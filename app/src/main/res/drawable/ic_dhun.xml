@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Three vertical bars (increasing height, left to right) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M8,30 L12,30 L12,38 L8,38 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M15,24 L19,24 L19,38 L15,38 Z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M22,18 L26,18 L26,38 L22,38 Z" />
+
+    <!-- Musical note (eighth note) on the right -->
+    <!-- Note head (filled oval) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M30,32 m-5,0 a5,4 0 1,0 10,0 a5,4 0 1,0 -10,0" />
+    <!-- Stem -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M34,32 L34,10 L36,10 L36,32 Z" />
+    <!-- Flag -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M36,10 Q42,14 40,22 Q38,16 36,18 Z" />
+
+</vector>

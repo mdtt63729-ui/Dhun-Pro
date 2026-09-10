@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="32dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/autoInstallTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/auto_install_title"
+        android:textAppearance="?textAppearanceHeadlineSmall"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Subtitle -->
+    <TextView
+        android:id="@+id/autoInstallSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/auto_install_subtitle"
+        android:textAppearance="?textAppearanceBodyMedium"
+        android:textColor="?colorOnSurfaceVariant"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Progress bar -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/autoInstallProgress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        app:indicatorColor="?colorPrimary"
+        app:trackColor="?colorSurfaceVariant"
+        app:cornerRadius="8dp"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+    <!-- Current extension name -->
+    <TextView
+        android:id="@+id/autoInstallCurrent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?textAppearanceBodySmall"
+        android:textColor="?colorOnSurfaceVariant"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Status / error message -->
+    <TextView
+        android:id="@+id/autoInstallStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?textAppearanceBodySmall"
+        android:textColor="?colorOnSurfaceVariant"
+        android:visibility="gone"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Done button (hidden until complete) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/autoInstallDoneButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/auto_install_done"
+        android:visibility="gone"
+        style="@style/Widget.Material3.Button.TonalButton" />
+
+</LinearLayout>

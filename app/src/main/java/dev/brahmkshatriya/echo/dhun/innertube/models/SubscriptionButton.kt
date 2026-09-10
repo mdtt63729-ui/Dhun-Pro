@@ -1,0 +1,22 @@
+/*
+ * Dhun Project Original (2026)
+ * Dhun
+ * Licensed Under GPL-3.0 | see git history for contributors
+ */
+
+package dev.brahmkshatriya.echo.dhun.innertube.models
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class SubscriptionButton(
+    val subscribeButtonRenderer: SubscribeButtonRenderer,
+) {
+    @Serializable
+    data class SubscribeButtonRenderer(
+        val subscribed: Boolean,
+        val channelId: String,
+        val subscriberCountText: Runs? = null,
+        val subscriberCountWithSubscribeText: Runs? = null,
+    )
+}
