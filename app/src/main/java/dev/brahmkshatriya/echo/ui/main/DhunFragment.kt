@@ -35,6 +35,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -50,6 +53,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
@@ -59,7 +63,15 @@ import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.dhun.bridge.DhunFeedBridge
 import dev.brahmkshatriya.echo.ui.component.navbar.BottomNavScreen
 import dev.brahmkshatriya.echo.ui.component.navbar.LiquidGlassTabBar
+import dev.brahmkshatriya.echo.dhun.ui.component.layerBackdrop
+import dev.brahmkshatriya.echo.dhun.ui.component.rememberBackdrop
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
+import dev.brahmkshatriya.echo.ui.extensions.list.ExtensionsListBottomSheet
+import dev.brahmkshatriya.echo.ui.settings.SettingsBottomSheet
+import dev.brahmkshatriya.echo.common.models.ExtensionType
+import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
+import dev.brahmkshatriya.echo.ui.common.UiViewModel
+import dev.brahmkshatriya.echo.R
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 /**
@@ -79,6 +91,7 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 class DhunFragment : Fragment() {
 
     private val extensionsViewModel by activityViewModel<ExtensionsViewModel>()
+    private val uiViewModel by activityViewModel<UiViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -87,10 +100,56 @@ class DhunFragment : Fragment() {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MaterialTheme {
-                    DhunHomeContent(extensionsViewModel)
+                    val backdrop = rememberBackdrop()
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(backdrop)
+                    ) {
+                        DhunHomeContent(
+                            extensionsViewModel,
+                            uiViewModel,
+                            backdrop,
+                            onExtensionClick = { ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC).show(parentFragmentManager, "dhun_extensions") },
+                            onSettingsClick = { SettingsBottomSheet().show(parentFragmentManager, "dhun_settings") },
+                            onDownloadsClick = { requireActivity().openFragment<dev.brahmkshatriya.echo.ui.download.DownloadFragment>() },
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun GlassHeaderButton(iconRes: Int, description: String, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        animationSpec = pressSpring,
+        label = "dhunHeaderButtonScale"
+    )
+    Box(
+        modifier = Modifier
+            .scale(scale)
+            .size(48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.28f))
+            .clickable(
+                interactionSource = interaction,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = description,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(25.dp),
+        )
     }
 }
 
@@ -125,7 +184,14 @@ private fun rememberHaptic(): () -> Unit {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DhunHomeContent(viewModel: ExtensionsViewModel) {
+private fun DhunHomeContent(
+    viewModel: ExtensionsViewModel,
+    uiViewModel: UiViewModel,
+    backdrop: dev.brahmkshatriya.echo.dhun.ui.component.PlatformBackdrop,
+    onExtensionClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onDownloadsClick: () -> Unit,
+) {
     val currentExtension by viewModel.extensionLoader.current.collectAsState()
     val feed = DhunFeedBridge.rememberExtensionFeed(currentExtension)
 
@@ -157,12 +223,13 @@ private fun DhunHomeContent(viewModel: ExtensionsViewModel) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
+
             // ── Feed ──
             LazyColumn(
                 state = lazyListState,
                 flingBehavior = flingBehavior,
                 modifier = Modifier.fillMaxSize().weight(1f),
-                contentPadding = PaddingValues(bottom = 100.dp),
+                contentPadding = PaddingValues(top = 72.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Header
@@ -238,9 +305,21 @@ private fun DhunHomeContent(viewModel: ExtensionsViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp),
+                backdrop = backdrop,
                 onTabSelected = { index ->
                     selectedNavTab = index
                     onHaptic()
+                    when (index) {
+                        0 -> Unit
+                        1 -> {
+                            parentFragmentManager.popBackStack()
+                            uiViewModel.navigation.value = 2
+                        }
+                        2 -> {
+                            parentFragmentManager.popBackStack()
+                            uiViewModel.navigation.value = 1
+                        }
+                    }
                 },
             )
         }
@@ -397,6 +476,23 @@ private fun BouncyHorizontalList(itemCount: Int, onHaptic: () -> Unit) {
                 }
             }
         }
+        // Dhun keeps the extension selector/settings/download actions visible even
+        // though the Dhun feed uses its own Compose surface.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .statusBarsPadding(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            GlassHeaderButton(R.drawable.ic_extension_32dp, "Extensions", onExtensionClick)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                GlassHeaderButton(R.drawable.ic_settings_outline_32dp, "Settings", onSettingsClick)
+                GlassHeaderButton(R.drawable.ic_download_for_offline, "Downloads", onDownloadsClick)
+            }
+        }
+
     }
 }
 

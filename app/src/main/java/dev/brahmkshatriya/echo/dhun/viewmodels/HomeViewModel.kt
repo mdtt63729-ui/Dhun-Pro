@@ -12,6 +12,13 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.brahmkshatriya.echo.dhun.innertube.YouTube
+import dev.brahmkshatriya.echo.common.clients.HomeFeedClient
+import dev.brahmkshatriya.echo.common.models.Shelf
+import dev.brahmkshatriya.echo.common.models.Track
+import dev.brahmkshatriya.echo.common.models.Feed.Companion.pagedDataOfFirst
+import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getAs
+import org.koin.core.context.GlobalContext
 import dev.brahmkshatriya.echo.dhun.innertube.models.PlaylistItem
 import dev.brahmkshatriya.echo.dhun.innertube.models.WatchEndpoint
 import dev.brahmkshatriya.echo.dhun.innertube.models.YTItem
@@ -43,11 +50,21 @@ import dev.brahmkshatriya.echo.dhun.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import timber.log.Timber
 import javax.inject.Inject
+
+/** A recommendation shelf coming from a real music extension. */
+data class DhunSourceSection(
+    val id: String,
+    val title: String,
+    val sourceId: String,
+    val sourceName: String,
+    val tracks: List<Track>,
+)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -77,6 +94,8 @@ class HomeViewModel @Inject constructor(
 
     val recentActivity = MutableStateFlow<List<YTItem>?>(null)
     val recentPlaylistsDb = MutableStateFlow<List<Playlist>?>(null)
+    /** Home shelves supplied by the installed Saavn extension. */
+    val saavnSections = MutableStateFlow<List<DhunSourceSection>>(emptyList())
 
     val allLocalItems = combine(
         quickPicks,
@@ -175,6 +194,57 @@ class HomeViewModel @Inject constructor(
         speedDialSongs.value = speedDialIds.mapNotNull { songsById[it] }
     }
 
+    private suspend fun loadSaavnSections() {
+        val loader = runCatching { GlobalContext.get().get<ExtensionLoader>() }.getOrNull()
+            ?: return
+        var saavn = loader.music.value.firstOrNull {
+            it.id == "saavn_music" && it.isEnabled
+        }
+        // On a clean install the remote installer may still be installing Saavn.
+        // Give the extension loader a short, non-blocking window to expose it.
+        repeat(6) { attempt ->
+            if (saavn == null) {
+                if (attempt > 0) delay(750)
+                saavn = loader.music.value.firstOrNull {
+                    it.id == "saavn_music" && it.isEnabled
+                }
+            }
+        }
+        val installedSaavn = saavn ?: run {
+            saavnSections.value = emptyList()
+            return
+        }
+
+        runCatching {
+            val feed = installedSaavn.getAs<HomeFeedClient, dev.brahmkshatriya.echo.common.models.Feed<Shelf>> {
+                loadHomeFeed()
+            }.getOrThrow()
+            val page = feed.pagedDataOfFirst().loadPage(null)
+            page.data.mapNotNull { shelf ->
+                val tracks = when (shelf) {
+                    is Shelf.Lists.Tracks -> shelf.list
+                    is Shelf.Lists.Items -> shelf.list.filterIsInstance<Track>()
+                    is Shelf.Item -> listOfNotNull(shelf.media as? Track)
+                    else -> emptyList()
+                }.distinctBy { it.id }.take(12)
+
+                if (tracks.isEmpty()) null
+                else DhunSourceSection(
+                    id = "saavn_${shelf.id}",
+                    title = shelf.title,
+                    sourceId = installedSaavn.id,
+                    sourceName = installedSaavn.name,
+                    tracks = tracks,
+                )
+            }.take(8)
+        }.onSuccess { sections ->
+            saavnSections.value = sections
+        }.onFailure {
+            Timber.w(it, "Failed to load Saavn home feed")
+            saavnSections.value = emptyList()
+        }
+    }
+
     private suspend fun load() {
         if (isLoading.value) return
         isLoading.value = true
@@ -186,6 +256,7 @@ class HomeViewModel @Inject constructor(
                 val fromTimeStamp = System.currentTimeMillis() - 86400000 * 7 * 2
 
                 launch { getQuickPicks() }
+                launch { loadSaavnSections() }
                 launch { loadSpeedDialSongs() }
                 launch { forgottenFavorites.value = database.forgottenFavorites().first().shuffled().take(20) }
                 

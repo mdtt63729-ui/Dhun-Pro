@@ -26,7 +26,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -107,6 +107,7 @@ fun SwipeableMiniPlayerBox(
     coroutineScope: CoroutineScope,
     pureBlack: Boolean = false,
     useLegacyBackground: Boolean = false,
+    enableVerticalDismiss: Boolean = false,
     content: @Composable (Float) -> Unit
 ) {
     val offsetXAnimatable = remember { Animatable(0f) }
@@ -141,76 +142,66 @@ fun SwipeableMiniPlayerBox(
             .let { baseModifier ->
                 if (swipeThumbnail) {
                     baseModifier.pointerInput(Unit) {
-                        detectHorizontalDragGestures(
+                        var totalX = 0f
+                        var totalY = 0f
+                        detectDragGestures(
                             onDragStart = {
                                 dragStartTime = System.currentTimeMillis()
-                                totalDragDistance = 0f
+                                totalX = 0f
+                                totalY = 0f
+                            },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                val adjustedX =
+                                    if (layoutDirection == LayoutDirection.Rtl) -dragAmount.x else dragAmount.x
+                                totalX += adjustedX
+                                totalY += dragAmount.y
+                                if (kotlin.math.abs(totalX) >= kotlin.math.abs(totalY)) {
+                                    val canSkipPrevious = playerConnection.player.previousMediaItemIndex != -1
+                                    val canSkipNext = playerConnection.player.nextMediaItemIndex != -1
+                                    val allowLeft = adjustedX < 0 && canSkipNext
+                                    val allowRight = adjustedX > 0 && canSkipPrevious
+                                    if (allowLeft || allowRight) {
+                                        coroutineScope.launch {
+                                            offsetXAnimatable.snapTo(offsetXAnimatable.value + adjustedX)
+                                        }
+                                    }
+                                }
                             },
                             onDragCancel = {
                                 coroutineScope.launch {
-                                    offsetXAnimatable.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = animationSpec
-                                    )
-                                }
-                            },
-                            onHorizontalDrag = { _, dragAmount ->
-                                val adjustedDragAmount =
-                                    if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
-                                val canSkipPrevious = playerConnection.player.previousMediaItemIndex != -1
-                                val canSkipNext = playerConnection.player.nextMediaItemIndex != -1
-                                val allowLeft = adjustedDragAmount < 0 && canSkipNext
-                                val allowRight = adjustedDragAmount > 0 && canSkipPrevious
-                                if (allowLeft || allowRight) {
-                                    totalDragDistance += kotlin.math.abs(adjustedDragAmount)
-                                    coroutineScope.launch {
-                                        offsetXAnimatable.snapTo(offsetXAnimatable.value + adjustedDragAmount)
-                                    }
+                                    offsetXAnimatable.animateTo(0f, animationSpec)
                                 }
                             },
                             onDragEnd = {
                                 val dragDuration = System.currentTimeMillis() - dragStartTime
-                                val velocity = if (dragDuration > 0) totalDragDistance / dragDuration else 0f
-                                val currentOffset = offsetXAnimatable.value
-
-                                val minDistanceThreshold = 50f
-                                val velocityThreshold = (swipeSensitivity * -8.25f) + 8.5f
-
-                                val shouldChangeSong = (
-                                        kotlin.math.abs(currentOffset) > minDistanceThreshold &&
-                                                velocity > velocityThreshold
-                                        ) || (kotlin.math.abs(currentOffset) > autoSwipeThreshold)
-
-                                if (shouldChangeSong) {
-                                    val isRightSwipe = currentOffset > 0
-                                    val canSkipPrevious = playerConnection.player.previousMediaItemIndex != -1
-                                    val canSkipNext = playerConnection.player.nextMediaItemIndex != -1
-
-                                    if (isRightSwipe && canSkipPrevious) {
-                                        playerConnection.player.seekToPreviousMediaItem()
-                                        if (dev.brahmkshatriya.echo.dhun.ui.screens.settings.DiscordPresenceManager.isRunning()) {
-                                            try { dev.brahmkshatriya.echo.dhun.ui.screens.settings.DiscordPresenceManager.restart() } catch (_: Exception) {}
-                                        }
-                                    } else if (!isRightSwipe && canSkipNext) {
-                                        playerConnection.player.seekToNext()
-                                        if (dev.brahmkshatriya.echo.dhun.ui.screens.settings.DiscordPresenceManager.isRunning()) {
-                                            try { dev.brahmkshatriya.echo.dhun.ui.screens.settings.DiscordPresenceManager.restart() } catch (_: Exception) {}
+                                val velocity = if (dragDuration > 0) totalX.absoluteValue / dragDuration else 0f
+                                val horizontalThreshold = autoSwipeThreshold.toFloat()
+                                val verticalThreshold = 90f
+                                if (enableVerticalDismiss && totalY > verticalThreshold && totalY > totalX.absoluteValue * 1.15f) {
+                                    // Down swipe: stop playback. The existing player sheet will
+                                    // collapse automatically because its media state becomes empty.
+                                    playerConnection.player.stop()
+                                } else {
+                                    val shouldChangeSong =
+                                        (totalX.absoluteValue > 50f && velocity > ((swipeSensitivity * -8.25f) + 8.5f)) ||
+                                            totalX.absoluteValue > horizontalThreshold
+                                    if (shouldChangeSong) {
+                                        val isRightSwipe = totalX > 0f
+                                        if (isRightSwipe && playerConnection.player.previousMediaItemIndex != -1) {
+                                            playerConnection.player.seekToPreviousMediaItem()
+                                        } else if (!isRightSwipe && playerConnection.player.nextMediaItemIndex != -1) {
+                                            playerConnection.player.seekToNext()
                                         }
                                     }
                                 }
-
                                 coroutineScope.launch {
-                                    offsetXAnimatable.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = animationSpec
-                                    )
+                                    offsetXAnimatable.animateTo(0f, animationSpec)
                                 }
                             }
                         )
                     }
-                } else {
-                    baseModifier
-                }
+                } else baseModifier
             }
     ) {
         content(offsetXAnimatable.value)
@@ -274,6 +265,88 @@ fun RowScope.MiniPlayerInfo(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.basicMarquee()
+            )
+        }
+    }
+}
+
+@Composable
+private fun DhunGlassMiniPlayerContent(
+    position: Long,
+    duration: Long,
+    playerConnection: PlayerConnection,
+    onOpenPlayer: () -> Unit,
+) {
+    val isPlaying by playerConnection.isPlaying.collectAsState()
+    val playbackState by playerConnection.playbackState.collectAsState()
+    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+    val canSkipNext by playerConnection.canSkipNext.collectAsState()
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(onClick = onOpenPlayer)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+    ) {
+        MiniPlayerArtwork(
+            mediaMetadata = mediaMetadata,
+            position = position,
+            duration = duration,
+            isLoading = playbackState == Player.STATE_BUFFERING,
+            modifier = Modifier.size(58.dp),
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = mediaMetadata?.title ?: "Dhun",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = mediaMetadata?.artists?.joinToString { it.name } ?: "Your music",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.70f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        IconButton(
+            onClick = { playerConnection.player.togglePlayPause() },
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                painter = painterResource(
+                    when {
+                        playbackState == Player.STATE_ENDED -> R.drawable.replay
+                        isPlaying -> R.drawable.pause
+                        else -> R.drawable.play
+                    }
+                ),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(25.dp),
+            )
+        }
+
+        IconButton(
+            onClick = playerConnection::seekToNext,
+            enabled = canSkipNext,
+            modifier = Modifier.size(48.dp),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.skip_next),
+                contentDescription = null,
+                tint = Color.White.copy(alpha = if (canSkipNext) 1f else 0.35f),
+                modifier = Modifier.size(27.dp),
             )
         }
     }
@@ -441,7 +514,8 @@ fun NewMiniPlayerContent(
     duration: Long,
     playerConnection: PlayerConnection,
     navController: NavController,
-    state: BottomSheetState
+    state: BottomSheetState,
+    useDhunGlass: Boolean = false,
 ) {
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val playbackState by playerConnection.playbackState.collectAsState()
@@ -454,108 +528,43 @@ fun NewMiniPlayerContent(
 
     val isLoading = playbackState == Player.STATE_BUFFERING
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp, vertical = 8.dp),
-    ) {
-        MiniPlayerArtwork(
-            mediaMetadata = mediaMetadata,
+    if (useDhunGlass) {
+        DhunGlassMiniPlayerContent(
             position = position,
             duration = duration,
-            isLoading = isLoading
+            playerConnection = playerConnection,
+            onOpenPlayer = { state.expandSoft() },
         )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        mediaMetadata?.let {
-            MiniPlayerInfo(mediaMetadata = it)
-        } ?: Spacer(Modifier.weight(1f))
-
-        if (togetherSessionState !is TogetherSessionState.Idle) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Surface(
-                shape = RoundedCornerShape(999.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.all_inclusive),
-                        contentDescription = stringResource(R.string.music_together),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(14.dp),
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        // ── Ícono de Persona (acceso al perfil del artista) ─────────
-        IconButton(
-            onClick = {
-                val firstArtist = mediaMetadata?.artists?.firstOrNull()
-                val artistId = firstArtist?.id
-                if (!artistId.isNullOrBlank()) {
-                    navController.navigate("artist/$artistId")
-                    state.collapseSoft()
-                }
-            },
-            modifier = Modifier.size(40.dp)
+    } else {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp, vertical = 8.dp),
         ) {
-            Icon(
-                painter = painterResource(R.drawable.person),
-                contentDescription = stringResource(R.string.artists),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
+            MiniPlayerArtwork(
+                mediaMetadata = mediaMetadata,
+                position = position,
+                duration = duration,
+                isLoading = isLoading
             )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            mediaMetadata?.let {
+                MiniPlayerInfo(mediaMetadata = it)
+            } ?: Spacer(Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            MiniPlayerPlayPauseButton(
+                isPlaying = isPlaying,
+                isLoading = isLoading,
+                playerConnection = playerConnection
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
         }
-
-        // ── Ícono de Corazón (guardar en favoritos) ────────────────
-        IconButton(
-            onClick = { playerConnection.toggleLike() },
-            modifier = Modifier.size(40.dp)
-        ) {
-            val heartScale by animateFloatAsState(
-                targetValue = if (isLiked) 1.25f else 1f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium
-                ),
-                label = "heartScale"
-            )
-            Icon(
-                painter = painterResource(
-                    if (isLiked) R.drawable.favorite else R.drawable.favorite_border
-                ),
-                contentDescription = null,
-                tint = if (isLiked)
-                    MaterialTheme.colorScheme.error
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(20.dp)
-                    .graphicsLayer {
-                        scaleX = heartScale
-                        scaleY = heartScale
-                    }
-            )
-        }
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        // ── Botón Play/Pause principal (Cookie6Sided) ─────────────────────
-        MiniPlayerPlayPauseButton(
-            isPlaying = isPlaying,
-            isLoading = isLoading,
-            playerConnection = playerConnection
-        )
-
-        Spacer(modifier = Modifier.width(4.dp))
     }
 }
 

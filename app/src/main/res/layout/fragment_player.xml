@@ -104,6 +104,11 @@
 
     </FrameLayout>
 
+    <include
+        android:id="@+id/dhun_player_controls"
+        layout="@layout/item_dhun_player_controls"
+        android:visibility="gone" />
+
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/player_more_container"
         android:name="dev.brahmkshatriya.echo.ui.player.more.PlayerMoreFragment"

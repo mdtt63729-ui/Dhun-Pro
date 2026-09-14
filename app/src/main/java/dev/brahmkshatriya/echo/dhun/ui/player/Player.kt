@@ -166,6 +166,8 @@ import dev.brahmkshatriya.echo.dhun.ui.utils.ShowMediaInfo
 import dev.brahmkshatriya.echo.dhun.utils.makeTimeString
 import dev.brahmkshatriya.echo.dhun.utils.rememberEnumPreference
 import dev.brahmkshatriya.echo.dhun.utils.rememberPreference
+import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import org.koin.core.context.GlobalContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import coil3.compose.AsyncImage
 import dev.brahmkshatriya.echo.dhun.canvas.models.CanvasArtwork
@@ -345,7 +347,10 @@ fun BottomSheetPlayer(
             useDarkTheme && pureBlack
         }
     val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
-    val backgroundColor = if (enableLiquidGlass) {
+    val extensionLoader = remember { GlobalContext.get().get<ExtensionLoader>() }
+    val currentExtension by extensionLoader.current.collectAsState()
+    val useDhunGlassPlayer = enableLiquidGlass && currentExtension?.id == "dhun"
+    val backgroundColor = if (useDhunGlassPlayer) {
         val progress = ((state.value - state.collapsedBound) / (state.expandedBound - state.collapsedBound))
             .coerceIn(0f, 1f)
         Color.White.copy(alpha = 0.1f * progress)
@@ -999,7 +1004,51 @@ fun BottomSheetPlayer(
 
 // distance
 
-        when (LocalConfiguration.current.orientation) {
+        if (useDhunGlassPlayer && LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            enrichedMetadata?.let { metadata ->
+                DhunGlassFullPlayer(
+                    mediaMetadata = metadata,
+                    isPlaying = isPlaying,
+                    isLoading = isLoading,
+                    currentSongLiked = currentSongLiked,
+                    position = sliderPosition ?: position,
+                    duration = duration,
+                    playerVolume = playerVolume.value,
+                    canSkipPrevious = canSkipPrevious,
+                    canSkipNext = canSkipNext,
+                    onBack = state::collapseSoft,
+                    onToggleLike = playerConnection::toggleLike,
+                    onPrevious = playerConnection::seekToPrevious,
+                    onPlayPause = {
+                        if (playbackState == STATE_ENDED) {
+                            playerConnection.player.seekTo(0, 0)
+                            playerConnection.player.playWhenReady = true
+                        } else {
+                            playerConnection.player.togglePlayPause()
+                        }
+                    },
+                    onNext = playerConnection::seekToNext,
+                    onVolumeChange = { playerConnection.service.playerVolume.value = it },
+                    onSeek = updatedOnSliderValueChange,
+                    onSeekFinished = updatedOnSliderValueChangeFinished,
+                    onQueue = queueSheetState::expandSoft,
+                    onLyrics = { lyricsSheetState.expandSoft() },
+                    onMore = {
+                        menuState.show {
+                            PlayerMenu(
+                                mediaMetadata = metadata,
+                                navController = navController,
+                                playerBottomSheetState = state,
+                                onShowDetailsDialog = {
+                                    bottomSheetPageState.show { ShowMediaInfo(metadata.id) }
+                                },
+                                onDismiss = menuState::dismiss,
+                            )
+                        }
+                    },
+                )
+            }
+        } else when (LocalConfiguration.current.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
                 if (playerDesignStyle == PlayerDesignStyle.V5) {
                     val littleBackground = MaterialTheme.colorScheme.primaryContainer
@@ -1687,6 +1736,237 @@ fun BottomSheetPlayer(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DhunGlassFullPlayer(
+    mediaMetadata: MediaMetadata,
+    isPlaying: Boolean,
+    isLoading: Boolean,
+    currentSongLiked: Boolean,
+    position: Long,
+    duration: Long,
+    playerVolume: Float,
+    canSkipPrevious: Boolean,
+    canSkipNext: Boolean,
+    onBack: () -> Unit,
+    onToggleLike: () -> Unit,
+    onPrevious: () -> Unit,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit,
+    onVolumeChange: (Float) -> Unit,
+    onSeek: (Long) -> Unit,
+    onSeekFinished: () -> Unit,
+    onQueue: () -> Unit,
+    onLyrics: () -> Unit,
+    onMore: () -> Unit,
+) {
+    val progress = if (duration > 0L && duration != C.TIME_UNSET) {
+        (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+    } else 0f
+
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        AsyncImage(
+            model = mediaMetadata.thumbnailUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .cloudy(radius = 42)
+                .graphicsLayer { scaleX = 1.10f; scaleY = 1.10f; alpha = 0.72f },
+        )
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.24f),
+                        Color.Transparent,
+                        Color.Black.copy(alpha = 0.78f),
+                        Color.Black.copy(alpha = 0.94f),
+                    ),
+                ),
+            ),
+        )
+
+        Column(
+            modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars).padding(horizontal = 22.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                GlassPlayerTopButton(R.drawable.ic_keyboard_arrow_down, onBack)
+                Text(
+                    text = mediaMetadata.album?.title ?: "Dhun",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White.copy(alpha = 0.82f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                    textAlign = TextAlign.Center,
+                )
+                Row {
+                    GlassPlayerTopButton(
+                        if (currentSongLiked) R.drawable.favorite else R.drawable.favorite_border,
+                        onToggleLike,
+                    )
+                    GlassPlayerTopButton(R.drawable.more_vert, onMore)
+                }
+            }
+
+            Spacer(Modifier.weight(0.35f))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = 390.dp)
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White.copy(alpha = 0.08f))
+                    .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp)),
+            ) {
+                AsyncImage(
+                    model = mediaMetadata.thumbnailUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)),
+                )
+                if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = Color.White,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            Column(Modifier.fillMaxWidth().widthIn(max = 520.dp)) {
+                Text(
+                    text = mediaMetadata.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = mediaMetadata.artists.joinToString { it.name },
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White.copy(alpha = 0.68f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Slider(
+                value = progress,
+                onValueChange = { value ->
+                    if (duration > 0L && duration != C.TIME_UNSET) onSeek((value * duration).toLong())
+                },
+                onValueChangeFinished = onSeekFinished,
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+                colors = androidx.compose.material3.SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color.White,
+                    inactiveTrackColor = Color.White.copy(alpha = 0.30f),
+                ),
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(makeTimeString(position), color = Color.White.copy(alpha = 0.78f), style = MaterialTheme.typography.labelMedium)
+                Text(makeTimeString(duration), color = Color.White.copy(alpha = 0.62f), style = MaterialTheme.typography.labelMedium)
+            }
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassPlayerTransportButton(R.drawable.skip_previous, onPrevious, canSkipPrevious)
+                GlassPlayerTransportButton(
+                    if (isPlaying) R.drawable.pause else R.drawable.play,
+                    onPlayPause,
+                    true,
+                    large = true,
+                )
+                GlassPlayerTransportButton(R.drawable.skip_next, onNext, canSkipNext)
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(painterResource(R.drawable.volume_off), null, tint = Color.White.copy(alpha = 0.80f), modifier = Modifier.size(22.dp))
+                Slider(
+                    value = playerVolume.coerceIn(0f, 1f),
+                    onValueChange = onVolumeChange,
+                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                    colors = androidx.compose.material3.SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.White,
+                        inactiveTrackColor = Color.White.copy(alpha = 0.24f),
+                    ),
+                )
+                Icon(painterResource(R.drawable.volume_up), null, tint = Color.White.copy(alpha = 0.88f), modifier = Modifier.size(24.dp))
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassPlayerUtilityButton(R.drawable.ic_queue_music, onQueue)
+                GlassPlayerUtilityButton(R.drawable.timer, onMore)
+                GlassPlayerUtilityButton(R.drawable.lyrics, onLyrics)
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassPlayerTopButton(icon: Int, onClick: () -> Unit) {
+    androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.size(46.dp)) {
+        Icon(painterResource(icon), null, tint = Color.White, modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun GlassPlayerTransportButton(
+    icon: Int,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    large: Boolean = false,
+) {
+    androidx.compose.material3.IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(if (large) 74.dp else 62.dp)) {
+        Icon(
+            painterResource(icon),
+            null,
+            tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
+            modifier = Modifier.size(if (large) 44.dp else 30.dp),
+        )
+    }
+}
+
+@Composable
+private fun GlassPlayerUtilityButton(icon: Int, onClick: () -> Unit) {
+    androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.size(54.dp)) {
+        Icon(painterResource(icon), null, tint = Color.White.copy(alpha = 0.90f), modifier = Modifier.size(25.dp))
     }
 }
 

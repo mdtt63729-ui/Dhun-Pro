@@ -296,17 +296,6 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                // Liquid Glass Navbar
-                SwitchPreferenceCompat(context).apply {
-                    key = "liquid_glass_nav_bar"
-                    title = getString(R.string.liquid_glass_navbar)
-                    summary = getString(R.string.liquid_glass_navbar_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(false)
-                    addPreference(this)
-                }
-
                 // Show Home Category Chips
                 SwitchPreferenceCompat(context).apply {
                     key = "showHomeCategoryChips"
@@ -1081,17 +1070,6 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                // Liquid Glass Navbar
-                SwitchPreferenceCompat(context).apply {
-                    key = "liquid_glass_nav_bar"
-                    title = getString(R.string.liquid_glass_navbar)
-                    summary = getString(R.string.liquid_glass_navbar_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(false)
-                    addPreference(this)
-                }
-
                 // Floating Navigation Bar
                 SwitchPreferenceCompat(context).apply {
                     key = "floatingNavigation"
@@ -1184,24 +1162,19 @@ class SettingsLookFragment : BaseSettingsFragment() {
         }
 
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            // Avoid rebuilding the entire Activity for ordinary visual/player toggles.
+            // Most of them are read lazily by the relevant view and will take effect
+            // without tearing down the current settings screen. Only changes that alter
+            // the Activity theme itself need recreation.
             when (key) {
-                THEME_KEY, CUSTOM_THEME_KEY, COLOR_KEY, AMOLED_KEY,
-                BIG_COVER, NAVBAR_GRADIENT, BACKGROUND_GRADIENT,
-                "pureBlack", "dynamicTheme", "randomThemeOnStartup",
-                "useSystemFont", "slimNavBar", "useNewLibraryDesign",
-                "useNewMiniPlayerDesign", "enableLiquidGlass", "liquid_glass_nav_bar",
-                "playerDesignStyle", "playerBackgroundStyle", "hidePlayerThumbnail",
-                "disableBlur", "DhunCanvas", "showHomeCategoryChips",
-                "showTagsInLibrary", "gridItemSize",
-                "darkMode", "translucentBottomBar", "useDenseMini",
-                "backGrad", "cardGrad", "bottomGrad", "playerGradientType",
-                "aod_style", "aod_art_shape", "aod_darkness", "aod_art_size",
-                "aod_fullscreen_mode", "aod_show_clock", "aod_clock_24h",
-                "useNewMiniPlayerDesign", "useDenseMini", "floatingNavigation",
-                "translucentBottomBar", "miniPlayerLastAnchor", "minimumVolume",
-                "maximumVolume",
-                    -> {
-                    requireActivity().recreate()
+                THEME_KEY, CUSTOM_THEME_KEY, COLOR_KEY, AMOLED_KEY, BIG_COVER -> {
+                    if (isAdded) {
+                        view?.post {
+                            if (isAdded && !requireActivity().isChangingConfigurations) {
+                                requireActivity().recreate()
+                            }
+                        }
+                    }
                 }
 
                 BACK_ANIM -> {

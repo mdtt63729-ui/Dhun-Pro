@@ -17,9 +17,23 @@ interface GestureListener {
             val gestureListener = object : GestureDetector.SimpleOnGestureListener() {
                 private var timer: Timer? = null
                 private var beingDoubleClicked = false
+
+                override fun onSingleTapUp(e: MotionEvent): Boolean {
+                    // A normal mini-player tap must not wait for the double-tap timeout.
+                    // Only the expanded player has a double-tap action, so single taps can
+                    // be dispatched immediately everywhere else.
+                    if (listener.onDoubleClick == null) {
+                        listener.onClick()
+                    }
+                    return true
+                }
+
                 override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-                    if (!beingDoubleClicked) listener.onClick()
-                    else return onDoubleTap(e)
+                    if (listener.onDoubleClick != null && !beingDoubleClicked) {
+                        listener.onClick()
+                    } else if (beingDoubleClicked) {
+                        beingDoubleClicked = false
+                    }
                     return true
                 }
 
@@ -42,9 +56,13 @@ interface GestureListener {
                 }
             }
             val detector = GestureDetector(context, gestureListener)
-            setOnTouchListener { _, event ->
+            setOnTouchListener { view, event ->
                 detector.onTouchEvent(event)
-                performClick()
+                if (event.actionMasked == MotionEvent.ACTION_UP ||
+                    event.actionMasked == MotionEvent.ACTION_CANCEL
+                ) {
+                    view.performClick()
+                }
                 true
             }
         }

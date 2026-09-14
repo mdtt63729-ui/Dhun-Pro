@@ -53,9 +53,14 @@ class ExtensionsAddBottomSheet : BottomSheetDialogFragment() {
                 dismissAllowingStateLoss()
             } else {
                 val link = binding.editText.text.toString()
-                if (link.isEmpty()) return@setOnClickListener
                 viewModel.addFromLinkOrCode(link)
             }
+        }
+
+        // The Link tab is backed by the remote extension repository by default.
+        // The user can still paste another repository URL/code manually.
+        if (binding.installationTypeGroup.checkedButtonId == R.id.linkAdd) {
+            viewModel.addFromLinkOrCode(AddViewModel.DEFAULT_REPOSITORY_URL)
         }
 
         observe(viewModel.addingFlow) {

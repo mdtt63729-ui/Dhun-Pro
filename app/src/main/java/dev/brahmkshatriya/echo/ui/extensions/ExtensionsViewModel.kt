@@ -13,6 +13,7 @@ import dev.brahmkshatriya.echo.common.models.Message
 import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.AutoExtensionInstaller
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import dev.brahmkshatriya.echo.extensions.repo.ExtensionParser
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getExtensionOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getOrThrow
 import dev.brahmkshatriya.echo.extensions.InstallationUtils.installApp
@@ -28,6 +29,7 @@ import dev.brahmkshatriya.echo.utils.AppUpdater.getUpdateFileUrl
 import dev.brahmkshatriya.echo.utils.AppUpdater.updateApp
 import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
 import dev.brahmkshatriya.echo.utils.CacheUtils.saveToCache
+import dev.brahmkshatriya.echo.utils.Serializer.toData
 import dev.brahmkshatriya.echo.utils.ContextUtils.cleanupTempApks
 import dev.brahmkshatriya.echo.utils.ContextUtils.collect
 import kotlinx.coroutines.CancellationException
@@ -37,7 +39,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.io.File
 
@@ -108,6 +112,79 @@ class ExtensionsViewModel(
         }.getOrElse { app.throwFlow.emit(it) }
     }
 
+    /**
+     * Optional extensions are never auto-downloaded. Only the two music sources
+     * shipped in the APK (YouTube Music + Saavn) are installed automatically.
+     * Everything else must be explicitly downloaded/installed by the user.
+     */
+    private val requiredRemoteExtensionIds = emptySet<String>()
+    @Serializable
+    private data class RemoteExtension(
+        val id: String,
+        val name: String = id,
+        val updateUrl: String
+    )
+
+    private val remoteCatalogUrl =
+        "https://raw.githubusercontent.com/itsmechinmoy/echo-extensions/main/echo_extensions.json"
+
+    /**
+     * Silently restores missing required extensions from the remote repository.
+     * Existing extensions are left alone; the normal updater remains responsible
+     * for checking versions. A network failure never blocks or crashes startup.
+     */
+    fun ensureRequiredRemoteExtensions() = viewModelScope.launch(Dispatchers.IO) {
+        if (requiredRemoteExtensionIds.isEmpty()) return@launch
+        runCatching {
+            val request = Request.Builder()
+                .url(remoteCatalogUrl)
+                .header("Accept", "application/json")
+                .build()
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) error("Extension catalog HTTP ${response.code}")
+            val body = response.body?.string().orEmpty()
+            val catalog = body.toData<List<RemoteExtension>>().getOrThrow()
+
+            val installed = extensionLoader.all.value.mapTo(mutableSetOf()) { it.id }
+            val required = catalog.filter { it.id in requiredRemoteExtensionIds }
+            if (required.isEmpty()) return@runCatching
+
+            message(
+                app.context.getString(
+                    R.string.downloading_x,
+                    "extensions"
+                )
+            )
+
+            required.forEach { item ->
+                if (item.id in installed) return@forEach
+
+                runCatching {
+                    val url = getUpdateFileUrl("", item.updateUrl, client).getOrThrow()
+                        ?: error("No release asset found for ${item.id}")
+                    val file = downloadUpdate(app.context, url, client).getOrThrow()
+                        ?: error("Failed to download ${item.id}")
+                    // Remote catalog entries are .eapk/file extensions. Installing
+                    // as a file avoids any APK installation UI or user prompt.
+                    install(item.id, ImportType.File, file).getOrThrow()
+                    installed += item.id
+                    message(
+                        app.context.getString(
+                            R.string.extension_installed_successfully
+                        )
+                    )
+                }.onFailure {
+                    // One broken extension must not prevent the remaining extensions
+                    // from installing or make the application fail during startup.
+                    app.throwFlow.emit(it)
+                }
+            }
+        }.onFailure {
+            // Remote installation is best-effort. Retry on the next app start.
+            app.throwFlow.emit(it)
+        }
+    }
+
     data class PromptResult(
         val file: File,
         val accepted: Boolean,
@@ -165,31 +242,35 @@ class ExtensionsViewModel(
     }
 
     /**
-     * Installs all bundled extensions using the official ExtensionInstallerBottomSheet
-     * popup flow. Copies .eapk files from assets to temp files, then shows the official
-     * popup for each one. Marks auto-install as complete when done.
+     * Installs bundled extensions silently on first launch. No user-facing Add
+     * Extension flow is shown; the bundled extensions simply appear in Manage
+     * Extensions after installation.
      */
-    fun installBundledExtensions() = viewModelScope.launch {
+    fun installBundledExtensions() = viewModelScope.launch(Dispatchers.IO) {
         val files = AutoExtensionInstaller.copyBundledToTempFiles(app.context)
         if (files.isEmpty()) {
             AutoExtensionInstaller.markComplete(app.settings)
             return@launch
         }
+
         files.forEach { file ->
-            installPromptFlow.emit(file)
-            val result = promptResultFlow.first { it.file == file }
-            if (!result.accepted) return@forEach
-            install(result.id, result.type, result.file).onFailure {
+            runCatching {
+                val id = app.context.packageManager.getPackageArchiveInfo(
+                    file.absolutePath,
+                    ExtensionParser.PACKAGE_FLAGS
+                )?.packageName ?: error("Could not read extension id")
+
+                install(id, ImportType.File, file).getOrThrow()
+                message(app.context.getString(R.string.extension_installed_successfully))
+            }.onFailure {
                 app.throwFlow.emit(it)
-                return@forEach
+            }.also {
+                file.delete()
             }
-            message(app.context.getString(R.string.extension_installed_successfully))
-            if (result.type == ImportType.App)
-                linksDialogFlow.emit(file to result.supportedLinks)
         }
+
         AutoExtensionInstaller.markComplete(app.settings)
     }
-
 
     fun uninstall(activity: FragmentActivity, extension: Extension<*>) = viewModelScope.launch {
         val fileResult = runCatching {
@@ -213,6 +294,7 @@ class ExtensionsViewModel(
                 createLinksDialog(it.first, it.second)
             }
 
+            viewModel.ensureRequiredRemoteExtensions()
             viewModel.update(this, false)
             var currentFile: File? = null
             collect(viewModel.installFileFlow) {

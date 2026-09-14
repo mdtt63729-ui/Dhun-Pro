@@ -129,6 +129,22 @@ class PlayerMoreFragment : Fragment() {
         binding.buttonToggleGroup.children.forEach { it.setOnTouchListener(touchListener) }
     }
 
+    fun showQueue() {
+        runCatching {
+            uiViewModel.lastMoreTab = R.id.queue
+            binding.buttonToggleGroup.check(R.id.queue)
+            showFragment()
+        }
+    }
+
+    fun showLyrics() {
+        runCatching {
+            uiViewModel.lastMoreTab = R.id.lyrics
+            binding.buttonToggleGroup.check(R.id.lyrics)
+            showFragment()
+        }
+    }
+
     private fun showFragment() {
         val checkedId = binding.buttonToggleGroup.checkedButtonId
         val toShow = when (checkedId) {

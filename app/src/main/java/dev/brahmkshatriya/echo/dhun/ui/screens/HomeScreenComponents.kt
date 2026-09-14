@@ -97,6 +97,10 @@ import dev.brahmkshatriya.echo.dhun.models.toMediaMetadata
 import dev.brahmkshatriya.echo.dhun.playback.PlayerConnection
 import dev.brahmkshatriya.echo.dhun.playback.queues.ListQueue
 import dev.brahmkshatriya.echo.dhun.playback.queues.YouTubeQueue
+import dev.brahmkshatriya.echo.playback.MediaItemUtils
+import dev.brahmkshatriya.echo.extensions.MediaState
+import dev.brahmkshatriya.echo.dhun.viewmodels.DhunSourceSection
+import org.koin.core.context.GlobalContext
 import dev.brahmkshatriya.echo.dhun.ui.component.AlbumGridItem
 import dev.brahmkshatriya.echo.dhun.ui.component.ArtistGridItem
 import dev.brahmkshatriya.echo.dhun.ui.component.LocalMenuState
@@ -127,6 +131,122 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.brahmkshatriya.echo.dhun.viewmodels.HomeViewModel
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DhunSourceSection(
+    section: DhunSourceSection,
+    mediaMetadata: MediaMetadata?,
+    isPlaying: Boolean,
+    playerConnection: PlayerConnection,
+    modifier: Modifier = Modifier,
+) {
+    val tracks = remember(section.tracks) { section.tracks.distinctBy { it.id } }
+    val activeId = mediaMetadata?.id
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        items(tracks, key = { "${section.sourceId}:${it.id}" }) { track ->
+            val image = when (val cover = track.cover) {
+                is dev.brahmkshatriya.echo.common.models.ImageHolder.NetworkRequestImageHolder -> cover.request.url
+                is dev.brahmkshatriya.echo.common.models.ImageHolder.ResourceUriImageHolder -> cover.uri
+                else -> null
+            }
+            val active = track.id == activeId
+
+            Column(
+                modifier = Modifier
+                    .width(218.dp)
+                    .combinedClickable(
+                        onClick = {
+                            if (active) {
+                                playerConnection.player.togglePlayPause()
+                            } else {
+                                val echoApp = runCatching {
+                                    GlobalContext.get().get<dev.brahmkshatriya.echo.di.App>()
+                                }.getOrNull() ?: return@combinedClickable
+                                val mediaItems = tracks.map { item ->
+                                    MediaItemUtils.build(
+                                        echoApp,
+                                        emptyList(),
+                                        MediaState.Unloaded(section.sourceId, item),
+                                        null,
+                                    )
+                                }
+                                playerConnection.playQueue(
+                                    ListQueue(
+                                        title = section.title,
+                                        items = mediaItems,
+                                        startIndex = tracks.indexOf(track).coerceAtLeast(0),
+                                    )
+                                )
+                            }
+                        }
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(20.dp))
+                ) {
+                    AsyncImage(
+                        model = image,
+                        contentDescription = track.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(10.dp)
+                            .size(44.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
+                                CircleShape,
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(
+                                if (active && isPlaying) R.drawable.volume_up
+                                else R.drawable.ic_widget_play
+                            ),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = track.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = buildString {
+                        append(track.artists.joinToString(", ") { it.name })
+                        if (section.sourceName.isNotBlank()) {
+                            if (isNotEmpty()) append(" • ")
+                            append(section.sourceName)
+                        }
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable

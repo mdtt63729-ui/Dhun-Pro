@@ -48,8 +48,6 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 object WebViewUtils {
-    private const val USER_AGENT =
-        "Mozilla/5.0 (Linux; Android 2; Jeff Bezos) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.158 Mobile Safari/537.36"
 
     @Suppress("DEPRECATION")
     @SuppressLint("SetJavaScriptEnabled")
@@ -65,16 +63,21 @@ object WebViewUtils {
                 webView.goBack()
             }
         }
-        WebStorage.getInstance().deleteAllData()
         CookieManager.getInstance().run {
-            removeAllCookies(null)
+            setAcceptCookie(true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                setAcceptThirdPartyCookies(webView, true)
+            }
+            removeSessionCookies(null)
             flush()
         }
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
-            userAgentString = USER_AGENT
+            // Keep the real Android System WebView user-agent. The previous hard-coded
+            // Chrome 66 UA could make Google reject modern sign-in/SAPISID flows.
+            userAgentString = WebSettings.getDefaultUserAgent(context)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 isAlgorithmicDarkeningAllowed = true
         }
@@ -158,8 +161,8 @@ object WebViewUtils {
                                 target.onStop(requests)
                             else null
                             val cookieRes = if (target is WebViewRequest.Cookie) {
-                                val cookie =
-                                    CookieManager.getInstance().getCookie(request.url) ?: ""
+                                val cookie = CookieManager.getInstance().getCookie(request.url).orEmpty()
+                                CookieManager.getInstance().flush()
                                 target.onStop(request, cookie)
                             } else null
                             val evalRes = if (target is WebViewRequest.Evaluate)

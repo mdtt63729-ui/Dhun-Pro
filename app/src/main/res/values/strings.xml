@@ -152,7 +152,7 @@
     <string name="downloading_update_for_x">Downloading update for %1$s</string>
     <string name="extension_updated_successfully">%1$s updated successfully</string>
     <string name="link">Link</string>
-    <string name="link_or_code">Link or Code</string>
+    <string name="link_or_code">Repository URL or code (default: extension)</string>
     <string name="list_is_empty">List is empty</string>
     <string name="extension_installed">%1$s (Installed)</string>
     <string name="add_extensions">Add Extensions</string>
@@ -2316,8 +2316,8 @@ Dhun will only extract your token, and everything else is stored locally.</strin
     <string name="smart_home_summary">Show personalized recommendation cards (Quick Picks, Forgotten Favorites, Keep Listening) on the home screen based on your listening history</string>
 
     <!-- Auto Extension Install -->
-    <string name="auto_install_title">Setting Up</string>
-    <string name="auto_install_subtitle">Installing music extensions…</string>
+    <string name="auto_install_title">Install All Extensions</string>
+    <string name="auto_install_subtitle">YouTube Music and Saavn are bundled. The remaining extensions will be downloaded and installed one by one.</string>
     <string name="auto_install_progress_format">Installing %1$d/%2$d: %3$s</string>
     <string name="auto_install_complete">All extensions installed!</string>
     <string name="auto_install_done">Done</string>

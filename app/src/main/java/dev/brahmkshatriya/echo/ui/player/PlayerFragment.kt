@@ -47,6 +47,7 @@ import com.google.android.material.slider.Slider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Streamable
+import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.databinding.FragmentPlayerBinding
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.background
 import dev.brahmkshatriya.echo.playback.MediaItemUtils.context
@@ -67,6 +68,8 @@ import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.defaultPlayerCol
 import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.getColorsFrom
 import dev.brahmkshatriya.echo.ui.player.PlayerTrackAdapter.Companion.configureClicking
 import dev.brahmkshatriya.echo.ui.player.quality.FormatUtils.getDetails
+import dev.brahmkshatriya.echo.ui.player.sleep.SleepTimerBottomSheet
+import dev.brahmkshatriya.echo.ui.player.more.PlayerMoreFragment
 import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
@@ -85,6 +88,7 @@ import dev.brahmkshatriya.echo.utils.ui.UiUtils.toTimeString
 import dev.brahmkshatriya.echo.utils.ui.ViewPager2Utils.registerOnUserPageChangeCallback
 import dev.brahmkshatriya.echo.utils.ui.ViewPager2Utils.supportBottomSheetBehavior
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlin.math.abs
 import kotlin.math.max
@@ -94,6 +98,8 @@ class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
     private val viewModel by activityViewModel<PlayerViewModel>()
     private val uiViewModel by activityViewModel<UiViewModel>()
+    private val extensionLoader by inject<ExtensionLoader>()
+    private var dhunSelected = false
     private val adapter by lazy {
         PlayerTrackAdapter(uiViewModel, viewModel.playerState.current, adapterListener)
     }
@@ -113,7 +119,14 @@ class PlayerFragment : Fragment() {
         configureCollapsing(binding)
         configureColors()
         configurePlayerControls()
+        configureDhunPlayerControls()
         configureBackgroundPlayerView()
+        observe(extensionLoader.current) { extension ->
+            dhunSelected = extension?.id == "dhun"
+            adapter.onCurrentUpdated()
+            updateDhunPlayerMode()
+        }
+        observe(uiViewModel.playerSheetState) { updateDhunPlayerMode() }
     }
 
     private val collapseHeight by lazy {
@@ -259,10 +272,15 @@ class PlayerFragment : Fragment() {
             adapter.playerOffsetUpdated()
 
             viewModel.browser.value?.volume = 1 + min(0f, it)
-            if (it < 1)
+            if (it < 1) {
                 requireActivity().hideSystemUi(false)
-            else if (uiViewModel.playerBgVisible.value)
+            } else if (uiViewModel.playerBgVisible.value && !dhunSelected) {
                 requireActivity().hideSystemUi(true)
+            } else {
+                // Dhun's full player intentionally keeps the status/navigation system
+                // chrome visible, matching the reference full-screen music player.
+                requireActivity().hideSystemUi(false)
+            }
         }
 
         observe(uiViewModel.playerSheetState) {
@@ -270,6 +288,8 @@ class PlayerFragment : Fragment() {
             if (isFinalState(it)) adapter.playerSheetStateUpdated()
             if (it == STATE_HIDDEN) viewModel.clearQueue()
             else if (it == STATE_COLLAPSED) emit(uiViewModel.playerBgVisible, false)
+            else if (it == STATE_EXPANDED && dhunSelected) emit(uiViewModel.playerBgVisible, true)
+            updateDhunPlayerMode()
         }
 
         binding.playerControls.root.doOnLayout {
@@ -486,6 +506,105 @@ class PlayerFragment : Fragment() {
 
     private val likeListener = CheckBoxListener { viewModel.likeCurrent(it) }
 
+    private fun updateDhunPlayerMode() {
+        val binding = binding ?: return
+        val expandedDhun = dhunSelected && uiViewModel.playerSheetState.value == STATE_EXPANDED
+
+        binding.dhunPlayerControls.root.isVisible = expandedDhun
+        binding.viewPager.isVisible = !expandedDhun
+        binding.constraintLayout.isVisible = !expandedDhun
+        binding.expandedToolbar.isVisible = !expandedDhun
+
+        if (expandedDhun) {
+            binding.bgImage.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            binding.playerView.isVisible = false
+            // Dhun uses the artwork itself as the full-screen canvas.
+            if (!uiViewModel.playerBgVisible.value) uiViewModel.changeBgVisible(true)
+        }
+    }
+
+    private fun configureDhunPlayerControls() {
+        val binding = binding ?: return
+        val controls = binding.dhunPlayerControls
+
+        controls.back.setOnClickListener { uiViewModel.collapsePlayer() }
+        controls.more.setOnClickListener {
+            viewModel.playerState.current.value?.mediaItem?.let { onMoreClicked(it) }
+        }
+        controls.previous.setOnClickListener { viewModel.previous() }
+        controls.next.setOnClickListener { viewModel.next() }
+        controls.playPause.addOnCheckedStateChangedListener(
+            CheckBoxListener { viewModel.setPlaying(it) }
+        )
+        val dhunLikeListener = CheckBoxListener { viewModel.likeCurrent(it) }
+        controls.heart.addOnCheckedStateChangedListener(dhunLikeListener)
+        controls.timer.setOnClickListener {
+            SleepTimerBottomSheet().show(parentFragmentManager, "dhun_sleep_timer")
+        }
+        controls.queue.setOnClickListener {
+            (requireActivity().supportFragmentManager
+                .findFragmentById(R.id.player_more_container) as? PlayerMoreFragment)
+                ?.showQueue()
+            uiViewModel.changeMoreState(STATE_EXPANDED)
+        }
+        controls.lyrics.setOnClickListener {
+            (requireActivity().supportFragmentManager
+                .findFragmentById(R.id.player_more_container) as? PlayerMoreFragment)
+                ?.showLyrics()
+            uiViewModel.changeMoreState(STATE_EXPANDED)
+        }
+        controls.seek.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) controls.currentTime.text = value.toLong().toTimeString()
+        }
+        controls.seek.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
+            override fun onStartTrackingTouch(slider: Slider) = Unit
+            override fun onStopTrackingTouch(slider: Slider) = viewModel.seekTo(slider.value.toLong())
+        })
+        controls.volumeDown.setOnClickListener {
+            viewModel.browser.value?.let { player -> player.volume = (player.volume - 0.1f).coerceAtLeast(0f) }
+            controls.volume.value = viewModel.browser.value?.volume ?: 1f
+        }
+        controls.volumeUp.setOnClickListener {
+            viewModel.browser.value?.let { player -> player.volume = (player.volume + 0.1f).coerceAtMost(1f) }
+            controls.volume.value = viewModel.browser.value?.volume ?: 1f
+        }
+        controls.volume.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) viewModel.browser.value?.volume = value
+        }
+
+        observe(viewModel.playerState.current) { item ->
+            item?.mediaItem?.let { mediaItem ->
+                val track = mediaItem.track
+                controls.title.text = track.title
+                controls.artist.text = track.artists.joinToString(", ") { it.name }
+                controls.source.text = when (mediaItem.extensionId) {
+                    "saavn_music" -> "Dhun • Saavn"
+                    "Youtube_music" -> "Dhun • YouTube Music"
+                    else -> "Dhun"
+                }
+                dhunLikeListener.enabled = false
+                controls.heart.isChecked = mediaItem.isLiked
+                dhunLikeListener.enabled = true
+            }
+        }
+        observe(viewModel.isPlaying) { playing ->
+            controls.playPause.isChecked = playing
+        }
+        observe(viewModel.progress) { (current, _) ->
+            if (!controls.seek.isPressed) {
+                controls.seek.value = current.toFloat().coerceIn(0f, controls.seek.valueTo)
+                controls.currentTime.text = current.toTimeString()
+            }
+        }
+        observe(viewModel.totalDuration) { duration ->
+            val total = duration ?: 0L
+            controls.seek.valueTo = max(1f, total.toFloat())
+            controls.totalTime.text = total.toTimeString()
+        }
+        observe(viewModel.buffering) { controls.playPause.isEnabled = !it }
+        observe(viewModel.browser) { player -> controls.volume.value = player?.volume ?: 1f }
+    }
+
     private fun configureColors() {
         observe(viewModel.playerState.current) { adapter.onCurrentUpdated() }
         var last: Drawable? = null
@@ -497,22 +616,22 @@ class PlayerFragment : Fragment() {
                 val colors =
                     if (context.isDynamic()) context.getColorsFrom(drawable?.toBitmap()) else null
                 uiViewModel.playerColors.value = colors
-                if (context.showBackground()) binding?.bgImage?.loadBlurred(drawable, 12f)
-                else binding?.bgImage?.setImageDrawable(null)
+                if (dhunSelected) {
+                    binding?.bgImage?.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+                    binding?.bgImage?.setImageDrawable(drawable)
+                } else if (context.showBackground()) {
+                    binding?.bgImage?.loadBlurred(drawable, 12f)
+                } else binding?.bgImage?.setImageDrawable(null)
             }
         }
         val bufferView =
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
         observe(uiViewModel.playerColors) {
             val context = requireContext()
-            if (context.isPlayerColor() && context.isDynamic()) {
-                if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.track?.id) {
-                    uiViewModel.currentAppColor =
-                        viewModel.playerState.current.value?.track?.id
-                    requireActivity().recreate()
-                    return@observe
-                }
-            }
+            // Never recreate the Activity from a playback-color update. Recreating the
+            // whole screen while a track is starting causes visible stalls and can race
+            // the MediaController/BottomSheet lifecycle. Player colors are applied below
+            // directly to the player UI, so a full Activity recreation is unnecessary.
             val colors = it ?: context.defaultPlayerColors()
             val binding = binding!!
             adapter.onColorsUpdated()

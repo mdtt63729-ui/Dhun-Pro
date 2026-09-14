@@ -18,18 +18,11 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 /**
- * Auto Install Bottom Sheet — a single popup that shows the progress of
- * all bundled extension installations in one place.
+ * First-launch "Install all extensions" popup.
  *
- * Animation: slides up from the bottom with a bouncy (overshoot) effect.
- * Uses Material BottomSheetDialog with an OvershootInterpolator on the
- * bottom sheet view for the bouncy feel.
- *
- * Usage:
- *   AutoInstallBottomSheet.newInstance().show(supportFragmentManager, "auto_install")
- *
- * The sheet auto-dismisses when all extensions are installed (or shows
- * a "Done" button if there were errors).
+ * It is intentionally a single surface: bundled YouTube Music + Saavn are
+ * installed first, then every other extension in the remote catalog is
+ * downloaded and installed sequentially in the same popup.
  */
 class AutoInstallBottomSheet : BottomSheetDialogFragment() {
 
@@ -39,10 +32,15 @@ class AutoInstallBottomSheet : BottomSheetDialogFragment() {
     private val app by inject<App>()
     private val extensionLoader by inject<ExtensionLoader>()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        isCancelable = false
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         _binding = BottomSheetAutoInstallBinding.inflate(inflater, container, false)
         return binding.root
@@ -51,97 +49,95 @@ class AutoInstallBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // ── Bouncy slide-up animation ──
-        // The bottom sheet view gets an overshoot translation Y animation
-        // for the "bouncy" feel the user requested.
-        val bottomSheet = (dialog as? BottomSheetDialog)?.findViewById<View>(
-            com.google.android.material.R.id.design_bottom_sheet
-        )
-        bottomSheet?.let { sheet ->
-            sheet.translationY = 300f
-            sheet.animate()
-                .translationY(0f)
-                .setDuration(500)
-                .setInterpolator(OvershootInterpolator(0.8f))
-                .start()
-        }
+        dialog?.setCanceledOnTouchOutside(false)
+        (dialog as? BottomSheetDialog)?.behavior?.isDraggable = false
 
-        // Start installing all bundled extensions
+        // Small overshoot entrance so the setup sheet feels integrated with the
+        // rest of Dhun's motion language.
+        (dialog as? BottomSheetDialog)
+            ?.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+            ?.let { sheet ->
+                sheet.translationY = 260f
+                sheet.animate()
+                    .translationY(0f)
+                    .setDuration(500)
+                    .setInterpolator(OvershootInterpolator(0.8f))
+                    .start()
+            }
+
+        binding.autoInstallDoneButton.setOnClickListener { dismissAllowingStateLoss() }
+        binding.autoInstallDoneButton.isVisible = false
+        binding.autoInstallProgress.isIndeterminate = false
+        binding.autoInstallProgress.max = 100
+        binding.autoInstallStatus.isVisible = false
+        binding.autoInstallLog.text = ""
+
         startAutoInstall()
     }
 
     private fun startAutoInstall() {
-        binding.autoInstallProgress.isIndeterminate = false
-        binding.autoInstallProgress.max = 100
-
         viewLifecycleOwner.lifecycleScope.launch {
             AutoExtensionInstaller.installAll(
                 context = requireContext(),
                 settings = app.settings,
                 fileIgnoreFlow = extensionLoader.fileIgnoreFlow,
                 onProgress = { progress ->
-                    requireActivity().runOnUiThread {
-                        updateProgress(progress)
+                    if (isAdded) {
+                        requireActivity().runOnUiThread { updateProgress(progress) }
                     }
-                }
+                },
             )
         }
     }
 
     private fun updateProgress(progress: AutoExtensionInstaller.InstallProgress) {
+        if (_binding == null) return
+
         if (progress.total == 0) {
-            // No extensions to install
-            binding.autoInstallStatus.text = progress.name
+            binding.autoInstallProgress.isVisible = false
+            binding.autoInstallCurrent.text = progress.name
+            binding.autoInstallStatus.text = progress.error ?: getString(R.string.auto_install_complete)
             binding.autoInstallStatus.isVisible = true
             binding.autoInstallDoneButton.isVisible = true
-            binding.autoInstallProgress.isVisible = false
-            binding.autoInstallCurrent.text = ""
-            setupDoneButton()
+            binding.autoInstallDoneButton.text = getString(R.string.auto_install_done)
             return
         }
 
-        // Update progress bar
-        val percent = if (progress.total > 0) {
-            (progress.current * 100) / progress.total
-        } else 0
+        val percent = (progress.current * 100 / progress.total).coerceIn(0, 100)
         binding.autoInstallProgress.setProgress(percent, true)
-
-        // Update current extension name
         binding.autoInstallCurrent.text = getString(
             R.string.auto_install_progress_format,
-            progress.current, progress.total, progress.name
+            progress.current,
+            progress.total,
+            progress.name,
         )
 
-        // Show error if any
         if (progress.error != null) {
             binding.autoInstallStatus.text = progress.error
             binding.autoInstallStatus.isVisible = true
         }
 
-        // When done
+        val previous = binding.autoInstallLog.text?.toString().orEmpty()
+        val line = if (progress.error == null) "✓ ${progress.name}" else "✕ ${progress.name}"
+        if (previous.isEmpty() || !previous.endsWith(line)) {
+            binding.autoInstallLog.text = if (previous.isEmpty()) line else "$previous\n$line"
+        }
+
         if (progress.isDone) {
             binding.autoInstallProgress.setProgress(100, true)
-            binding.autoInstallCurrent.text = getString(R.string.auto_install_complete)
+            binding.autoInstallCurrent.text = progress.name
+            binding.autoInstallDoneButton.isVisible = true
+            binding.autoInstallDoneButton.text = getString(R.string.auto_install_done)
             if (progress.error != null) {
-                // Had errors — show Done button
                 binding.autoInstallStatus.text = getString(
-                    R.string.auto_install_errors, progress.error
+                    R.string.auto_install_errors,
+                    progress.error,
                 )
                 binding.autoInstallStatus.isVisible = true
-                binding.autoInstallDoneButton.isVisible = true
-                setupDoneButton()
             } else {
-                // All good — auto dismiss after a short delay
-                binding.autoInstallDoneButton.isVisible = true
-                binding.autoInstallDoneButton.text = getString(R.string.auto_install_done)
-                setupDoneButton()
+                binding.autoInstallStatus.text = getString(R.string.auto_install_complete)
+                binding.autoInstallStatus.isVisible = true
             }
-        }
-    }
-
-    private fun setupDoneButton() {
-        binding.autoInstallDoneButton.setOnClickListener {
-            dismiss()
         }
     }
 

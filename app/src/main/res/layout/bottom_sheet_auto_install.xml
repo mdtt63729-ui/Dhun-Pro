@@ -46,6 +46,19 @@
         android:textColor="?colorOnSurfaceVariant"
         android:layout_marginBottom="8dp" />
 
+    <!-- Per-extension install log -->
+    <TextView
+        android:id="@+id/autoInstallLog"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:gravity="top|start"
+        android:scrollbars="vertical"
+        android:padding="12dp"
+        android:background="?attr/colorSurfaceContainer"
+        android:textAppearance="?textAppearanceBodySmall"
+        android:textColor="?colorOnSurfaceVariant"
+        android:layout_marginBottom="10dp" />
+
     <!-- Status / error message -->
     <TextView
         android:id="@+id/autoInstallStatus"

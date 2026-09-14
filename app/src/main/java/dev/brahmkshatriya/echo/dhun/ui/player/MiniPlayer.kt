@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.remember
 import dev.brahmkshatriya.echo.dhun.constants.EnableLiquidGlassKey
+import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import org.koin.core.context.GlobalContext
 import dev.brahmkshatriya.echo.dhun.ui.component.LocalBackdrop
 import dev.brahmkshatriya.echo.dhun.ui.component.drawBackdropCustomShape
 
@@ -73,6 +75,9 @@ private fun NewMiniPlayer(
     val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
     val swipeThumbnail by rememberPreference(dev.brahmkshatriya.echo.dhun.constants.SwipeThumbnailKey, true)
     val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+    val extensionLoader = remember { GlobalContext.get().get<ExtensionLoader>() }
+    val currentExtension by extensionLoader.current.collectAsState()
+    val useDhunGlass = enableLiquidGlass && currentExtension?.id == "dhun"
 
     val layer = rememberGraphicsLayer()
     val luminanceAnimation = remember { Animatable(0.3f) }
@@ -88,25 +93,30 @@ private fun NewMiniPlayer(
         layoutDirection = layoutDirection,
         coroutineScope = coroutineScope,
         pureBlack = pureBlack,
-        useLegacyBackground = false
+        useLegacyBackground = false,
+        enableVerticalDismiss = useDhunGlass,
     ) { offsetX ->
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(64.dp)
+                .height(if (useDhunGlass) 72.dp else MiniPlayerHeight)
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
                 .let {
-                    if (enableLiquidGlass && backdrop != null) {
+                    if (useDhunGlass && backdrop != null) {
                         it.drawBackdropCustomShape(
                             backdrop = backdrop,
                             layer = layer,
                             luminanceAnimation = luminanceAnimation.value,
-                            shape = RoundedCornerShape(32.dp)
+                            shape = RoundedCornerShape(36.dp)
                         )
                     } else it
                 }
-                .clip(RoundedCornerShape(32.dp))
-                .background(color = if (enableLiquidGlass) Color.Transparent else backgroundColor)
+                .clip(RoundedCornerShape(if (useDhunGlass) 36.dp else 32.dp))
+                .background(color = if (useDhunGlass) Color.Transparent else backgroundColor)
+                .then(
+                    if (useDhunGlass) Modifier.border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(36.dp))
+                    else Modifier
+                )
         ) {
             NewMiniPlayerContent(
                 pureBlack = pureBlack,
@@ -114,7 +124,8 @@ private fun NewMiniPlayer(
                 duration = duration,
                 playerConnection = playerConnection,
                 navController = navController,
-                state = state
+                state = state,
+                useDhunGlass = useDhunGlass
             )
         }
     }

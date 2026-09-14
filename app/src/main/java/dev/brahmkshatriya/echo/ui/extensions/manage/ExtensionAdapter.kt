@@ -86,13 +86,20 @@ ExtensionAdapter(
         holder.bind(download)
     }
 
-    suspend fun submit(list: List<Extension<*>>, selectedIndex: Int, settings: SharedPreferences) {
+    suspend fun submit(
+        list: List<Extension<*>>,
+        selectedIndex: Int,
+        settings: SharedPreferences,
+        persistPriority: Boolean = true,
+    ) {
         submitData(PagingData.from(list))
         empty.loadState = if (list.isEmpty()) LoadState.Loading
         else LoadState.NotLoading(true)
-        // Update priority map of extensions
-        val key = ExtensionType.entries[selectedIndex].priorityKey()
-        val extIds = list.joinToString(",") { it.id }
-        settings.edit { putString(key, extIds) }
+        // Search results must never rewrite the user's extension priority order.
+        if (persistPriority) {
+            val key = ExtensionType.entries[selectedIndex].priorityKey()
+            val extIds = list.joinToString(",") { it.id }
+            settings.edit { putString(key, extIds) }
+        }
     }
 }

@@ -24,6 +24,13 @@ class AddViewModel(
     private val extensionLoader: ExtensionLoader
 ) : ViewModel() {
 
+    companion object {
+        /** Default remote extension catalog. The actual .eapk files are never bundled in the app. */
+        const val DEFAULT_REPOSITORY_URL =
+            "https://raw.githubusercontent.com/itsmechinmoy/echo-extensions/main/echo_extensions.json"
+        const val DEFAULT_REPOSITORY_CODE = "extension"
+    }
+
     fun getList() = (addingFlow.value as? AddState.AddList)?.list.orEmpty()
 
     fun selectAll(select: Boolean) {
@@ -78,9 +85,12 @@ class AddViewModel(
     val addingFlow = MutableStateFlow<AddState>(AddState.Init)
     fun addFromLinkOrCode(link: String) = viewModelScope.launch {
         addingFlow.value = AddState.Loading
+        val normalizedLink = link.trim()
         val actualLink = when {
-            link.startsWith("http://") or link.startsWith("https://") -> link
-            else -> "https://v.gd/$link"
+            normalizedLink.isEmpty() -> DEFAULT_REPOSITORY_URL
+            normalizedLink.equals(DEFAULT_REPOSITORY_CODE, ignoreCase = true) -> DEFAULT_REPOSITORY_URL
+            normalizedLink.startsWith("http://") || normalizedLink.startsWith("https://") -> normalizedLink
+            else -> "https://v.gd/$normalizedLink"
         }
 
         val list = runCatching { getExtensionList(actualLink, client) }.getOrElse {

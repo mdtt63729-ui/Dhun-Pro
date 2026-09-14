@@ -4,11 +4,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
+import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.common.Extension
 import dev.brahmkshatriya.echo.common.MusicExtension
 import dev.brahmkshatriya.echo.common.models.ExtensionType
@@ -30,6 +33,8 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 class ManageExtensionsFragment : Fragment() {
     private var binding by autoCleared<FragmentManageExtensionsBinding>()
     private val viewModel by activityViewModel<ExtensionsViewModel>()
+    private var allExtensions: List<Extension<*>> = emptyList()
+    private var searchQuery: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -52,9 +57,14 @@ class ManageExtensionsFragment : Fragment() {
         binding.toolBar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
         }
-        binding.toolBar.setOnMenuItemClickListener {
-            viewModel.update(requireActivity(), true)
-            true
+        binding.toolBar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.menu_update -> {
+                    viewModel.update(requireActivity(), true)
+                    true
+                }
+                else -> false
+            }
         }
 
         FastScrollerHelper.applyTo(binding.recyclerView)
@@ -109,13 +119,49 @@ class ManageExtensionsFragment : Fragment() {
             }
         })
 
+        suspend fun renderExtensions() {
+            val filtered = if (searchQuery.isBlank()) {
+                allExtensions
+            } else {
+                allExtensions.filter { extension ->
+                    extension.name.contains(searchQuery, ignoreCase = true) ||
+                        extension.id.contains(searchQuery, ignoreCase = true)
+                }
+            }
+            extensionAdapter.submit(
+                filtered,
+                viewModel.lastSelectedManageExt.value,
+                viewModel.app.settings,
+                persistPriority = searchQuery.isBlank(),
+            )
+        }
+
+        binding.toolBar.menu.findItem(R.id.menu_search)?.actionView?.let { actionView ->
+            (actionView as? SearchView)?.apply {
+                queryHint = getString(R.string.search)
+                setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?) = true
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        searchQuery = newText.orEmpty().trim()
+                        viewLifecycleOwner.lifecycleScope.launch { renderExtensions() }
+                        return true
+                    }
+                })
+            }
+        }
+
         observe(viewModel.manageExtListFlow) { list ->
-            extensionAdapter.submit(list, viewModel.lastSelectedManageExt.value, viewModel.app.settings)
+            allExtensions = list
+            renderExtensions()
         }
 
         binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             fun select(tab: TabLayout.Tab) {
                 viewModel.lastSelectedManageExt.value = tab.position
+                searchQuery = ""
+                binding.toolBar.menu.findItem(R.id.menu_search)?.collapseActionView()
+                allExtensions = viewModel.manageExtListFlow.value
+                viewLifecycleOwner.lifecycleScope.launch { renderExtensions() }
             }
 
             override fun onTabSelected(tab: TabLayout.Tab) = select(tab)

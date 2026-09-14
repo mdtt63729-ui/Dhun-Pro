@@ -59,6 +59,7 @@ class LoginViewModel(
     ) {
         val users = result.getOrElse {
             app.throwFlow.emit(it)
+            app.messageFlow.emit(Message(it.localizedMessage ?: app.context.getString(R.string.login_failed)))
             loading.value = false
             loadingOver.emit(Unit)
             return@afterLogin

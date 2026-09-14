@@ -87,6 +87,7 @@ fun HomeScreen(
     val forgottenFavorites by viewModel.forgottenFavorites.collectAsState()
     val keepListening by viewModel.keepListening.collectAsState()
     val homePage by viewModel.homePage.collectAsState()
+    val saavnSections by viewModel.saavnSections.collectAsState()
     val allItemsMetadata by viewModel.allItemsMetadata.collectAsState()
 
     val selectedChip by viewModel.selectedChip.collectAsState()
@@ -337,6 +338,25 @@ fun HomeScreen(
                         menuState = menuState,
                         haptic = haptic,
                         metadataMap = allItemsMetadata
+                    )
+                }
+            }
+
+            // Dhun combines the installed Saavn feed with the existing YouTube Music feed.
+            // Each Saavn track keeps its source extension id so playback is resolved by Saavn.
+            saavnSections.forEach { section ->
+                item {
+                    NavigationTitle(
+                        title = section.title,
+                        modifier = Modifier.animateItem()
+                    )
+                }
+                item {
+                    DhunSourceSection(
+                        section = section,
+                        mediaMetadata = mediaMetadata,
+                        isPlaying = isPlaying,
+                        playerConnection = playerConnection,
                     )
                 }
             }

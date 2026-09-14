@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.ui.component.navbar
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +48,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlin.math.roundToInt
 import kotlin.math.sign
+import dev.brahmkshatriya.echo.dhun.ui.component.PlatformBackdrop
+import dev.brahmkshatriya.echo.dhun.ui.component.liquidGlass
 
 /**
  * Liquid Glass Tab Bar — Apple Music-style floating capsule with a frosted glass
@@ -77,6 +80,7 @@ fun LiquidGlassTabBar(
     selectedTab: Int,
     modifier: Modifier = Modifier,
     availableWidth: Dp = Dp.Unspecified,
+    backdrop: PlatformBackdrop? = null,
     onTabSelected: (Int) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -160,12 +164,28 @@ fun LiquidGlassTabBar(
                     scaleX = capsuleScale
                     scaleY = capsuleScale
                 }
-                .clip(CapsuleShape)
-                .background(
-                    if (isDark)
-                        MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.90f)
-                    else
-                        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.85f)
+                .then(
+                    if (backdrop != null) {
+                        Modifier.liquidGlass(
+                            backdrop = backdrop,
+                            shape = CapsuleShape,
+                            interactive = false,
+                        )
+                    } else {
+                        Modifier
+                            .clip(CapsuleShape)
+                            .background(
+                                if (isDark)
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.48f)
+                                else
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.42f)
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.18f),
+                                shape = CapsuleShape,
+                            )
+                    }
                 )
                 .drawWithContent {
                     drawContent()
@@ -211,12 +231,27 @@ fun LiquidGlassTabBar(
                 }
                 .width(tabWidth)
                 .height(BlobHeight)
-                .clip(CapsuleShape)
-                .background(
-                    // Frosted glass look — semi-transparent with depth
-                    MaterialTheme.colorScheme.secondaryContainer.copy(
-                        alpha = lerp(0.70f, 0.90f, dampedDrag.pressProgress)
-                    )
+                .then(
+                    if (backdrop != null) {
+                        Modifier.liquidGlass(
+                            backdrop = backdrop,
+                            shape = CapsuleShape,
+                            interactive = false,
+                        )
+                    } else {
+                        Modifier
+                            .clip(CapsuleShape)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHighest.copy(
+                                    alpha = lerp(0.32f, 0.56f, dampedDrag.pressProgress)
+                                )
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.20f),
+                                shape = CapsuleShape,
+                            )
+                    }
                 )
                 .drawWithContent {
                     drawContent()

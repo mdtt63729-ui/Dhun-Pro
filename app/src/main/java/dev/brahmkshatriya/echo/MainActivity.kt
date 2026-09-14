@@ -5,13 +5,25 @@ import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.content.res.Configuration
 import android.animation.ObjectAnimator
 import android.view.animation.DecelerateInterpolator
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.animation.doOnEnd
 import androidx.fragment.app.add
@@ -20,17 +32,22 @@ import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.navigation.NavigationBarView
 import dev.brahmkshatriya.echo.databinding.ActivityMainBinding
-import dev.brahmkshatriya.echo.extensions.AutoExtensionInstaller
 import dev.brahmkshatriya.echo.extensions.ExtensionLoader
+import dev.brahmkshatriya.echo.extensions.AutoExtensionInstaller
 import dev.brahmkshatriya.echo.ui.common.ExceptionUtils.setupExceptionHandler
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.setupIntents
 import dev.brahmkshatriya.echo.ui.common.SnackBarHandler.Companion.setupSnackBar
 import dev.brahmkshatriya.echo.ui.common.UiViewModel
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.setupNavBarAndInsets
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.setupPlayerBehavior
-import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
+import dev.brahmkshatriya.echo.ui.extensions.AutoInstallBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel.Companion.configureExtensionsUpdater
 import dev.brahmkshatriya.echo.ui.main.MainFragment
+import dev.brahmkshatriya.echo.ui.component.navbar.BottomNavScreen
+import dev.brahmkshatriya.echo.ui.component.navbar.LiquidGlassTabBar
+import dev.brahmkshatriya.echo.dhun.constants.EnableLiquidGlassKey
+import dev.brahmkshatriya.echo.dhun.utils.rememberPreference
+import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
@@ -86,15 +103,16 @@ open class MainActivity : AppCompatActivity() {
         setupPlayerBehavior(uiViewModel, binding.playerFragmentContainer)
         setupExceptionHandler(setupSnackBar(uiViewModel, binding.root))
         checkAppPermissions { extensionLoader.setPermGranted() }
-        configureExtensionsUpdater()
-
-        // ── First-run auto extension installation ──
-        // On first launch, copies bundled .eapk files from assets and shows
-        // the official ExtensionInstallerBottomSheet popup for each one.
-        if (!AutoExtensionInstaller.isAlreadyInstalled(getSettings())) {
-            val extensionsViewModel by viewModel<ExtensionsViewModel>()
-            extensionsViewModel.installBundledExtensions()
+        // First launch: show one setup popup after the splash animation. It installs
+        // bundled YouTube Music + Saavn first, then downloads/installs every other
+        // extension from the remote catalog in the same popup.
+        val extensionSetupComplete = AutoExtensionInstaller.isSetupComplete(getSettings())
+        if (extensionSetupComplete) {
+            configureExtensionsUpdater()
+        } else {
+            maybeShowExtensionSetup()
         }
+        configureDhunLiquidNavigation()
 
         supportFragmentManager.commit {
             if (savedInstanceState != null) return@commit
@@ -102,6 +120,70 @@ open class MainActivity : AppCompatActivity() {
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
+    }
+
+    private fun maybeShowExtensionSetup() {
+        if (AutoExtensionInstaller.isSetupComplete(getSettings())) return
+
+        window.decorView.postDelayed({
+            if (isFinishing || isDestroyed) return@postDelayed
+            if (supportFragmentManager.isStateSaved) return@postDelayed
+            if (supportFragmentManager.findFragmentByTag("auto_install") != null) return@postDelayed
+            AutoInstallBottomSheet.newInstance()
+                .show(supportFragmentManager, "auto_install")
+        }, 3000L)
+    }
+
+    private fun configureDhunLiquidNavigation() {
+        binding.dhunLiquidNavigation.setViewCompositionStrategy(
+            ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
+        )
+        binding.dhunLiquidNavigation.setContent {
+            val currentExtension by extensionLoader.current.collectAsState()
+            val navigationIndex by uiViewModel.navigation.collectAsState()
+            val playerState by uiViewModel.playerSheetState.collectAsState()
+            val isMain by uiViewModel.isMainFragment.collectAsState()
+            val enableLiquidGlass by rememberPreference(EnableLiquidGlassKey, defaultValue = false)
+            val isDhun = currentExtension?.id == "dhun"
+            val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+            val showGlass = isDhun && isMain && !isLandscape &&
+                playerState != com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED &&
+                enableLiquidGlass
+
+            // The normal Material navigation remains the default. The glass layer is
+            // an opt-in skin, and is only active while Dhun itself is selected.
+            LaunchedEffect(showGlass, isDhun, isLandscape, enableLiquidGlass) {
+                binding.navView.isVisible = !isDhun || isLandscape || !enableLiquidGlass
+                binding.dhunLiquidNavigation.isVisible = showGlass
+            }
+
+            androidx.compose.animation.AnimatedVisibility(visible = showGlass) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    LiquidGlassTabBar(
+                        tabs = listOf(
+                            BottomNavScreen.Home,
+                            BottomNavScreen.Search,
+                            BottomNavScreen.Library,
+                        ),
+                        selectedTab = navigationIndex.coerceIn(0, 2),
+                        modifier = Modifier.fillMaxSize(),
+                        backdrop = null,
+                        onTabSelected = { index ->
+                            if (uiViewModel.navigation.value != index) {
+                                uiViewModel.navigation.value = index
+                            } else {
+                                uiViewModel.navigationReselected.tryEmit(index)
+                            }
+                        },
+                    )
+                }
+            }
+        }
     }
 
     companion object {

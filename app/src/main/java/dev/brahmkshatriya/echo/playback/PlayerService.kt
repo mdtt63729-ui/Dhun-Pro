@@ -68,12 +68,22 @@ class PlayerService : MediaLibraryService() {
     @OptIn(UnstableApi::class)
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
         when (key) {
-            SKIP_SILENCE -> exoPlayer.skipSilenceEnabled = prefs.getBoolean(key, true)
-            MORE_BRAIN_CAPACITY -> exoPlayer.trackSelectionParameters =
-                exoPlayer.trackSelectionParameters
-                    .buildUpon()
-                    .setAudioOffloadPreferences(offloadPreferences(prefs.getBoolean(key, false)))
-                    .build()
+            SKIP_SILENCE -> {
+                runCatching {
+                    exoPlayer.skipSilenceEnabled = prefs.getBoolean(SKIP_SILENCE, true)
+                }
+            }
+
+            // Newer settings UI uses audioOffload; the legacy player historically used
+            // the key "offload". Support both so the switch actually controls playback.
+            MORE_BRAIN_CAPACITY, AUDIO_OFFLOAD_ALIAS -> {
+                applyOffloadPreferenceSafely(
+                    moreBrainCapacity = prefs.getBoolean(
+                        if (prefs.contains(AUDIO_OFFLOAD_ALIAS)) AUDIO_OFFLOAD_ALIAS else MORE_BRAIN_CAPACITY,
+                        false
+                    )
+                )
+            }
         }
     }
     private val effects by lazy { EffectsListener(exoPlayer, this, state.session) }
@@ -125,6 +135,7 @@ class PlayerService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        runCatching { app.settings.unregisterOnSharedPreferenceChangeListener(listener) }
         mediaSession?.run {
             player.release()
             release()
@@ -136,6 +147,25 @@ class PlayerService : MediaLibraryService() {
     private val cache by inject<SimpleCache>()
 
     private val mediaChangeFlow = MutableSharedFlow<Pair<MediaItem, MediaItem>>()
+
+    @OptIn(UnstableApi::class)
+    private fun applyOffloadPreferenceSafely(moreBrainCapacity: Boolean) {
+        runCatching {
+            exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                .buildUpon()
+                .setAudioOffloadPreferences(offloadPreferences(moreBrainCapacity))
+                .build()
+        }.onFailure {
+            // Some OEM AudioTrack implementations reject an offload transition while
+            // a stream is active. Keep playback alive and fall back to software audio.
+            runCatching {
+                exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                    .buildUpon()
+                    .setAudioOffloadPreferences(offloadPreferences(true))
+                    .build()
+            }
+        }
+    }
 
     @OptIn(UnstableApi::class)
     private fun offloadPreferences(moreBrainCapacity: Boolean) =
@@ -153,8 +183,11 @@ class PlayerService : MediaLibraryService() {
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
 
-        val audioOffloadPreferences =
-            offloadPreferences(app.settings.getBoolean(MORE_BRAIN_CAPACITY, false))
+        val moreBrainCapacity = app.settings.getBoolean(
+            AUDIO_OFFLOAD_ALIAS,
+            app.settings.getBoolean(MORE_BRAIN_CAPACITY, false)
+        )
+        val audioOffloadPreferences = offloadPreferences(moreBrainCapacity)
 
         val factory = StreamableMediaSource.Factory(
             app, scope, state, extensions, cache, downloadFlow, mediaChangeFlow
@@ -167,10 +200,12 @@ class PlayerService : MediaLibraryService() {
             .setAudioAttributes(audioAttributes, true)
             .build()
             .also {
-                it.trackSelectionParameters = it.trackSelectionParameters
-                    .buildUpon()
-                    .setAudioOffloadPreferences(audioOffloadPreferences)
-                    .build()
+                runCatching {
+                    it.trackSelectionParameters = it.trackSelectionParameters
+                        .buildUpon()
+                        .setAudioOffloadPreferences(audioOffloadPreferences)
+                        .build()
+                }
                 it.preloadConfiguration = ExoPlayer.PreloadConfiguration(C.TIME_UNSET)
                 it.skipSilenceEnabled = app.settings.getBoolean(SKIP_SILENCE, true)
             }
@@ -185,6 +220,7 @@ class PlayerService : MediaLibraryService() {
 
     companion object {
         const val MORE_BRAIN_CAPACITY = "offload"
+        const val AUDIO_OFFLOAD_ALIAS = "audioOffload"
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
 

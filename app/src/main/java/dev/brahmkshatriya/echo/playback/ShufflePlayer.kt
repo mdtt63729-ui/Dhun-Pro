@@ -43,8 +43,10 @@ class ShufflePlayer(
     private fun changeQueue(list: List<MediaItem>) {
         log("Change queue")
         if (list.size <= 1) return
-        val currentMediaItem = list.first { it.mediaId == currentMediaItem?.mediaId }
+        val activeId = currentMediaItem?.mediaId ?: return
+        val currentMediaItem = list.firstOrNull { it.mediaId == activeId } ?: return
         val index = list.indexOf(currentMediaItem)
+        if (index < 0) return
         val before = list.take(index) - currentMediaItem
         val after = list.takeLast(list.size - index) - currentMediaItem
         if (currentMediaItemIndex > 0) player.removeMediaItems(0, currentMediaItemIndex)
