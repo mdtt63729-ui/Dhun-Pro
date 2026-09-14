@@ -3748,7 +3748,7 @@ fun SpotifyCollapsedHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
-            model = mediaMetadata.thumbnailUrl,
+            model = mediaMetadata.thumbnailUrl?.ultraHighRes(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -3806,7 +3806,7 @@ fun SpotifyPlayerBackdrop(
     )
     Box(modifier = modifier.background(Color.Black)) {
         AsyncImage(
-            model = thumbnailUrl,
+            model = thumbnailUrl?.ultraHighRes(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -3911,7 +3911,7 @@ fun SpotifyPlayerContent(
     Spacer(Modifier.height(32.dp))
 
     AsyncImage(
-        model = mediaMetadata.thumbnailUrl,
+        model = mediaMetadata.thumbnailUrl?.ultraHighRes(),
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier
@@ -4250,7 +4250,7 @@ private fun SpotifyArtistCard(
             .clickable(onClick = onClick),
     ) {
         AsyncImage(
-            model = avatarUrl ?: thumbnailUrl,
+            model = (avatarUrl ?: thumbnailUrl)?.ultraHighRes(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize().alpha(0.82f),

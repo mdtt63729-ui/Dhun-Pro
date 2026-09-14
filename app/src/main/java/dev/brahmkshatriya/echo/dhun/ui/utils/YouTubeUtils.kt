@@ -44,6 +44,12 @@ fun String.resize(
         return this
     }
 
+    // JioSaavn image CDN commonly embeds dimensions in the path (e.g. 150x150).
+    // Request the largest practical rendition without touching unrelated hosts.
+    if (contains("saavncdn.com", ignoreCase = true) || contains("jiosaavn.com", ignoreCase = true)) {
+        return replace(Regex("\\d{2,4}x\\d{2,4}"), "2160x2160")
+    }
+
     if (isYtimg) {
         // Replace any known resolution token with maxresdefault for best quality
         val resTokens = listOf(

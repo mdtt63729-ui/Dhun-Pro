@@ -76,9 +76,7 @@ import dev.brahmkshatriya.echo.dhun.db.entities.LyricsEntity
 import dev.brahmkshatriya.echo.dhun.extensions.togglePlayPause
 import dev.brahmkshatriya.echo.dhun.extensions.toggleRepeatMode
 import dev.brahmkshatriya.echo.dhun.models.MediaMetadata
-import dev.brahmkshatriya.echo.dhun.ui.component.Lyrics
 import dev.brahmkshatriya.echo.dhun.ui.component.LyricsV2
-import dev.brahmkshatriya.echo.dhun.constants.UseLyricsV2Key
 import dev.brahmkshatriya.echo.dhun.ui.component.LocalMenuState
 import dev.brahmkshatriya.echo.dhun.ui.component.BigSeekBar
 import androidx.navigation.NavController
@@ -129,7 +127,6 @@ fun LyricsScreen(
     // slider style preference
     val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.Standard)
     val currentLyrics by playerConnection.currentLyrics.collectAsState(initial = null)
-    val (useLyricsV2) = rememberPreference(UseLyricsV2Key, defaultValue = false)
 
     // Auto-fetch lyrics when no lyrics found (same logic as refetch)
     LaunchedEffect(mediaMetadata.id, currentLyrics) {
@@ -387,17 +384,9 @@ fun LyricsScreen(
                                     .padding(horizontal = 16.dp),
                                 contentAlignment = Alignment.Center  // Center lyrics in landscape
                             ) {
-                                if (useLyricsV2) {
-                                    LyricsV2(
-                                        sliderPositionProvider = { sliderPosition }
-                                    )
-                                } else {
-                                    Lyrics(
-                                        sliderPositionProvider = { sliderPosition },
-                                        lyricsSyncOffset = lyricsSyncOffset,
-                                        modifier = modifier,
-                                    )
-                                }
+                                LyricsV2(
+                                    sliderPositionProvider = { sliderPosition }
+                                )
                             }
                         }
                         
@@ -679,17 +668,9 @@ fun LyricsScreen(
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.TopCenter
                     ) {
-                        if (useLyricsV2) {
-                            LyricsV2(
-                                sliderPositionProvider = { sliderPosition }
-                            )
-                        } else {
-                            Lyrics(
-                                sliderPositionProvider = { sliderPosition },
-                                lyricsSyncOffset = lyricsSyncOffset,
-                                modifier = modifier,
-                            )
-                        }
+                        LyricsV2(
+                            sliderPositionProvider = { sliderPosition }
+                        )
                     }
 
                     Column(

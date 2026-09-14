@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.component
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
@@ -929,7 +930,7 @@ fun ArtistListItem(
     badges = badges,
     thumbnailContent = {
         AsyncImage(
-            model = artist.artist.thumbnailUrl,
+            model = artist.artist.thumbnailUrl?.ultraHighRes(),
             contentDescription = null,
             modifier = Modifier
                 .size(ListThumbnailSize)
@@ -959,7 +960,7 @@ fun ArtistGridItem(
     badges = badges,
     thumbnailContent = {
         AsyncImage(
-            model = artist.artist.thumbnailUrl,
+            model = artist.artist.thumbnailUrl?.ultraHighRes(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier

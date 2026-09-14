@@ -51,17 +51,6 @@ class SettingsLyricsFragment : BaseSettingsFragment() {
                     addPreference(this)
                 }
 
-                // Use Lyrics V2
-                SwitchPreferenceCompat(context).apply {
-                    key = "useLyricsV2"
-                    title = getString(R.string.use_lyrics_v2)
-                    summary = getString(R.string.use_lyrics_v2_summary)
-                    layoutResource = R.layout.preference_switch
-                    isIconSpaceReserved = false
-                    setDefaultValue(true)
-                    addPreference(this)
-                }
-
                 // Lyrics Animation Style
                 MaterialListPreference(context).apply {
                     key = "lyricsAnimationStyle"
@@ -156,15 +145,18 @@ class SettingsLyricsFragment : BaseSettingsFragment() {
                     title = getString(R.string.main_lyrics_provider)
                     summary = getString(R.string.main_lyrics_provider_summary)
                     entries = arrayOf(
+                        "YouLyPlus", "PaxSenix", "Unison",
+                        getString(R.string.lyrics_provider_better_lyrics),
+                        getString(R.string.lyrics_provider_simpmusic),
                         getString(R.string.lyrics_provider_lrclib),
                         getString(R.string.lyrics_provider_kugou),
-                        getString(R.string.lyrics_provider_better_lyrics),
-                        getString(R.string.lyrics_provider_simpmusic)
+                        "YouTube Subtitle",
+                        "YouTube Music"
                     )
-                    entryValues = arrayOf("LRCLIB", "KUGOU", "BETTER_LYRICS", "SIMPMUSIC")
+                    entryValues = arrayOf("YOULYPLUS", "PAXSENIX", "UNISON", "BETTER_LYRICS", "SIMPMUSIC", "LRCLIB", "KUGOU", "YOUTUBE_SUBTITLE", "YOUTUBE_MUSIC")
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
-                    setDefaultValue("LRCLIB")
+                    setDefaultValue("YOULYPLUS")
                     addPreference(this)
                 }
 
@@ -202,6 +194,50 @@ class SettingsLyricsFragment : BaseSettingsFragment() {
                 SwitchPreferenceCompat(context).apply {
                     key = "enableSimpMusicLyrics"
                     title = getString(R.string.enable_simpmusic_lyrics)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                // Enable YouLyPlus
+                SwitchPreferenceCompat(context).apply {
+                    key = "enableYouLyPlus"
+                    title = "Enable YouLyPlus"
+                    summary = "LyricsPlus multi-server synced/word-synced source"
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                // Enable PaxSenix
+                SwitchPreferenceCompat(context).apply {
+                    key = "enablePaxsenix"
+                    title = "Enable PaxSenix"
+                    summary = "Apple Music search + synchronized lyrics source"
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                // Enable Unison
+                SwitchPreferenceCompat(context).apply {
+                    key = "enableUnisonLyrics"
+                    title = "Enable Unison"
+                    summary = "Video ID/metadata/search lyrics source"
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                // Fetch Faster Lyrics
+                SwitchPreferenceCompat(context).apply {
+                    key = "lyrics_fetch_faster"
+                    title = "Fetch Faster Lyrics"
+                    summary = "Query enabled lyrics providers concurrently and use the first valid result"
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
@@ -306,15 +342,18 @@ class SettingsLyricsFragment : BaseSettingsFragment() {
                     key = "mainLyricsProvider"
                     title = getString(R.string.main_lyrics_provider_key)
                     entries = arrayOf(
+                        "YouLyPlus", "PaxSenix", "Unison",
+                        getString(R.string.lyrics_provider_better_lyrics),
+                        getString(R.string.lyrics_provider_simpmusic),
                         getString(R.string.lyrics_provider_lrclib),
                         getString(R.string.lyrics_provider_kugou),
-                        getString(R.string.lyrics_provider_better_lyrics),
-                        getString(R.string.lyrics_provider_simpmusic)
+                        "YouTube Subtitle",
+                        "YouTube Music"
                     )
-                    entryValues = arrayOf("LRCLIB", "KUGOU", "BETTER_LYRICS", "SIMPMUSIC")
+                    entryValues = arrayOf("YOULYPLUS", "PAXSENIX", "UNISON", "BETTER_LYRICS", "SIMPMUSIC", "LRCLIB", "KUGOU", "YOUTUBE_SUBTITLE", "YOUTUBE_MUSIC")
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
-                    setDefaultValue("LRCLIB")
+                    setDefaultValue("YOULYPLUS")
                     addPreference(this)
                 }
 

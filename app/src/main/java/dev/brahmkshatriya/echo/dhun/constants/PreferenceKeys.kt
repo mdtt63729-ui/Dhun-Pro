@@ -45,21 +45,33 @@ val MiniPlayerLastAnchorKey = intPreferencesKey("miniPlayerLastAnchor")
 val EnableHapticFeedbackKey = booleanPreferencesKey("enableHapticFeedback")
 val PlayerFullscreenKey = booleanPreferencesKey("player_fullscreen")
 val EnableLiquidGlassKey = booleanPreferencesKey("enableLiquidGlass")
+val SpatialAudioModeKey = intPreferencesKey("spatialAudioMode")
 
 val ProviderOrderKey = stringPreferencesKey("lyrics_provider_order")
+val FetchLyricsFasterKey = booleanPreferencesKey("lyrics_fetch_faster")
 
 val DefaultProviderOrder = listOf(
-    PreferredLyricsProvider.LRCLIB,
-    PreferredLyricsProvider.KUGOU,
+    PreferredLyricsProvider.YOULYPLUS,
+    PreferredLyricsProvider.PAXSENIX,
+    PreferredLyricsProvider.UNISON,
     PreferredLyricsProvider.BETTER_LYRICS,
     PreferredLyricsProvider.SIMPMUSIC,
+    PreferredLyricsProvider.LRCLIB,
+    PreferredLyricsProvider.KUGOU,
+    PreferredLyricsProvider.YOUTUBE_SUBTITLE,
+    PreferredLyricsProvider.YOUTUBE_MUSIC,
 )
 
 fun PreferredLyricsProvider.displayName(): String = when (this) {
     PreferredLyricsProvider.LRCLIB -> "LrcLib"
     PreferredLyricsProvider.KUGOU -> "KuGou"
-    PreferredLyricsProvider.BETTER_LYRICS -> "BetterLyrics"
+    PreferredLyricsProvider.BETTER_LYRICS -> "Better Lyrics"
     PreferredLyricsProvider.SIMPMUSIC -> "SimpMusic"
+    PreferredLyricsProvider.YOULYPLUS -> "YouLyPlus"
+    PreferredLyricsProvider.PAXSENIX -> "PaxSenix"
+    PreferredLyricsProvider.UNISON -> "Unison"
+    PreferredLyricsProvider.YOUTUBE_SUBTITLE -> "YouTube Subtitle"
+    PreferredLyricsProvider.YOUTUBE_MUSIC -> "YouTube Music"
 }
 
 enum class SliderStyle {
@@ -78,6 +90,9 @@ val EnableKugouKey = booleanPreferencesKey("enableKugou")
 val EnableLrcLibKey = booleanPreferencesKey("enableLrclib")
 val EnableBetterLyricsKey = booleanPreferencesKey("enableBetterLyrics")
 val EnableSimpMusicLyricsKey = booleanPreferencesKey("enableSimpMusicLyrics")
+val EnableYouLyPlusKey = booleanPreferencesKey("enableYouLyPlus")
+val EnablePaxsenixKey = booleanPreferencesKey("enablePaxsenix")
+val UnisonLyricsEnabledKey = booleanPreferencesKey("enableUnisonLyrics")
 val HideExplicitKey = booleanPreferencesKey("hideExplicit")
 val HideVideoKey = booleanPreferencesKey("hideVideo")
 val ProxyEnabledKey = booleanPreferencesKey("proxyEnabled")
@@ -403,6 +418,11 @@ enum class PreferredLyricsProvider {
     KUGOU,
     BETTER_LYRICS,
     SIMPMUSIC,
+    YOULYPLUS,
+    PAXSENIX,
+    UNISON,
+    YOUTUBE_SUBTITLE,
+    YOUTUBE_MUSIC,
 }
 
 enum class PlayerButtonsStyle {
@@ -467,7 +487,6 @@ val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 val LyricsRomanizeJapaneseKey = booleanPreferencesKey("lyricsRomanizeJapanese")
 val LyricsRomanizeKoreanKey = booleanPreferencesKey("lyricsRomanizeKorean")
 val TranslateLyricsKey = booleanPreferencesKey("translateLyrics")
-val UseLyricsV2Key = booleanPreferencesKey("useLyricsV2")
 
 // Queue lyrics pre-load settings
 val PreloadQueueLyricsEnabledKey = booleanPreferencesKey("preload_queue_lyrics_enabled")

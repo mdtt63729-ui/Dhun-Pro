@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.menu
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -275,7 +276,7 @@ fun AlbumMenu(
                         contentAlignment = Alignment.Center,
                     ) {
                         AsyncImage(
-                            model = splitArtist.originalArtist?.thumbnailUrl,
+                            model = splitArtist.originalArtist?.thumbnailUrl?.ultraHighRes(),
                             contentDescription = null,
                             modifier =
                             Modifier

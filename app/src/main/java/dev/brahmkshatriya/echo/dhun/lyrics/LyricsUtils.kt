@@ -155,17 +155,38 @@ object LyricsUtils {
         }.sorted()
     }
 
+    /**
+     * Parses standard LRC plus Dhun's rich word-sync extension used by
+     * YouLyPlus/Paxsenix: a normal LRC line followed by
+     * <word:startSeconds:endSeconds|word:startSeconds:endSeconds>.
+     */
     fun parseLyrics(lyrics: String): List<LyricsEntry> {
-        val lines = lyrics.lines()
         val result = mutableListOf<LyricsEntry>()
-
-        for (line in lines) {
-            val entries = parseLine(line)
-            if (entries != null) {
-                result.addAll(entries)
+        for (rawLine in lyrics.lines()) {
+            val line = rawLine.trim()
+            if (line.startsWith("<") && line.endsWith(">") && result.isNotEmpty()) {
+                val last = result.removeAt(result.lastIndex)
+                result += last.copy(words = parseRichWords(line))
+                continue
             }
+
+            parseLine(line)?.let { result.addAll(it) }
         }
         return result.sorted()
+    }
+
+    private fun parseRichWords(line: String): List<WordTimestamp>? {
+        val body = line.removePrefix("<").removeSuffix(">")
+        val words = body.split('|').mapNotNull { token ->
+            val match = Regex("^(.+):(-?\\d+(?:\\.\\d+)?):(-?\\d+(?:\\.\\d+)?)$").find(token.trim())
+                ?: return@mapNotNull null
+            WordTimestamp(
+                text = match.groupValues[1],
+                startTime = match.groupValues[2].toDoubleOrNull() ?: return@mapNotNull null,
+                endTime = match.groupValues[3].toDoubleOrNull() ?: return@mapNotNull null,
+            )
+        }
+        return words.takeIf { it.isNotEmpty() }
     }
 
     private fun parseLine(line: String): List<LyricsEntry>? {

@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.menu
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.widget.Toast
@@ -239,7 +240,7 @@ fun YouTubeSongMenu(
                     .clip(RoundedCornerShape(ThumbnailCornerRadius))
             ) {
                 AsyncImage(
-                    model = song.thumbnail,
+                    model = song.thumbnail?.ultraHighRes(),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()

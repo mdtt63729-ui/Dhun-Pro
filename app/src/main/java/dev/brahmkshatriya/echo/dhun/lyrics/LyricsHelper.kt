@@ -15,6 +15,7 @@ import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLog
 import dev.brahmkshatriya.echo.dhun.constants.PreferredLyricsProvider
 import dev.brahmkshatriya.echo.dhun.constants.PreferredLyricsProviderKey
 import dev.brahmkshatriya.echo.dhun.constants.ProviderOrderKey
+import dev.brahmkshatriya.echo.dhun.constants.FetchLyricsFasterKey
 import dev.brahmkshatriya.echo.dhun.constants.UseAITranslationKey
 import dev.brahmkshatriya.echo.dhun.constants.TranslateLyricsKey
 import dev.brahmkshatriya.echo.dhun.db.DatabaseDao
@@ -33,6 +34,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
@@ -45,8 +47,11 @@ constructor(
 ) {
     private val baseProviders =
         listOf(
-            SimpMusicLyricsProvider,
+            YouLyPlusLyricsProvider,
+            PaxSenixLyricsProvider,
+            UnisonLyricsProvider,
             BetterLyricsProvider,
+            SimpMusicLyricsProvider,
             LrcLibLyricsProvider,
             KuGouLyricsProvider,
             YouTubeSubtitleLyricsProvider,
@@ -80,37 +85,59 @@ constructor(
 
         val ordered = orderedProviders()
         val providers = if (preferredProviderOnly) listOf(ordered.first()) else ordered
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val deferred = scope.async {
-            for (provider in providers) {
-                val enabled = provider.isEnabled(context)
-                
-                if (enabled) {
-                    try {
-                        val result = provider.getLyrics(
+        val enabledProviders = providers.filter { runCatching { it.isEnabled(context) }.getOrDefault(false) }
+        if (enabledProviders.isEmpty()) return LYRICS_NOT_FOUND
+
+        val fetchFaster = context.dataStore.data.first()[FetchLyricsFasterKey] ?: true
+        val lyrics = kotlinx.coroutines.coroutineScope {
+            val deferreds = enabledProviders.associateWith { provider ->
+                async(Dispatchers.IO) {
+                    runCatching {
+                        provider.getLyrics(
                             mediaMetadata.id,
                             mediaMetadata.title,
                             mediaMetadata.artists.joinToString { it.name },
                             mediaMetadata.album?.title,
                             mediaMetadata.duration,
-                        )
-                        result.onSuccess { lyrics ->
-                            if (isMeaningfulLyrics(lyrics)) {
-                                return@async lyrics
-                            }
-                        }.onFailure {
-                            reportException(it)
-                        }
-                    } catch (e: Exception) {
-                        reportException(e)
-                    }
+                        ).getOrNull()?.takeIf(::isMeaningfulLyrics)
+                    }.onFailure { reportException(it) }.getOrNull()
                 }
             }
-            return@async LYRICS_NOT_FOUND
-        }
 
-        val lyrics = deferred.await()
-        scope.cancel()
+            if (fetchFaster) {
+                val channel = kotlinx.coroutines.channels.Channel<String?>(enabledProviders.size)
+                enabledProviders.forEach { provider ->
+                    launch { channel.send(deferreds.getValue(provider).await()?.takeIf { it.isNotBlank() }) }
+                }
+                var received = 0
+                var firstUnsynced: String? = null
+                while (received < enabledProviders.size) {
+                    val result = channel.receive()
+                    received++
+                    if (!result.isNullOrBlank()) {
+                        if (result.trimStart().startsWith("[") || LyricsUtils.isTtml(result)) {
+                            deferreds.values.forEach { it.cancel() }
+                            return@coroutineScope result
+                        }
+                        if (firstUnsynced == null) firstUnsynced = result
+                    }
+                }
+                firstUnsynced ?: LYRICS_NOT_FOUND
+            } else {
+                var bestUnsynced: String? = null
+                for (provider in enabledProviders) {
+                    val result = deferreds.getValue(provider).await()
+                    if (!result.isNullOrBlank()) {
+                        if (result.trimStart().startsWith("[") || LyricsUtils.isTtml(result)) {
+                            deferreds.values.forEach { it.cancel() }
+                            return@coroutineScope result
+                        }
+                        if (bestUnsynced == null) bestUnsynced = result
+                    }
+                }
+                bestUnsynced ?: LYRICS_NOT_FOUND
+            }
+        }
 
         // AI translation fallback: if AI translation is enabled and we got
         // meaningful lyrics, try to get translated lyrics from AI
@@ -149,24 +176,28 @@ constructor(
             return
         }
 
-        val allResult = mutableListOf<LyricsResult>()
+        val allResult = java.util.concurrent.CopyOnWriteArrayList<LyricsResult>()
         val providers = orderedProviders()
-        currentLyricsJob = CoroutineScope(SupervisorJob() + Dispatchers.IO).async {
-            providers.forEach { provider ->
-                if (provider.isEnabled(context)) {
+        currentLyricsJob = CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            val jobs = providers.mapNotNull { provider ->
+                if (!runCatching { provider.isEnabled(context) }.getOrDefault(false)) return@mapNotNull null
+                launch {
                     try {
                         provider.getAllLyrics(mediaId, songTitle, songArtists, songAlbum, duration) lyricsCallback@{ lyrics ->
                             if (!isMeaningfulLyrics(lyrics)) return@lyricsCallback
                             val result = LyricsResult(provider.name, lyrics)
-                            allResult += result
-                            callback(result)
+                            if (allResult.none { it.providerName == result.providerName && it.lyrics == result.lyrics }) {
+                                allResult += result
+                                callback(result)
+                            }
                         }
                     } catch (e: Exception) {
                         reportException(e)
                     }
                 }
             }
-            cache.put(cacheKey, allResult)
+            jobs.forEach { it.join() }
+            cache.put(cacheKey, allResult.toList())
         }
 
         currentLyricsJob?.join()
@@ -177,6 +208,11 @@ constructor(
         PreferredLyricsProvider.KUGOU -> KuGouLyricsProvider
         PreferredLyricsProvider.BETTER_LYRICS -> BetterLyricsProvider
         PreferredLyricsProvider.SIMPMUSIC -> SimpMusicLyricsProvider
+        PreferredLyricsProvider.YOULYPLUS -> YouLyPlusLyricsProvider
+        PreferredLyricsProvider.PAXSENIX -> PaxSenixLyricsProvider
+        PreferredLyricsProvider.UNISON -> UnisonLyricsProvider
+        PreferredLyricsProvider.YOUTUBE_SUBTITLE -> YouTubeSubtitleLyricsProvider
+        PreferredLyricsProvider.YOUTUBE_MUSIC -> YouTubeLyricsProvider
     }
 
     private suspend fun orderedProviders(): List<LyricsProvider> {
@@ -197,7 +233,7 @@ constructor(
 
         val preferred = context.dataStore.data
             .first()[PreferredLyricsProviderKey]
-            .toEnum(PreferredLyricsProvider.LRCLIB)
+            .toEnum(PreferredLyricsProvider.YOULYPLUS)
 
         val first = preferred.toLyricsProvider()
         return listOf(first) + baseProviders.filterNot { it == first }

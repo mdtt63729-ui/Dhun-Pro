@@ -464,9 +464,7 @@
     <string name="main_lyrics_provider_summary">Choose the default lyrics source</string>
     <string name="show_lyrics">Show Lyrics</string>
     <string name="show_lyrics_summary">Display lyrics in the player</string>
-    <string name="use_lyrics_v2">Use Lyrics V2</string>
-    <string name="use_lyrics_v2_summary">Use the new lyrics engine</string>
-    <string name="lyrics_animation_style">Lyrics Animation</string>
+<string name="lyrics_animation_style">Lyrics Animation</string>
     <string name="lyrics_animation_style_summary">Animation style for lyrics</string>
     <string name="lyrics_text_size">Lyrics Text Size</string>
     <string name="lyrics_text_size_summary">Adjust the size of lyrics text</string>

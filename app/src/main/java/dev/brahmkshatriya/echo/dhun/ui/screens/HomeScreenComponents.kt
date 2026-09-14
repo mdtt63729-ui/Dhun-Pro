@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.screens
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -478,7 +479,7 @@ fun SpeedDialSection(
                         )
                 ) {
                     AsyncImage(
-                        model = song.song.thumbnailUrl,
+                        model = song.song.thumbnailUrl?.ultraHighRes(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -1111,7 +1112,7 @@ fun SimilarRecommendationsTitle(
                 val shape = if (recommendation.title is Artist) CircleShape 
                     else RoundedCornerShape(ThumbnailCornerRadius)
                 AsyncImage(
-                    model = thumbnailUrl,
+                    model = thumbnailUrl?.ultraHighRes(),
                     contentDescription = null,
                     modifier = Modifier
                         .size(ListThumbnailSize)
@@ -1148,7 +1149,7 @@ fun HomePageSectionTitle(
                 val shape = if (section.endpoint?.isArtistEndpoint == true) CircleShape 
                     else RoundedCornerShape(ThumbnailCornerRadius)
                 AsyncImage(
-                    model = thumbnailUrl,
+                    model = thumbnailUrl?.ultraHighRes(),
                     contentDescription = null,
                     modifier = Modifier
                         .size(ListThumbnailSize)

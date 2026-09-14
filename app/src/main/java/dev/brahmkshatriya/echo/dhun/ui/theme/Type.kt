@@ -132,7 +132,13 @@ private fun buildTypography(fontFamily: FontFamily) =
         )
     )
 
-private val AppFontFamily = FontFamily(Font(R.font.linotte))
+private val AppFontFamily = FontFamily(
+    Font(R.font.josefin_sans_light, FontWeight.Light),
+    Font(R.font.josefin_sans_regular, FontWeight.Normal),
+    Font(R.font.josefin_sans_medium, FontWeight.Medium),
+    Font(R.font.josefin_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.josefin_sans_bold, FontWeight.Bold),
+)
 val AppTypography = buildTypography(AppFontFamily)
 val SystemTypography = buildTypography(FontFamily.Default)
 

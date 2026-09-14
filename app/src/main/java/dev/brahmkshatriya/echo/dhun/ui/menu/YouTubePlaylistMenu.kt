@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.menu
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -328,7 +329,7 @@ fun YouTubePlaylistMenu(
                             modifier = Modifier.size(ListThumbnailSize),
                         ) {
                             AsyncImage(
-                                model = song.thumbnailUrl,
+                                model = song.thumbnailUrl?.ultraHighRes(),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .fillMaxSize()

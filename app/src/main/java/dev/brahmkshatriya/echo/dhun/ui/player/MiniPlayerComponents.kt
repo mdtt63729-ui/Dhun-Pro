@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.player
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
@@ -394,7 +395,7 @@ private fun MiniPlayerArtwork(
             val thumbnailUrl = mediaMetadata?.thumbnailUrl
             if (thumbnailUrl != null) {
                 AsyncImage(
-                    model = thumbnailUrl,
+                    model = thumbnailUrl?.ultraHighRes(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()

@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.compose.compiler)
 
@@ -66,6 +66,10 @@ kotlin {
     jvmToolchain(17)
 }
 
+kapt {
+    correctErrorTypes = true
+}
+
 dependencies {
     implementation(project(":common"))
     implementation(libs.kotlin.reflect)
@@ -74,7 +78,7 @@ dependencies {
     implementation(libs.bundles.paging)
     implementation(libs.filekache)
     implementation(libs.bundles.room)
-    ksp(libs.room.compiler)
+    kapt(libs.room.compiler)
     implementation(libs.bundles.koin)
     implementation(libs.bundles.media3)
     implementation(libs.bundles.coil)
@@ -91,6 +95,7 @@ dependencies {
     implementation(libs.nestedscrollwebview)
     implementation(libs.acsbendi.webview)
     implementation(libs.commons.lang3)
+    implementation(libs.bundles.lyrics.network)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)

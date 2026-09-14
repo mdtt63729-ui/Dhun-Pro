@@ -8,6 +8,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.menu
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.content.Intent
 import android.content.res.Configuration
 import android.widget.Toast
@@ -318,7 +319,7 @@ fun SongMenu(
                     },
                     leadingContent = {
                         AsyncImage(
-                            model = splitArtist.originalArtist?.thumbnailUrl,
+                            model = splitArtist.originalArtist?.thumbnailUrl?.ultraHighRes(),
                             contentDescription = null,
                             modifier =
                                 Modifier

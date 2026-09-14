@@ -10,6 +10,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.player
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -142,7 +143,7 @@ fun CurrentSongHeader(
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             AsyncImage(
-                model = mediaMetadata?.thumbnailUrl,
+                model = mediaMetadata?.thumbnailUrl?.ultraHighRes(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier

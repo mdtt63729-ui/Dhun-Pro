@@ -124,6 +124,7 @@ import dev.brahmkshatriya.echo.dhun.constants.PersistentQueueKey
 import dev.brahmkshatriya.echo.dhun.constants.PlayerStreamClient
 import dev.brahmkshatriya.echo.dhun.constants.PlayerStreamClientKey
 import dev.brahmkshatriya.echo.dhun.constants.PlayerVolumeKey
+import dev.brahmkshatriya.echo.dhun.constants.SpatialAudioModeKey
 import dev.brahmkshatriya.echo.dhun.constants.RepeatModeKey
 import dev.brahmkshatriya.echo.dhun.constants.ShowLyricsKey
 import dev.brahmkshatriya.echo.dhun.constants.SkipSilenceKey
@@ -747,6 +748,13 @@ class MusicService :
                 settings[PlayerVolumeKey] = volume
             }
         }
+
+        dataStore.data
+            .map { it[SpatialAudioModeKey] ?: 0 }
+            .distinctUntilChanged()
+            .collectLatest(scope) { mode ->
+                SpatialAudioController.setModeOrdinal(mode)
+            }
 
         currentSong.debounce(300).collect(scope) { song ->
             updateNotification()
@@ -4678,6 +4686,7 @@ class MusicService :
                             10,
                             150.toShort(),
                         ),
+                        SpatialAudioProcessor(),
                         SonicAudioProcessor(),
                     ),
                 ).build()

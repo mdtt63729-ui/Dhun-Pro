@@ -10,6 +10,7 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.player
 
+import dev.brahmkshatriya.echo.dhun.ui.utils.ultraHighRes
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.res.Configuration
@@ -17,18 +18,23 @@ import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,6 +61,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -116,6 +124,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -176,6 +186,8 @@ import dev.brahmkshatriya.echo.dhun.constants.AodFullscreenKey
 import dev.brahmkshatriya.echo.dhun.constants.BlurRadiusKey
 import dev.brahmkshatriya.echo.dhun.constants.CanvasSource
 import dev.brahmkshatriya.echo.dhun.constants.SeekExtraSeconds
+import dev.brahmkshatriya.echo.dhun.constants.SpatialAudioModeKey
+import dev.brahmkshatriya.echo.dhun.playback.SpatialAudioController
 import dev.brahmkshatriya.echo.dhun.ui.component.COLLAPSED_ANCHOR
 import com.my.kizzy.gateway.entities.presence.Activity
 import com.skydoves.cloudy.cloudy
@@ -1769,7 +1781,7 @@ private fun DhunGlassFullPlayer(
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         AsyncImage(
-            model = mediaMetadata.thumbnailUrl,
+            model = mediaMetadata.thumbnailUrl?.ultraHighRes(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -1830,7 +1842,7 @@ private fun DhunGlassFullPlayer(
                     .border(1.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(28.dp)),
             ) {
                 AsyncImage(
-                    model = mediaMetadata.thumbnailUrl,
+                    model = mediaMetadata.thumbnailUrl?.ultraHighRes(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(28.dp)),
@@ -1878,6 +1890,8 @@ private fun DhunGlassFullPlayer(
                     inactiveTrackColor = Color.White.copy(alpha = 0.30f),
                 ),
             )
+
+            SpatialAudioPill()
 
             Row(
                 modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
@@ -1939,9 +1953,138 @@ private fun DhunGlassFullPlayer(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SpatialAudioPill() {
+    val mode by SpatialAudioController.mode.collectAsState()
+    val haptics = LocalHapticFeedback.current
+    val context = LocalContext.current
+    val (savedMode, setSavedMode) = rememberPreference(SpatialAudioModeKey, defaultValue = 0)
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
+    var dragScale by remember { mutableFloatStateOf(1f) }
+
+    LaunchedEffect(savedMode) {
+        if (savedMode != mode.ordinal) SpatialAudioController.setModeOrdinal(savedMode)
+    }
+
+    fun select(next: SpatialAudioController.Mode) {
+        SpatialAudioController.setMode(next)
+        setSavedMode(next.ordinal)
+        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+    }
+
+    Box(
+        modifier = Modifier
+            .graphicsLayer { scaleX = dragScale; scaleY = dragScale }
+            .widthIn(min = 118.dp, max = 220.dp)
+            .height(42.dp)
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.10f))
+            .border(1.dp, Color.White.copy(alpha = 0.40f), RoundedCornerShape(50))
+            .pointerInput(mode) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    dragScale = 0.96f
+                    var totalX = 0f
+                    var switched = false
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Main)
+                        val change = event.changes.firstOrNull() ?: break
+                        if (!change.pressed) break
+                        totalX += change.position.x - change.previousPosition.x
+                        if (!switched && abs(totalX) >= 56f) {
+                            val next = if (totalX > 0) {
+                                SpatialAudioController.Mode.fromOrdinal((mode.ordinal + 1).coerceAtMost(3))
+                            } else {
+                                SpatialAudioController.Mode.fromOrdinal((mode.ordinal - 1).coerceAtLeast(0))
+                            }
+                            if (next != mode) {
+                                select(next)
+                                switched = true
+                            }
+                            change.consume()
+                        }
+                    }
+                    dragScale = 1f
+                    if (!switched) sheetOpen = true
+                }
+            }
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.headphones),
+                contentDescription = "Spatial audio",
+                tint = Color.White.copy(alpha = 0.92f),
+                modifier = Modifier.size(20.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            AnimatedContent(
+                targetState = mode,
+                transitionSpec = { fadeIn(tween(130)) togetherWith fadeOut(tween(90)) },
+                label = "spatial-mode",
+            ) { target ->
+                Text(target.label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            }
+        }
+    }
+
+    if (sheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { sheetOpen = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+                Text("Audio Spatial Dimension", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(6.dp))
+                Text("Switch instantly while the song is playing.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(14.dp))
+                SpatialAudioController.Mode.entries.forEach { item ->
+                    val selected = item == mode
+                    Surface(
+                        onClick = { select(item); sheetOpen = false },
+                        shape = RoundedCornerShape(22.dp),
+                        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                    ) {
+                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(item.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text(item.description, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            if (selected) Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        }
+                    }
+                }
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
 @Composable
 private fun GlassPlayerTopButton(icon: Int, onClick: () -> Unit) {
-    androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.size(46.dp)) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.90f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "glassTopButtonScale",
+    )
+    androidx.compose.material3.IconButton(
+        onClick = onClick,
+        interactionSource = interaction,
+        modifier = Modifier
+            .size(46.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale),
+    ) {
         Icon(painterResource(icon), null, tint = Color.White, modifier = Modifier.size(24.dp))
     }
 }
@@ -1953,19 +2096,87 @@ private fun GlassPlayerTransportButton(
     enabled: Boolean,
     large: Boolean = false,
 ) {
-    androidx.compose.material3.IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.size(if (large) 74.dp else 62.dp)) {
-        Icon(
-            painterResource(icon),
-            null,
-            tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
-            modifier = Modifier.size(if (large) 44.dp else 30.dp),
-        )
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) { if (large) 0.90f else 0.88f } else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = if (large) "glassPlayScale" else "glassSkipScale",
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = if (large) "glassPlayIconScale" else "glassSkipIconScale",
+    )
+
+    androidx.compose.material3.IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        interactionSource = interaction,
+        modifier = Modifier
+            .size(if (large) 74.dp else 62.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(if (large) 68.dp else 56.dp)
+                .clip(CircleShape)
+                .background(
+                    if (large) Color.White.copy(alpha = 0.18f)
+                    else Color.White.copy(alpha = 0.08f),
+                )
+                .border(
+                    1.dp,
+                    Color.White.copy(alpha = if (large) 0.30f else 0.16f),
+                    CircleShape,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedContent(
+                targetState = icon,
+                transitionSpec = {
+                    fadeIn(tween(120)) togetherWith fadeOut(tween(90))
+                },
+                label = if (large) "glassPlayIconTransition" else "glassSkipIconTransition",
+            ) { iconRes ->
+                Icon(
+                    painterResource(iconRes),
+                    null,
+                    tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
+                    modifier = Modifier
+                        .size(if (large) 44.dp else 30.dp)
+                        .graphicsLayer(scaleX = iconScale, scaleY = iconScale),
+                )
+            }
+        }
     }
 }
 
 @Composable
 private fun GlassPlayerUtilityButton(icon: Int, onClick: () -> Unit) {
-    androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.size(54.dp)) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.90f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "glassUtilityScale",
+    )
+    androidx.compose.material3.IconButton(
+        onClick = onClick,
+        interactionSource = interaction,
+        modifier = Modifier
+            .size(54.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale),
+    ) {
         Icon(painterResource(icon), null, tint = Color.White.copy(alpha = 0.90f), modifier = Modifier.size(25.dp))
     }
 }
@@ -1998,7 +2209,7 @@ private fun V7PlayerBackdrop(
             if (artworkUrl != null) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     AsyncImage(
-                        model = artworkUrl,
+                        model = artworkUrl?.ultraHighRes(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
@@ -2012,7 +2223,7 @@ private fun V7PlayerBackdrop(
 
                     if (!disableBlur) {
                         AsyncImage(
-                            model = artworkUrl,
+                            model = artworkUrl?.ultraHighRes(),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
