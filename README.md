@@ -19,3 +19,7 @@ The focus of the app has now been shifted to be [Multiplatform](https://github.c
 Join our communities to stay updated and contribute to the discussion:
 
 <a href="https://discord.gg/J3WvbBUU8Z" style="margin-right: 10px; display: inline-block;"><img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/discord-round-color-icon.png" alt="Discord" height="40" style="vertical-align: middle;"></a>
+
+## APK build policy
+
+Dhun is configured to build **only an unsigned Release APK** through GitHub Actions. No keystore, signing password, or injected signing configuration is used by the APK build workflow. The expected output is `app-release-unsigned.apk`.
