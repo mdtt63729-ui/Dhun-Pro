@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt)
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.compose.compiler)
@@ -75,6 +76,9 @@ kapt {
 dependencies {
     implementation(project(":common"))
     implementation(libs.kotlin.reflect)
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.bundles.androidx)
     implementation(libs.material)
     implementation(libs.bundles.paging)
