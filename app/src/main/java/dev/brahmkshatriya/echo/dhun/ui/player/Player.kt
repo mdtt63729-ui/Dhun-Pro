@@ -2008,7 +2008,6 @@ private fun SpatialAudioPill() {
                     dragScale = 1f
                     if (!switched) sheetOpen = true
                 }
-            }
             },
         contentAlignment = Alignment.Center,
     ) {

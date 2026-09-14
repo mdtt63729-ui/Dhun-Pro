@@ -786,7 +786,7 @@ fun PlayerTopActions(
                             .size(42.dp)
                             .clip(CircleShape)
                             .background(textBackgroundColor.copy(alpha = 0.1f))
-                            .clickable {
+                            .clickable(onClick = {
                                 val sendIntent = Intent().apply {
                                     action = Intent.ACTION_SEND
                                     type = "text/plain"
@@ -796,7 +796,7 @@ fun PlayerTopActions(
                                     )
                                 }
                                 context.startActivity(Intent.createChooser(sendIntent, null))
-                            },
+                            }),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -832,7 +832,7 @@ fun PlayerTopActions(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .clickable {
+                        .clickable(onClick = {
                             menuState.show {
                                 PlayerMenu(
                                     mediaMetadata = mediaMetadata,
@@ -846,7 +846,7 @@ fun PlayerTopActions(
                                     onDismiss = menuState::dismiss
                                 )
                             }
-                        },
+                        }),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
