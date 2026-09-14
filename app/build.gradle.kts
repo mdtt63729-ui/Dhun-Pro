@@ -63,7 +63,9 @@ java {
 }
 
 kotlin {
-    jvmToolchain(17)
+    // Backdrop 1.0.1 is distributed with Java 21 bytecode (class version 65).
+    // Keep Android/JVM output compatible with Java 17 while using JDK 21 to run KAPT.
+    jvmToolchain(21)
 }
 
 kapt {
