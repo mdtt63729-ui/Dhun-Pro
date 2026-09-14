@@ -796,8 +796,7 @@ fun PlayerTopActions(
                                     )
                                 }
                                 context.startActivity(Intent.createChooser(sendIntent, null))
-                            }
-                        },
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

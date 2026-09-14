@@ -2009,6 +2009,7 @@ private fun SpatialAudioPill() {
                     if (!switched) sheetOpen = true
                 }
             }
+            },
         contentAlignment = Alignment.Center,
     ) {
         Row(
