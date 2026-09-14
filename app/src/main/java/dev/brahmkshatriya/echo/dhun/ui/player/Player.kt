@@ -189,7 +189,6 @@ import dev.brahmkshatriya.echo.dhun.constants.SeekExtraSeconds
 import dev.brahmkshatriya.echo.dhun.constants.SpatialAudioModeKey
 import dev.brahmkshatriya.echo.dhun.playback.SpatialAudioController
 import dev.brahmkshatriya.echo.dhun.ui.component.COLLAPSED_ANCHOR
-import com.my.kizzy.gateway.entities.presence.Activity
 import com.skydoves.cloudy.cloudy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay

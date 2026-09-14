@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.acsbendi.webview)
     implementation(libs.commons.lang3)
     implementation(libs.bundles.lyrics.network)
+    implementation(libs.newpipe.extractor)
 
     if (!hasGoogleServices) return@dependencies
     implementation(libs.bundles.firebase)
