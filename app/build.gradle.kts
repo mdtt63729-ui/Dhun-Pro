@@ -102,6 +102,7 @@ dependencies {
     implementation(libs.acsbendi.webview)
     implementation(libs.commons.lang3)
     implementation(libs.bundles.lyrics.network)
+    // NewPipeExtractor is published by TeamNewPipe on JitPack using the v-prefixed tag.
     implementation(libs.newpipe.extractor)
 
     if (!hasGoogleServices) return@dependencies
