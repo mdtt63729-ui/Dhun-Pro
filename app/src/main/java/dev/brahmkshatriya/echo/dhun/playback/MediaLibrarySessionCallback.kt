@@ -48,9 +48,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
 class MediaLibrarySessionCallback
@@ -64,6 +65,28 @@ constructor(
     var toggleLike: () -> Unit = {}
     var toggleStartRadio: () -> Unit = {}
     var toggleLibrary: () -> Unit = {}
+
+    /**
+     * Coroutine-to-ListenableFuture bridge replacing `kotlinx.coroutines.guava`
+     * (`scope.future { ... }`), which is not part of this project's dependency
+     * set. Behaviour matches the upstream helper: the coroutine runs in
+     * [context], and the returned future completes with its result (or the
+     * exception it threw).
+     */
+    private fun <T> CoroutineScope.future(
+        context: CoroutineContext = Dispatchers.Default,
+        block: suspend CoroutineScope.() -> T,
+    ): ListenableFuture<T> {
+        val result = com.google.common.util.concurrent.SettableFuture.create<T>()
+        launch(context) {
+            try {
+                result.set(block())
+            } catch (t: Throwable) {
+                result.setException(t)
+            }
+        }
+        return result
+    }
 
     private fun browsableExtras(
         browsableHint: Int = CONTENT_STYLE_GRID_ITEM,

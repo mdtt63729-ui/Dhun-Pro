@@ -7,8 +7,6 @@
 package dev.brahmkshatriya.echo.dhun.lyrics
 
 import android.util.Log
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -160,7 +158,7 @@ class LyricsPreloadManager @Inject constructor(
      * This is a simplified version that gets lyrics from enabled providers.
      */
     private suspend fun fetchLyricsForSong(song: MediaMetadata): String? {
-        val lyricsHelper = LyricsHelper(context, networkConnectivity)
+        val lyricsHelper = LyricsHelper(context, networkConnectivity, database.dao)
         
         return try {
             lyricsHelper.getLyrics(song, preferredProviderOnly = true)

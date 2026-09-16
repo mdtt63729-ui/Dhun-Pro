@@ -77,7 +77,7 @@ object WebViewUtils {
             databaseEnabled = true
             // Keep the real Android System WebView user-agent. The previous hard-coded
             // Chrome 66 UA could make Google reject modern sign-in/SAPISID flows.
-            userAgentString = WebSettings.getDefaultUserAgent(context)
+            userAgentString = WebSettings.getDefaultUserAgent(this@configure)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 isAlgorithmicDarkeningAllowed = true
         }

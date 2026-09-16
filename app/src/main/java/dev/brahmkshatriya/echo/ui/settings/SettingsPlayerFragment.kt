@@ -258,16 +258,12 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                 // ── Radio Load Threshold (from SimpMusic queue algorithm) ──
                 // Number of tracks remaining before radio starts loading more.
                 // Higher = earlier loading (less gap), lower = less data usage.
-                MaterialSliderPreference(context).apply {
+                MaterialSliderPreference(context, 1, 10).apply {
                     key = RADIO_THRESHOLD
                     title = getString(R.string.radio_threshold)
                     summary = getString(R.string.radio_threshold_summary)
-                    layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     setDefaultValue(3)
-                    min = 1f
-                    max = 10f
-                    step = 1f
                     addPreference(this)
                 }
 

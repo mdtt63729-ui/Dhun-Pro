@@ -52,7 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import dev.brahmkshatriya.echo.R
-import dev.brahmkshatriya.echo.dhun.ui.screens.OptionStats
+import dev.brahmkshatriya.echo.dhun.constants.OptionStats
 
 @Composable
 fun <E> ChipsRow(

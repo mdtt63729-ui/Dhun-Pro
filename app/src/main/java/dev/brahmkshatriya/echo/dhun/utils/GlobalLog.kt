@@ -8,8 +8,6 @@
 
 package dev.brahmkshatriya.echo.dhun.utils
 
-import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLog
-import dev.brahmkshatriya.echo.dhun.canvas.providers.LogEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber

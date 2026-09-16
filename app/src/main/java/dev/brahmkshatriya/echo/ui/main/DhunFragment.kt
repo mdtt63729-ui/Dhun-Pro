@@ -7,8 +7,6 @@ import android.view.ViewGroup
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -113,6 +112,10 @@ class DhunFragment : Fragment() {
                             onExtensionClick = { ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC).show(parentFragmentManager, "dhun_extensions") },
                             onSettingsClick = { SettingsBottomSheet().show(parentFragmentManager, "dhun_settings") },
                             onDownloadsClick = { requireActivity().openFragment<dev.brahmkshatriya.echo.ui.download.DownloadFragment>() },
+                            onNavigate = { nav ->
+                                parentFragmentManager.popBackStack()
+                                uiViewModel.navigation.value = nav
+                            },
                         )
                     }
                 }
@@ -191,6 +194,7 @@ private fun DhunHomeContent(
     onExtensionClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onDownloadsClick: () -> Unit,
+    onNavigate: (Int) -> Unit,
 ) {
     val currentExtension by viewModel.extensionLoader.current.collectAsState()
     val feed = DhunFeedBridge.rememberExtensionFeed(currentExtension)
@@ -221,15 +225,32 @@ private fun DhunHomeContent(
         label = "headerScale",
     )
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+
+            // Dhun keeps the extension selector/settings/download actions visible even
+            // though the Dhun feed uses its own Compose surface.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .statusBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                GlassHeaderButton(R.drawable.ic_extension_32dp, "Extensions", onExtensionClick)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    GlassHeaderButton(R.drawable.ic_settings_outline_32dp, "Settings", onSettingsClick)
+                    GlassHeaderButton(R.drawable.ic_download_for_offline, "Downloads", onDownloadsClick)
+                }
+            }
 
             // ── Feed ──
             LazyColumn(
                 state = lazyListState,
                 flingBehavior = flingBehavior,
                 modifier = Modifier.fillMaxSize().weight(1f),
-                contentPadding = PaddingValues(top = 72.dp, bottom = 100.dp),
+                contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 // Header
@@ -281,13 +302,13 @@ private fun DhunHomeContent(
                         items = feed,
                         key = { shelf ->
                             when (shelf) {
-                                is Shelf.Lists -> "lists_${shelf.title}"
-                                is Shelf.Items -> "items_${shelf.title}"
+                                is Shelf.Lists<*> -> "lists_${shelf.title}"
+                                is Shelf.Item -> "items_${shelf.title}"
                                 else -> "other_${shelf.hashCode()}"
                             }
                         },
                     ) { shelf ->
-                        BouncyShelfCard(shelf, onHaptic)
+                        BouncyShelfCard(shelf, onHaptic, Modifier.animateItem(placementSpec = placementSpring))
                     }
                 }
             }
@@ -311,14 +332,8 @@ private fun DhunHomeContent(
                     onHaptic()
                     when (index) {
                         0 -> Unit
-                        1 -> {
-                            parentFragmentManager.popBackStack()
-                            uiViewModel.navigation.value = 2
-                        }
-                        2 -> {
-                            parentFragmentManager.popBackStack()
-                            uiViewModel.navigation.value = 1
-                        }
+                        1 -> onNavigate(2)
+                        2 -> onNavigate(1)
                     }
                 },
             )
@@ -333,6 +348,7 @@ private fun DhunHomeContent(
 private fun BouncyShelfCard(
     shelf: Shelf,
     onHaptic: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -344,29 +360,25 @@ private fun BouncyShelfCard(
     )
 
     val title = when (shelf) {
-        is Shelf.Lists -> shelf.title
-        is Shelf.Items -> shelf.title
+        is Shelf.Lists<*> -> shelf.title
+        is Shelf.Item -> shelf.title
         else -> "Section"
     }
     val itemCount = when (shelf) {
-        is Shelf.Lists -> shelf.items.size
-        is Shelf.Items -> shelf.items.size
+        is Shelf.Lists<*> -> shelf.list.size
+        is Shelf.Item -> 1
         else -> 0
     }
 
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .scale(cardScale)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-            ) { onHaptic() }
-            .animateItem(
-                fadeIn(animationSpec = tween(400)),
-                placementSpec = placementSpring,
-            ),
+            ) { onHaptic() },
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 2.dp,
@@ -398,8 +410,8 @@ private fun BouncyShelfCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             when (shelf) {
-                is Shelf.Lists -> BouncyHorizontalList(itemCount, onHaptic)
-                is Shelf.Items -> BouncyHorizontalList(itemCount, onHaptic)
+                is Shelf.Lists<*> -> BouncyHorizontalList(itemCount, onHaptic)
+                is Shelf.Item -> BouncyHorizontalList(itemCount, onHaptic)
                 else -> {
                     Text(
                         text = "$itemCount items available",
@@ -476,23 +488,6 @@ private fun BouncyHorizontalList(itemCount: Int, onHaptic: () -> Unit) {
                 }
             }
         }
-        // Dhun keeps the extension selector/settings/download actions visible even
-        // though the Dhun feed uses its own Compose surface.
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-                .statusBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            GlassHeaderButton(R.drawable.ic_extension_32dp, "Extensions", onExtensionClick)
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                GlassHeaderButton(R.drawable.ic_settings_outline_32dp, "Settings", onSettingsClick)
-                GlassHeaderButton(R.drawable.ic_download_for_offline, "Downloads", onDownloadsClick)
-            }
-        }
-
     }
 }
 

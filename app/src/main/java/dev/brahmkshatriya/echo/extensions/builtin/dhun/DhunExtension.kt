@@ -13,7 +13,6 @@ import dev.brahmkshatriya.echo.common.models.ImageHolder.Companion.toResourceIma
 import dev.brahmkshatriya.echo.common.models.ImportType
 import dev.brahmkshatriya.echo.common.models.Metadata
 import dev.brahmkshatriya.echo.common.models.Shelf
-import dev.brahmkshatriya.echo.common.models.Tab
 import dev.brahmkshatriya.echo.common.settings.Setting
 import dev.brahmkshatriya.echo.common.settings.Settings
 
@@ -52,25 +51,23 @@ class DhunExtension : ExtensionClient, HomeFeedClient, SearchFeedClient {
 
     override suspend fun loadHomeFeed(): Feed<Shelf> {
         // Placeholder empty feed — the actual UI will be a custom fragment
-        return Feed(listOf())
+        return Feed(emptyList()) {
+            Feed.Data(PagedData.Single { emptyList() })
+        }
+    }
+
+    override suspend fun loadSearchFeed(query: String): Feed<Shelf> {
+        // Dhun does not provide a search feed; return an empty placeholder.
+        return Feed(emptyList()) {
+            Feed.Data(PagedData.Single { emptyList() })
+        }
     }
 
     override suspend fun getSettingItems(): List<Setting> {
         return listOf()
     }
 
-    override suspend fun onSettingsChanged(settings: Settings, key: String?) {
+    override fun setSettings(settings: Settings) {
         // No settings to handle
-    }
-
-    override val tabs: List<Tab>
-        get() = listOf(Tab("home", "Home"))
-
-    override suspend fun search(query: String, tab: Tab?, page: Int): PagedData<EchoMediaItem> {
-        return PagedData.Single { listOf() }
-    }
-
-    override fun searchableTabs(): List<Tab> {
-        return listOf(Tab("all", "All"))
     }
 }

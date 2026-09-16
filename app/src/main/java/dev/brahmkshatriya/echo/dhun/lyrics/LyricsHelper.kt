@@ -11,7 +11,7 @@ package dev.brahmkshatriya.echo.dhun.lyrics
 import android.content.Context
 import android.util.Log
 import android.util.LruCache
-import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLog
+import dev.brahmkshatriya.echo.dhun.utils.GlobalLog
 import dev.brahmkshatriya.echo.dhun.constants.PreferredLyricsProvider
 import dev.brahmkshatriya.echo.dhun.constants.PreferredLyricsProviderKey
 import dev.brahmkshatriya.echo.dhun.constants.ProviderOrderKey

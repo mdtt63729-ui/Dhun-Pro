@@ -83,6 +83,8 @@ import coil3.compose.AsyncImage
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
+import coil3.request.crossfade
+import coil3.size.size
 import coil3.toBitmap
 import dev.brahmkshatriya.echo.dhun.LocalDatabase
 import dev.brahmkshatriya.echo.dhun.LocalDownloadUtil

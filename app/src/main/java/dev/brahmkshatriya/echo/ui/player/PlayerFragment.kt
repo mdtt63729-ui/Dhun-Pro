@@ -510,7 +510,7 @@ class PlayerFragment : Fragment() {
         val binding = binding ?: return
         val expandedDhun = dhunSelected && uiViewModel.playerSheetState.value == STATE_EXPANDED
 
-        binding.dhunPlayerControls.root.isVisible = expandedDhun
+        binding.dhunPlayerControls?.root?.isVisible = expandedDhun
         binding.viewPager.isVisible = !expandedDhun
         binding.constraintLayout.isVisible = !expandedDhun
         binding.expandedToolbar.isVisible = !expandedDhun
@@ -525,7 +525,7 @@ class PlayerFragment : Fragment() {
 
     private fun configureDhunPlayerControls() {
         val binding = binding ?: return
-        val controls = binding.dhunPlayerControls
+        val controls = binding.dhunPlayerControls ?: return
 
         controls.back.setOnClickListener { uiViewModel.collapsePlayer() }
         controls.more.setOnClickListener {

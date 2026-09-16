@@ -121,5 +121,5 @@ fun ParsedRichSyncLine.toLyricsItems(): List<Lyrics.Item> {
  * Example: `<00:16.62> Và <00:16.64> em` → `Và em`
  */
 fun String.stripRichSyncTimestamps(): String {
-    return Regex("""<\d{2}:\d{2}\.\d{2,3}>""").replace(this, "").replace(Regex("\s+"), " ").trim()
+    return Regex("""<\d{2}:\d{2}\.\d{2,3}>""").replace(this, "").replace(Regex("\\s+"), " ").trim()
 }

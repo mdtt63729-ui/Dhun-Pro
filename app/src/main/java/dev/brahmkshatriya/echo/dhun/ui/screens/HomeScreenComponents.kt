@@ -215,7 +215,7 @@ fun DhunSourceSection(
                         Icon(
                             painter = painterResource(
                                 if (active && isPlaying) R.drawable.volume_up
-                                else R.drawable.ic_widget_play
+                                else R.drawable.ic_play
                             ),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface,

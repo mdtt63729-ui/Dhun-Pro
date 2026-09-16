@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Dhun Project Original (2026)
+  Dhun
+  Licensed Under GPL-3.0 | see git history for contributors
+-->
+<resources>
+    <plurals name="n_song">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
+</resources>

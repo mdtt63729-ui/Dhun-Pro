@@ -127,6 +127,7 @@ fun rememberGlassInteraction(): GlassInteraction {
  * Draws the liquid-glass effect: backdrop blur + vibrancy + lens refraction,
  * plus an optional press response (scale-up, deeper blur, radial glow).
  */
+@Composable
 fun Modifier.drawInteractiveGlass(
     isDark: Boolean,
     backdrop: PlatformBackdrop,

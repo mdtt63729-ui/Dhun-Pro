@@ -646,7 +646,7 @@ class MainActivity : ComponentActivity() {
             val pureBlackEnabled by rememberPreference(PureBlackKey, defaultValue = false)
             val pureBlack = pureBlackEnabled && useDarkTheme && !enableLiquidGlass
 
-            val customThemeSeedPalette = remember(customThemeColorValue) {
+            val customThemeSeedPalette: ThemeSeedPalette? = remember(customThemeColorValue) {
                 if (customThemeColorValue.startsWith("#")) {
                     null
                 } else if (customThemeColorValue.startsWith("seedPalette:")) {
@@ -1165,7 +1165,7 @@ class MainActivity : ComponentActivity() {
                         delay(3000)
 
                         withContext(Dispatchers.IO) {
-                            val current = dataStore[LaunchCountKey] ?: 0
+                            val current: Int = dataStore[LaunchCountKey] ?: 0
                             val newCount = current + 1
                             dataStore.edit { prefs ->
                                 prefs[LaunchCountKey] = newCount

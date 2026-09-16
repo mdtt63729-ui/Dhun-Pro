@@ -1,8 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // Apply Hilt via the plugins DSL; version resolves from the root build's
-    // `alias(libs.plugins.hilt) apply false` declaration (catalog: 2.60.1).
+    // Apply Hilt explicitly so AGP 9 + KAPT registers Hilt's generated component metadata.
     alias(libs.plugins.hilt)
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.kotlinx.serialization)
@@ -27,6 +26,10 @@ android {
         targetSdk = 36
         versionCode = gitCount
         versionName = "v${version}_$gitHash($gitCount)"
+
+        // Last.fm API credentials (scrobbling). Override via gradle properties if needed.
+        buildConfigField("String", "LASTFM_API_KEY", "\"${project.findProperty("LASTFM_API_KEY") ?: ""}\"")
+        buildConfigField("String", "LASTFM_SECRET", "\"${project.findProperty("LASTFM_SECRET") ?: ""}\"")
     }
 
     buildTypes {
@@ -95,6 +98,21 @@ dependencies {
     implementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.tooling)
     implementation(libs.kyant.backdrop)
+
+    // Dhun: additional dependencies
+    implementation(libs.datastore.preferences)
+    implementation(libs.coil.compose)
+    implementation(libs.window.core)
+    implementation(libs.compose.material3.adaptive)
+    implementation(libs.jsoup)
+    implementation(libs.kuromoji.ipadic)
+    implementation(libs.reorderable)
+    implementation(libs.squigglyslider)
+    implementation(libs.cloudy)
+    implementation(libs.markdown.m3)
+    implementation(libs.compose.markdown)
+    implementation(libs.translator)
+    implementation(libs.m3color)
 
     implementation(libs.pikolo)
     implementation(libs.fadingedgelayout)

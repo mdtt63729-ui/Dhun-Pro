@@ -794,14 +794,12 @@ val AutoBackupMaxFilesKey = intPreferencesKey("autoBackupMaxFiles")
 val LastBackupTimeKey = longPreferencesKey("lastBackupTime")
 
 // Update channel
-val UpdateChannelKey = stringPreferencesKey("updateChannel")
 val AutoCheckForUpdateKey = booleanPreferencesKey("autoCheckForUpdate")
 
 // Developer blog
 val BlogNotificationEnabledKey = booleanPreferencesKey("blogNotificationEnabled")
 
 // Equalizer
-val EqualizerEnabledKey = booleanPreferencesKey("equalizerEnabled")
 val SavePlaybackStateKey = booleanPreferencesKey("savePlaybackState")
 
 // === BlackHole-ported theme settings ===

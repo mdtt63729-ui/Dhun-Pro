@@ -28,6 +28,7 @@ import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoCleared
 import dev.brahmkshatriya.echo.utils.ui.FastScrollerHelper
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.configureAppBar
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
 
 class ManageExtensionsFragment : Fragment() {
@@ -160,7 +161,8 @@ class ManageExtensionsFragment : Fragment() {
                 viewModel.lastSelectedManageExt.value = tab.position
                 searchQuery = ""
                 binding.toolBar.menu.findItem(R.id.menu_search)?.collapseActionView()
-                allExtensions = viewModel.manageExtListFlow.value
+                val type = ExtensionType.entries[viewModel.lastSelectedManageExt.value]
+                allExtensions = viewModel.extensionLoader.getFlow(type).value
                 viewLifecycleOwner.lifecycleScope.launch { renderExtensions() }
             }
 

@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import android.content.Intent
-import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLogTree
+import dev.brahmkshatriya.echo.dhun.utils.GlobalLogTree
 import java.io.PrintWriter
 import java.io.StringWriter
 import kotlin.system.exitProcess

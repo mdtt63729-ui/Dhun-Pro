@@ -92,7 +92,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.brahmkshatriya.echo.R
-import me.saket.squiggles.SquigglySlider
+import me.saket.squigglyslider.SquigglySlider
 import kotlin.math.roundToInt
 
 val LocalPreferenceInGroup = compositionLocalOf { false }

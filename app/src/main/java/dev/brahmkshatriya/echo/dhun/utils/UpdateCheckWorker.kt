@@ -13,7 +13,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import dev.brahmkshatriya.echo.dhun.BuildConfig
+import dev.brahmkshatriya.echo.BuildConfig
 import dev.brahmkshatriya.echo.dhun.constants.EnableUpdateNotificationKey
 import dev.brahmkshatriya.echo.dhun.constants.UpdateChannel
 import dev.brahmkshatriya.echo.dhun.constants.UpdateChannelKey

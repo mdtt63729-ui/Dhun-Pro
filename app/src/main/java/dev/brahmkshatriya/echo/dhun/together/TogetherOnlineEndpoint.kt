@@ -25,6 +25,20 @@ object TogetherOnlineEndpoint {
 
     private const val CacheTtlMs: Long = 6 * 60 * 60 * 1000L
 
+    /**
+     * Bearer token used to authenticate against the Together online session
+     * backend.
+     *
+     * The upstream project injected this via a generated
+     * `dev.brahmkshatriya.echo.dhun.BuildConfig.TOGETHER_BEARER_TOKEN` constant.
+     * That class does not exist in this build, so the token lives here instead;
+     * it can be set at startup (e.g. from a build-injected value) by assigning
+     * this property before the first online session is created. An empty value
+     * disables online sessions with the "token missing" error, matching the
+     * previous behaviour.
+     */
+    var BEARER_TOKEN: String = ""
+
     private val httpClient =
         HttpClient(OkHttp) {
             engine {

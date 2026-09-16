@@ -6,7 +6,6 @@
 
 package dev.brahmkshatriya.echo.dhun.ui.menu
 
-import android.R.attr.progress
 import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.Intent
@@ -72,14 +71,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.components.FilledButton
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
-import androidx.graphics.shapes.RoundedPolygon
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import dev.brahmkshatriya.echo.dhun.LocalDatabase
 import dev.brahmkshatriya.echo.R

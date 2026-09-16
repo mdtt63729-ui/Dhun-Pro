@@ -59,7 +59,7 @@ import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR
 import androidx.media3.datasource.cache.Cache
 import androidx.media3.datasource.cache.ContentMetadata
-import androidx.media3.datasource.okhttp.OkHttpDataSource
+import dev.brahmkshatriya.echo.dhun.playback.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -531,7 +531,7 @@ class MusicService :
                     )
 
                 NotificationCompat.Builder(this, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.dhun_monochrome)
+                    .setSmallIcon(R.drawable.dhun)
                     .setContentTitle(getString(R.string.music_player))
                     .setContentText(getString(R.string.app_name))
                     .setContentIntent(contentIntent)
@@ -2340,7 +2340,7 @@ class MusicService :
                 return@launch
             }
 
-            val togetherToken = dev.brahmkshatriya.echo.dhun.BuildConfig.TOGETHER_BEARER_TOKEN.trim().takeIf { it.isNotBlank() }
+            val togetherToken = dev.brahmkshatriya.echo.dhun.together.TogetherOnlineEndpoint.BEARER_TOKEN.trim().takeIf { it.isNotBlank() }
             if (togetherToken == null) {
                 scope.launch(SilentHandler) {
                     togetherSessionState.value =
@@ -2675,7 +2675,7 @@ class MusicService :
                 return@launch
             }
 
-            val togetherToken = dev.brahmkshatriya.echo.dhun.BuildConfig.TOGETHER_BEARER_TOKEN.trim().takeIf { it.isNotBlank() }
+            val togetherToken = dev.brahmkshatriya.echo.dhun.together.TogetherOnlineEndpoint.BEARER_TOKEN.trim().takeIf { it.isNotBlank() }
             if (togetherToken == null) {
                 scope.launch(SilentHandler) {
                     togetherSessionState.value =

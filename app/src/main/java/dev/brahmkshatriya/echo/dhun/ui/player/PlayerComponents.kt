@@ -112,7 +112,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
-import me.saket.squiggles.SquigglySlider
+import me.saket.squigglyslider.SquigglySlider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.dhun.canvas.models.CanvasArtwork
 import dev.brahmkshatriya.echo.dhun.constants.PlayerBackgroundStyle

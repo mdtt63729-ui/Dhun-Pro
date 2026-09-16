@@ -314,7 +314,7 @@ class PlayerViewModel(
         // We send a radio command with the current item to force-load.
         val track = current.track
         val extId = current.mediaId.substringBeforeLast(":")
-        it.sendCustomCommand(radioCommand, Bundle().apply {
+        controller.sendCustomCommand(radioCommand, Bundle().apply {
             putString("extId", extId)
             putSerialized("item", track)
             putBoolean("loaded", true)

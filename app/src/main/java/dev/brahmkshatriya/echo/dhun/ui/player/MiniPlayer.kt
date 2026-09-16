@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.brahmkshatriya.echo.dhun.LocalPlayerConnection
 import dev.brahmkshatriya.echo.dhun.constants.SwipeSensitivityKey
+import dev.brahmkshatriya.echo.dhun.constants.MiniPlayerHeight
 import dev.brahmkshatriya.echo.dhun.ui.component.BottomSheetState
 import dev.brahmkshatriya.echo.dhun.utils.rememberPreference
 import kotlin.math.roundToInt

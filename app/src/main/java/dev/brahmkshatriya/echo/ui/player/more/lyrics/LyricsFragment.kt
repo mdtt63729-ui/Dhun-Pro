@@ -242,10 +242,10 @@ class LyricsFragment : Fragment() {
                         ?.result?.getOrNull()
 
                     AppleMusicLyricsView(
-                        lyrics = lyricsItem?.lyrics,
+                        lyrics = lyricsItem,
                         currentPosition = progress.first,
                         onLineClick = { startTime -> playerVM.seekTo(startTime) },
-                        primaryColor = Color(colors.primary),
+                        primaryColor = Color(colors.accent),
                         onBackgroundColor = Color(colors.onBackground),
                     )
                 }

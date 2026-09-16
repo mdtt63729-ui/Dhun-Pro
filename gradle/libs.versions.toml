@@ -18,6 +18,18 @@ ktor = "3.4.0"
 timber = "5.0.1"
 newpipe-extractor = "v0.24.8"
 
+datastore = "1.2.1"
+window = "1.5.1"
+jsoup = "1.23.2"
+kuromoji = "0.9.0"
+reorderable = "3.1.0"
+squigglyslider = "1.0.0"
+cloudy = "0.7.1"
+markdown-renderer = "0.45.0"
+compose-markdown-lib = "0.7.2"
+translator = "1.1.1"
+m3color = "2026.1"
+
 [libraries]
 okhttp = { module = "com.squareup.okhttp3:okhttp", version = "5.1.0" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.9.0" }
@@ -103,6 +115,20 @@ newpipe-extractor = { module = "com.github.TeamNewPipe:NewPipeExtractor", versio
 
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version = "23.0.0" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version = "20.0.1" }
+
+datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+window-core = { module = "androidx.window:window-core", version.ref = "window" }
+compose-material3-adaptive = { module = "androidx.compose.material3.adaptive:adaptive" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "kuromoji" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+squigglyslider = { module = "me.saket.squigglyslider:squigglyslider", version.ref = "squigglyslider" }
+cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy" }
+markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
+compose-markdown = { module = "com.github.jeziellago:compose-markdown", version.ref = "compose-markdown-lib" }
+translator = { module = "com.github.therealbush:translator", version.ref = "translator" }
+m3color = { module = "com.github.Kyant0:m3color", version.ref = "m3color" }
 
 [bundles]
 androidx = [

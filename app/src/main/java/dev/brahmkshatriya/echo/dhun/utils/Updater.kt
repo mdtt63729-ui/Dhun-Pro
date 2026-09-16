@@ -12,7 +12,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
 import androidx.datastore.preferences.core.edit
-import dev.brahmkshatriya.echo.dhun.BuildConfig
+import dev.brahmkshatriya.echo.BuildConfig
 import dev.brahmkshatriya.echo.dhun.App
 import dev.brahmkshatriya.echo.dhun.constants.GitHubReleasesEtagKey
 import dev.brahmkshatriya.echo.dhun.constants.GitHubReleasesFingerprintKey

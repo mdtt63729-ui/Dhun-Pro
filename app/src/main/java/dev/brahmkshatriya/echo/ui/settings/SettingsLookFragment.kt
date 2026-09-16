@@ -32,6 +32,8 @@ import dev.brahmkshatriya.echo.utils.ui.FastScrollerHelper.SCROLL_BAR
 import dev.brahmkshatriya.echo.utils.ui.prefs.ColorListPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialTextInputPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 
 class SettingsLookFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.look_and_feel)

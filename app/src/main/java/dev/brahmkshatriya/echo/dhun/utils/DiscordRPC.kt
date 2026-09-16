@@ -10,7 +10,6 @@ package dev.brahmkshatriya.echo.dhun.utils
 
 import android.content.Context
 import dev.brahmkshatriya.echo.R
-import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLog
 import dev.brahmkshatriya.echo.dhun.db.entities.Song
 import dev.brahmkshatriya.echo.dhun.constants.*
 import com.my.kizzy.rpc.KizzyRPC
@@ -18,6 +17,7 @@ import com.my.kizzy.rpc.RpcImage
 import timber.log.Timber
 import me.bush.translator.Translator
 import me.bush.translator.Language
+import dev.brahmkshatriya.echo.dhun.utils.GlobalLog
 
 
 class DiscordRPC(

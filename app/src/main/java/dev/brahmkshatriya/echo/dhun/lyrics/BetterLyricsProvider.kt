@@ -14,7 +14,7 @@ import dev.brahmkshatriya.echo.dhun.constants.EnableBetterLyricsKey
 import dev.brahmkshatriya.echo.dhun.utils.dataStore
 import dev.brahmkshatriya.echo.dhun.utils.get
 
-import dev.brahmkshatriya.echo.dhun.canvas.providers.GlobalLog
+import dev.brahmkshatriya.echo.dhun.utils.GlobalLog
 import android.util.Log
 
 object BetterLyricsProvider : LyricsProvider {

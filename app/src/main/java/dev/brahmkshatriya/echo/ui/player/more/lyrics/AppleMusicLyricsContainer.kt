@@ -52,15 +52,14 @@ class AppleMusicLyricsContainer : Fragment() {
 
                     val lyricsItem = (lyricsState as? LyricsViewModel.State.Loaded)
                         ?.result?.getOrNull()
-                    val lyrics = lyricsItem?.lyrics
 
                     AppleMusicLyricsView(
-                        lyrics = lyrics,
+                        lyrics = lyricsItem,
                         currentPosition = currentPosition,
                         onLineClick = { startTime ->
                             playerVM.seekTo(startTime)
                         },
-                        primaryColor = Color(colors.primary),
+                        primaryColor = Color(colors.accent),
                         onBackgroundColor = Color(colors.onBackground),
                     )
                 }

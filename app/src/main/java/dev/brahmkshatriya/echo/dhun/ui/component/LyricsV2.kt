@@ -18,6 +18,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1392,6 +1394,7 @@ fun LyricsV2(
         }
     }
 }
+}
 
 
 // ──────────────────────────────────────────────────────────────────────
@@ -1624,5 +1627,4 @@ private fun AnimatedWordV2(
             )
         }
     }
-}
 }

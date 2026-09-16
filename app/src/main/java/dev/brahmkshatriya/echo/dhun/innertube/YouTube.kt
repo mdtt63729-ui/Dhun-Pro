@@ -83,7 +83,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.Dns
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.dnsoverhttps.DnsOverHttps
+import java.net.InetAddress
 import java.net.Proxy
 import java.util.logging.Logger
 import kotlin.random.Random
@@ -211,12 +211,52 @@ object YouTube {
 
     fun currentPlaybackAuthState(): PlaybackAuthState = authState
 
+    /**
+     * Builds a DNS-over-HTTPS resolver for [url] using only the okhttp core
+     * artifact (the dedicated `okhttp-dnsoverhttps` module is not bundled).
+     *
+     * The resolver speaks the JSON variant of the DoH protocol
+     * (`Accept: application/dns-json`, see RFC 8484 section 4.2 / Google &
+     * Cloudflare JSON APIs) and falls back to the system resolver if the
+     * secure lookup fails for any reason.
+     */
     fun createDnsOverHttps(url: String): Dns {
+        val dohUrl = url.toHttpUrl()
         val bootstrapClient = OkHttpClient.Builder().build()
-        return DnsOverHttps.Builder()
-            .client(bootstrapClient)
-            .url(url.toHttpUrl())
-            .build()
+        return Dns { hostname ->
+            runCatching {
+                val request = okhttp3.Request.Builder()
+                    .url(
+                        dohUrl.newBuilder()
+                            .addQueryParameter("name", hostname)
+                            .addQueryParameter("type", "A")
+                            .build()
+                    )
+                    .header("Accept", "application/dns-json")
+                    .build()
+                bootstrapClient.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) return@runCatching Dns.SYSTEM.lookup(hostname)
+                    val body = response.body?.string() ?: return@runCatching Dns.SYSTEM.lookup(hostname)
+                    val root = Json.parseToJsonElement(body) as? kotlinx.serialization.json.JsonObject
+                        ?: return@runCatching Dns.SYSTEM.lookup(hostname)
+                    val answers = root["Answer"] as? kotlinx.serialization.json.JsonArray
+                        ?: return@runCatching Dns.SYSTEM.lookup(hostname)
+                    val addresses = answers
+                        .mapNotNull { it as? kotlinx.serialization.json.JsonObject }
+                        .filter { obj ->
+                            // Keep only A records (type == 1)
+                            val type = obj["type"]
+                                ?.let { runCatching { it.jsonPrimitive.content.toIntOrNull() }.getOrNull() }
+                            type == 1
+                        }
+                        .mapNotNull { obj ->
+                            obj["data"]?.let { runCatching { it.jsonPrimitive.content }.getOrNull() }
+                        }
+                        .mapNotNull { raw -> runCatching { InetAddress.getByName(raw) }.getOrNull() }
+                    addresses.ifEmpty { Dns.SYSTEM.lookup(hostname) }
+                }
+            }.getOrElse { Dns.SYSTEM.lookup(hostname) }
+        }
     }
 
     private fun resolvePlayerPoToken(

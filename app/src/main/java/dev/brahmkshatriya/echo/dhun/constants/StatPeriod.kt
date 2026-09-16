@@ -8,9 +8,16 @@
 
 package dev.brahmkshatriya.echo.dhun.constants
 
-import dev.brahmkshatriya.echo.dhun.ui.screens.OptionStats
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+
+/** The grouping mode used by the listening-stats screens. */
+enum class OptionStats {
+    WEEKS,
+    MONTHS,
+    YEARS,
+    CONTINUOUS,
+}
 
 enum class StatPeriod {
     WEEK_1,
