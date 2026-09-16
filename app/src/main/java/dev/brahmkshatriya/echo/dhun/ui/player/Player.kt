@@ -25,6 +25,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -61,8 +63,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
@@ -72,6 +72,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -126,6 +127,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import kotlinx.coroutines.launch
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -187,7 +192,8 @@ import dev.brahmkshatriya.echo.dhun.constants.BlurRadiusKey
 import dev.brahmkshatriya.echo.dhun.constants.CanvasSource
 import dev.brahmkshatriya.echo.dhun.constants.SeekExtraSeconds
 import dev.brahmkshatriya.echo.dhun.constants.SpatialAudioModeKey
-import dev.brahmkshatriya.echo.dhun.playback.SpatialAudioController
+import dev.brahmkshatriya.echo.dhun.playback.audio.AudioMode
+import dev.brahmkshatriya.echo.dhun.playback.audio.AudioModeController
 import dev.brahmkshatriya.echo.dhun.ui.component.COLLAPSED_ANCHOR
 import com.my.kizzy.gateway.entities.presence.Activity
 import com.skydoves.cloudy.cloudy
@@ -1953,119 +1959,174 @@ private fun DhunGlassFullPlayer(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SpatialAudioPill() {
-    val mode by SpatialAudioController.mode.collectAsState()
+    val mode by AudioModeController.mode.collectAsState()
     val haptics = LocalHapticFeedback.current
-    val context = LocalContext.current
     val (savedMode, setSavedMode) = rememberPreference(SpatialAudioModeKey, defaultValue = 0)
-    var sheetOpen by rememberSaveable { mutableStateOf(false) }
-    var dragScale by remember { mutableFloatStateOf(1f) }
+    val context = LocalContext.current
+    val rememberMode = remember {
+        context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            .getBoolean("spatialAudioRememberMode", false)
+    }
+    var zoomed by remember { mutableStateOf(false) }
+    var transitionDirection by remember { mutableIntStateOf(1) }
+    var moved by remember { mutableStateOf(false) }
+    var longPressTriggered by remember { mutableStateOf(false) }
 
-    LaunchedEffect(savedMode) {
-        if (savedMode != mode.ordinal) SpatialAudioController.setModeOrdinal(savedMode)
+    LaunchedEffect(Unit) {
+        if (rememberMode) {
+            AudioModeController.setModeOrdinal(savedMode)
+        } else {
+            AudioModeController.setMode(AudioMode.NORMAL_2D)
+        }
     }
 
-    fun select(next: SpatialAudioController.Mode) {
-        SpatialAudioController.setMode(next)
-        setSavedMode(next.ordinal)
+    LaunchedEffect(rememberMode) {
+        if (!rememberMode) {
+            setSavedMode(AudioMode.NORMAL_2D.ordinal)
+            AudioModeController.setMode(AudioMode.NORMAL_2D)
+        }
+    }
+
+    fun select(next: AudioMode) {
+        if (next == mode) return
+        transitionDirection = if (next.ordinal > mode.ordinal) 1 else -1
+        AudioModeController.setMode(next)
+        if (rememberMode) setSavedMode(next.ordinal)
+        else setSavedMode(AudioMode.NORMAL_2D.ordinal)
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    val capsuleScale by animateFloatAsState(
+        targetValue = if (zoomed) 1.085f else 1f,
+        animationSpec = tween(260),
+        label = "audioModeCapsuleScale",
+    )
+    val textScale by animateFloatAsState(
+        targetValue = if (zoomed) 1.10f else 1f,
+        animationSpec = tween(260),
+        label = "audioModeTextScale",
+    )
+    val highlightAlpha by animateFloatAsState(
+        targetValue = if (zoomed) 0.22f else 0.09f,
+        animationSpec = tween(260),
+        label = "audioModeHighlight",
+    )
+
     Box(
         modifier = Modifier
-            .graphicsLayer { scaleX = dragScale; scaleY = dragScale }
-            .widthIn(min = 118.dp, max = 220.dp)
-            .height(42.dp)
-            .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = 0.10f))
-            .border(1.dp, Color.White.copy(alpha = 0.40f), RoundedCornerShape(50))
-            .pointerInput(mode) {
+            .fillMaxWidth()
+            .widthIn(max = 520.dp)
+            .height(48.dp)
+            .graphicsLayer {
+                scaleX = capsuleScale
+                scaleY = capsuleScale
+            }
+            .pointerInput(Unit) {
                 awaitEachGesture {
-                    val down = awaitFirstDown()
-                    dragScale = 0.96f
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    moved = false
+                    longPressTriggered = false
                     var totalX = 0f
-                    var switched = false
-                    while (true) {
-                        val event = awaitPointerEvent(PointerEventPass.Main)
-                        val change = event.changes.firstOrNull() ?: break
-                        if (!change.pressed) break
-                        totalX += change.position.x - change.previousPosition.x
-                        if (!switched && abs(totalX) >= 56f) {
-                            val next = if (totalX > 0) {
-                                SpatialAudioController.Mode.fromOrdinal((mode.ordinal + 1).coerceAtMost(3))
-                            } else {
-                                SpatialAudioController.Mode.fromOrdinal((mode.ordinal - 1).coerceAtLeast(0))
-                            }
-                            if (next != mode) {
-                                select(next)
-                                switched = true
-                            }
-                            change.consume()
+                    var totalY = 0f
+                    val startTime = SystemClock.uptimeMillis()
+                    val longPressJob = launch {
+                        kotlinx.coroutines.delay(2000L)
+                        if (!moved) {
+                            longPressTriggered = true
+                            zoomed = true
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         }
                     }
-                    dragScale = 1f
-                    if (!switched) sheetOpen = true
+                    try {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Main)
+                            val change = event.changes.firstOrNull() ?: break
+                            totalX += change.position.x - change.previousPosition.x
+                            totalY += change.position.y - change.previousPosition.y
+                            if (kotlin.math.abs(totalX) > 14f || kotlin.math.abs(totalY) > 14f) moved = true
+                            if (kotlin.math.abs(totalX) >= 56f && kotlin.math.abs(totalX) > kotlin.math.abs(totalY) * 1.35f && !longPressTriggered) {
+                                val next = if (totalX < 0f) AudioModeController.next() else AudioModeController.previous()
+                                if (next != AudioModeController.currentMode()) select(next)
+                                longPressJob.cancel()
+                                change.consume()
+                                break
+                            }
+                            if (!change.pressed) break
+                        }
+                    } finally {
+                        longPressJob.cancel()
+                        zoomed = false
+                        // Prevent a quick tap after a completed long press from changing the mode.
+                        if (!moved && !longPressTriggered && SystemClock.uptimeMillis() - startTime < 500L) {
+                            // Tap is intentionally passive; accessibility exposes the explicit next-mode action.
+                        }
+                    }
+                }
+            }
+            .semantics {
+                contentDescription = "Audio effect mode ${mode.label}. Swipe left or right to change mode. Hold for two seconds for glass zoom."
+                onClick("Select next audio mode") {
+                    val next = AudioModeController.next()
+                    if (next != mode) select(next)
+                    true
                 }
             },
         contentAlignment = Alignment.Center,
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+        Box(
+            modifier = Modifier
+                .width(76.dp)
+                .height(36.dp)
+                .clip(RoundedCornerShape(50))
+                .background(Color.White.copy(alpha = 0.095f))
+                .border(1.dp, Color.White.copy(alpha = 0.40f), RoundedCornerShape(50))
+                .drawWithCache {
+                    val highlight = Brush.linearGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = highlightAlpha),
+                            Color.White.copy(alpha = 0.025f),
+                            Color.White.copy(alpha = 0.10f),
+                        ),
+                        start = Offset(if (transitionDirection > 0) 0f else size.width, 0f),
+                        end = Offset(if (transitionDirection > 0) size.width else 0f, size.height),
+                    )
+                    onDrawBehind {
+                        drawRoundRect(highlight, cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2f))
+                    }
+                },
+            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                painter = painterResource(R.drawable.headphones),
-                contentDescription = "Spatial audio",
-                tint = Color.White.copy(alpha = 0.92f),
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(Modifier.width(8.dp))
             AnimatedContent(
                 targetState = mode,
-                transitionSpec = { fadeIn(tween(130)) togetherWith fadeOut(tween(90)) },
-                label = "spatial-mode",
+                transitionSpec = {
+                    val direction = transitionDirection
+                    (slideInHorizontally(
+                        animationSpec = tween(280),
+                        initialOffsetX = { full -> direction * full / 2 },
+                    ) + fadeIn(tween(180))) togetherWith
+                        (slideOutHorizontally(
+                            animationSpec = tween(220),
+                            targetOffsetX = { full -> -direction * full / 2 },
+                        ) + fadeOut(tween(160)))
+                },
+                label = "liquidAudioModeTransition",
             ) { target ->
-                Text(target.label, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            }
-        }
-    }
-
-    if (sheetOpen) {
-        ModalBottomSheet(
-            onDismissRequest = { sheetOpen = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.97f),
-        ) {
-            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
-                Text("Audio Spatial Dimension", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(6.dp))
-                Text("Switch instantly while the song is playing.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(Modifier.height(14.dp))
-                SpatialAudioController.Mode.entries.forEach { item ->
-                    val selected = item == mode
-                    Surface(
-                        onClick = { select(item); sheetOpen = false },
-                        shape = RoundedCornerShape(22.dp),
-                        color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
-                    ) {
-                        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(item.label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.width(56.dp))
-                            Column(Modifier.weight(1f)) {
-                                Text(item.description, style = MaterialTheme.typography.bodyMedium)
-                            }
-                            if (selected) Text("✓", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                        }
-                    }
-                }
-                Spacer(Modifier.height(20.dp))
+                Text(
+                    target.label,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = textScale
+                        scaleY = textScale
+                    },
+                )
             }
         }
     }
 }
-
 @Composable
 private fun GlassPlayerTopButton(icon: Int, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }

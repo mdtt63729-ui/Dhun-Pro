@@ -132,6 +132,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = "spatialAudioRememberMode"
+                    title = "Remember spatial audio mode"
+                    summary = "Keep the last 2D / 3D / 8D / 16D mode when reopening the player. Off always starts in 2D."
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             // ========== CROSSFADE CATEGORY ==========
