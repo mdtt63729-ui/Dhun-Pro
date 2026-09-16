@@ -1,8 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // Apply Hilt explicitly so AGP 9 + KAPT registers Hilt's generated component metadata.
+    apply(plugin = "com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.kapt")
-    alias(libs.plugins.hilt)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.compose.compiler)
 
