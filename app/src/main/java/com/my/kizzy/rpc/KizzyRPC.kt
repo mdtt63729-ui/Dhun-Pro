@@ -8,7 +8,14 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
+import io.ktor.websocket.readText
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -93,16 +100,16 @@ open class KizzyRPC(
             }
             if (large != null || small != null || largeText != null || smallText != null) {
                 putJsonObject("assets") {
-                    large?.let { put("large_image", it) }
-                    small?.let { put("small_image", it) }
+                    large?.let { put("large_image", kotlinx.serialization.json.JsonPrimitive(it)) }
+                    small?.let { put("small_image", kotlinx.serialization.json.JsonPrimitive(it)) }
                     largeText?.let { put("large_text", it.take(128)) }
                     smallText?.let { put("small_text", it.take(128)) }
                 }
             }
             buttons?.take(2)?.takeIf { it.isNotEmpty() }?.let { list ->
-                putJsonArray("buttons") { list.forEach { add(it.first.take(32)) } }
+                putJsonArray("buttons") { list.forEach { add(kotlinx.serialization.json.JsonPrimitive(it.first.take(32))) } }
                 putJsonObject("metadata") {
-                    putJsonArray("button_urls") { list.forEach { add(it.second) } }
+                    putJsonArray("button_urls") { list.forEach { add(kotlinx.serialization.json.JsonPrimitive(it.second)) } }
                 }
             }
             applicationId?.let { put("application_id", it) }
@@ -129,7 +136,7 @@ open class KizzyRPC(
             client.webSocket("wss://gateway.discord.gg/?v=10&encoding=json") {
                 var heartbeatMs = 30_000L
                 var identified = false
-                var heartbeatJob: kotlinx.coroutines.Job? = null
+                var heartbeatJob: Job? = null
 
                 while (!identified) {
                     val frame = incoming.receiveCatching().getOrNull() ?: break
@@ -152,8 +159,8 @@ open class KizzyRPC(
                         }.toString()))
                         identified = true
                         running = true
-                        heartbeatJob = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                            while (kotlinx.coroutines.currentCoroutineContext().isActive) {
+                        heartbeatJob = CoroutineScope(Dispatchers.IO).launch {
+                            while (currentCoroutineContext().isActive) {
                                 delay(heartbeatMs)
                                 send(Frame.Text(buildJsonObject {
                                     put("op", 1)

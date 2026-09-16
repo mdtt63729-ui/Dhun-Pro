@@ -9,6 +9,7 @@
 package dev.brahmkshatriya.echo.dhun
 
 import android.app.Application
+import dev.brahmkshatriya.echo.BuildConfig
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build

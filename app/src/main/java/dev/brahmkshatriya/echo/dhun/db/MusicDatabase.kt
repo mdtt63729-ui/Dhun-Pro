@@ -14,14 +14,10 @@ import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.core.content.contentValuesOf
 import androidx.room.Database
-import androidx.room.DeleteColumn
-import androidx.room.DeleteTable
-import androidx.room.RenameColumn
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.withTransaction
-import androidx.room.migration.AutoMigrationSpec
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.sqlite.db.SupportSQLiteOpenHelper
@@ -670,113 +666,3 @@ private val MIGRATION_1_2 = object : Migration(1, 2) {
             "playlistId" to it.playlistId, "songId" to it.songId, "position" to it.position)) }
     }
 }
-
-// =============================================================================
-// AUTO MIGRATION SPECS (Required by Room's AutoMigration annotations)
-// =============================================================================
-
-@DeleteColumn.Entries(
-    DeleteColumn(tableName = "song", columnName = "isTrash"),
-    DeleteColumn(tableName = "playlist", columnName = "author"),
-    DeleteColumn(tableName = "playlist", columnName = "authorId"),
-    DeleteColumn(tableName = "playlist", columnName = "year"),
-    DeleteColumn(tableName = "playlist", columnName = "thumbnailUrl"),
-    DeleteColumn(tableName = "playlist", columnName = "createDate"),
-    DeleteColumn(tableName = "playlist", columnName = "lastUpdateTime"),
-)
-@RenameColumn.Entries(
-    RenameColumn(tableName = "song", fromColumnName = "download_state", toColumnName = "downloadState"),
-    RenameColumn(tableName = "song", fromColumnName = "create_date", toColumnName = "createDate"),
-    RenameColumn(tableName = "song", fromColumnName = "modify_date", toColumnName = "modifyDate"),
-)
-class Migration5To6 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.query("SELECT id FROM playlist WHERE id NOT LIKE 'LP%'").use { cursor ->
-            while (cursor.moveToNext()) {
-                db.execSQL("UPDATE playlist SET browseId = '${cursor.getString(0)}' WHERE id = '${cursor.getString(0)}'")
-            }
-        }
-    }
-}
-
-class Migration6To7 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.query("SELECT id, createDate FROM song").use { cursor ->
-            while (cursor.moveToNext()) {
-                db.execSQL("UPDATE song SET inLibrary = ${cursor.getLong(1)} WHERE id = '${cursor.getString(0)}'")
-            }
-        }
-    }
-}
-
-@DeleteColumn.Entries(
-    DeleteColumn(tableName = "song", columnName = "createDate"),
-    DeleteColumn(tableName = "song", columnName = "modifyDate"),
-)
-class Migration7To8 : AutoMigrationSpec
-
-@DeleteTable.Entries(DeleteTable(tableName = "download"))
-class Migration9To10 : AutoMigrationSpec
-
-@DeleteColumn.Entries(
-    DeleteColumn(tableName = "song", columnName = "downloadState"),
-    DeleteColumn(tableName = "artist", columnName = "bannerUrl"),
-    DeleteColumn(tableName = "artist", columnName = "description"),
-    DeleteColumn(tableName = "artist", columnName = "createDate"),
-)
-class Migration10To11 : AutoMigrationSpec
-
-@DeleteColumn.Entries(DeleteColumn(tableName = "album", columnName = "createDate"))
-class Migration11To12 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.execSQL("UPDATE album SET bookmarkedAt = lastUpdateTime")
-        db.query("SELECT DISTINCT albumId, albumName FROM song").use { cursor ->
-            while (cursor.moveToNext()) {
-                val albumId = cursor.getString(0)
-                val albumName = cursor.getString(1)
-                db.insert("album", SQLiteDatabase.CONFLICT_IGNORE, contentValuesOf(
-                    "id" to albumId, "title" to albumName, "songCount" to 0, "duration" to 0, "lastUpdateTime" to 0))
-            }
-        }
-        db.query("CREATE INDEX IF NOT EXISTS `index_song_albumId` ON `song` (`albumId`)")
-    }
-}
-
-class Migration12To13 : AutoMigrationSpec
-
-class Migration13To14 : AutoMigrationSpec {
-    @SuppressLint("Range")
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        val now = Converters().dateToTimestamp(LocalDateTime.now())
-        db.execSQL("UPDATE playlist SET createdAt = '$now'")
-        db.execSQL("UPDATE playlist SET lastUpdateTime = '$now'")
-    }
-}
-
-@DeleteColumn.Entries(
-    DeleteColumn(tableName = "song", columnName = "isLocal"),
-    DeleteColumn(tableName = "song", columnName = "localPath"),
-    DeleteColumn(tableName = "artist", columnName = "isLocal"),
-    DeleteColumn(tableName = "playlist", columnName = "isLocal"),
-)
-class Migration16To17 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.execSQL("UPDATE playlist SET bookmarkedAt = lastUpdateTime")
-        db.execSQL("UPDATE playlist SET isEditable = 1 WHERE browseId IS NOT NULL")
-    }
-}
-
-class Migration18To19 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.execSQL("UPDATE song SET explicit = 0 WHERE explicit IS NULL")
-    }
-}
-
-class Migration19To20 : AutoMigrationSpec {
-    override fun onPostMigrate(db: SupportSQLiteDatabase) {
-        db.execSQL("UPDATE song SET explicit = 0 WHERE explicit IS NULL")
-    }
-}
-
-@DeleteColumn.Entries(DeleteColumn(tableName = "song", columnName = "artistName"))
-class Migration20To21 : AutoMigrationSpec
