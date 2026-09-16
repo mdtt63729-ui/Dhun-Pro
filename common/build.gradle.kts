@@ -27,7 +27,10 @@ kotlin {
             dependencies {
                 api(libs.bundles.kotlinx)
                 api(libs.okhttp)
-                api(libs.protobuf.java)
+                // Do not expose the full protobuf runtime from common. Android/Firebase
+                // dependencies may bring protobuf-javalite transitively; putting both
+                // protobuf-java and protobuf-javalite on the app classpath causes duplicate
+                // com.google.protobuf.* classes during checkReleaseDuplicateClasses.
             }
         }
     }
