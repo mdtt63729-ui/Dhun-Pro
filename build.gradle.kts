@@ -6,6 +6,10 @@ val kotlinVersion = libs.versions.kotlin.get()
 subprojects {
     configurations.configureEach {
         resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:$kotlinVersion")
+        // Pin the stdlib to the newest Kotlin-2.3-metadata build readable by the project's
+        // compiler; some third-party POMs (e.g. markdown renderers) pin newer stdlib versions
+        // whose 2.4 metadata the Kotlin 2.2 compiler cannot read.
+        resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.3.21")
     }
 }
 
