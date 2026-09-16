@@ -117,7 +117,7 @@ object ListenBrainzManager {
         )
     }
 
-    private fun submit(token: String, body: String): Boolean =
+    private suspend fun submit(token: String, body: String): Boolean =
         withContext(Dispatchers.IO) {
             runCatching {
                 val request = Request.Builder()

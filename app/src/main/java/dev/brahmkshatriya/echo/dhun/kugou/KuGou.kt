@@ -232,7 +232,7 @@ object KuGou {
      */
     internal fun decodeKrcToLrc(base64Content: String): String {
         val encrypted = Base64.decode(base64Content, Base64.DEFAULT)
-        val xored = ByteArray(encrypted.size) { encrypted[it] xor 0x40 }
+        val xored = ByteArray(encrypted.size) { encrypted[it] xor 0x40.toByte() }
         val decompressed = inflate(xored)
         val krc = decompressed.toString(Charsets.UTF_8)
 

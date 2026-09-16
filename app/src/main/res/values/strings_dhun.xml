@@ -9,4 +9,5 @@
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>
     </plurals>
+    <string name="ai_translated">AI Translated</string>
 </resources>

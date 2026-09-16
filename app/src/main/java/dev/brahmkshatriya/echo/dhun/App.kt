@@ -23,6 +23,7 @@ import coil3.disk.directory
 import coil3.request.CachePolicy
 import coil3.request.allowHardware
 import coil3.request.crossfade
+import dev.brahmkshatriya.echo.BuildConfig
 import dev.brahmkshatriya.echo.dhun.constants.*
 import dev.brahmkshatriya.echo.dhun.extensions.*
 import dev.brahmkshatriya.echo.dhun.ui.screens.settings.ThemePalettes

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 /*
  * Dhun Project Original (2026)
  * Dhun
@@ -112,7 +112,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import coil3.compose.rememberAsyncImagePainter
-import me.saket.squigglyslider.SquigglySlider
+import me.saket.squiggles.SquigglySlider
 import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.dhun.canvas.models.CanvasArtwork
 import dev.brahmkshatriya.echo.dhun.constants.PlayerBackgroundStyle

@@ -166,6 +166,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import dev.brahmkshatriya.echo.BuildConfig
+import dev.brahmkshatriya.echo.R
 import dev.brahmkshatriya.echo.dhun.utils.PreferenceStore
 import kotlinx.coroutines.withContext
 import dev.brahmkshatriya.echo.dhun.constants.AppBarHeight

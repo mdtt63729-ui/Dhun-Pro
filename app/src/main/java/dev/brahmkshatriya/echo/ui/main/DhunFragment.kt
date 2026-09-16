@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -168,7 +169,7 @@ private val pressSpring = spring<Float>(
     stiffness = Spring.StiffnessMedium,
 )
 
-private val placementSpring = spring<Float>(
+private val placementSpring = spring<IntOffset>(
     dampingRatio = Spring.DampingRatioMediumBouncy,
     stiffness = Spring.StiffnessMediumLow,
 )

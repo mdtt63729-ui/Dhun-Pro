@@ -606,7 +606,7 @@ fun BottomSheetPlayer(
 
                     Text(
                         text = pluralStringResource(
-                            R.plurals.minute,
+                            R.plurals.number_min,
                             sleepTimerValue.roundToInt(),
                             sleepTimerValue.roundToInt()
                         ),

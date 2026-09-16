@@ -45,7 +45,7 @@ object PlayerWidgetUpdater {
         for ((providerClass, layoutRes) in providerLayouts) {
             val provider = ComponentName(appContext, providerClass)
             val ids = appWidgetManager.getAppWidgetIds(provider)
-            if (ids.isNullOrEmpty()) continue
+            if (ids.isEmpty()) continue
 
             val views = buildViews(appContext, providerClass, layoutRes, state)
             appWidgetManager.updateAppWidget(provider, views)

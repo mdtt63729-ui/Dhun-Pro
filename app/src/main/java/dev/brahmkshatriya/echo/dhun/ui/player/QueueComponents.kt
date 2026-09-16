@@ -252,15 +252,15 @@ fun CurrentSongHeader(
             horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val uncheckedColors = ToggleButtonDefaults.toggleButtonColors(
+            val uncheckedColors = ToggleButtonDefaults.colors(
                 containerColor = onBackgroundColor.copy(alpha = 0.12f),
                 contentColor = onBackgroundColor,
             )
-            val checkedColors = ToggleButtonDefaults.toggleButtonColors(
+            val checkedColors = ToggleButtonDefaults.colors(
                 checkedContainerColor = onBackgroundColor.copy(alpha = 0.22f),
                 checkedContentColor = onBackgroundColor,
             )
-            val infiniteCheckedColors = ToggleButtonDefaults.toggleButtonColors(
+            val infiniteCheckedColors = ToggleButtonDefaults.colors(
                 checkedContainerColor = MaterialTheme.colorScheme.primary,
                 checkedContentColor = MaterialTheme.colorScheme.onPrimary,
                 containerColor = onBackgroundColor.copy(alpha = 0.12f),
@@ -409,7 +409,7 @@ fun SleepTimerDialog(
                 ) {
                     Text(
                         text = pluralStringResource(
-                            R.plurals.minute,
+                            R.plurals.number_min,
                             sleepTimerValue.roundToInt(),
                             sleepTimerValue.roundToInt()
                         ),

@@ -24,6 +24,7 @@ jsoup = "1.23.2"
 kuromoji = "0.9.0"
 reorderable = "3.1.0"
 squigglyslider = "1.0.0"
+coroutines-guava = "1.11.0"
 cloudy = "0.6.1"
 markdown-renderer = "0.41.0"
 compose-markdown-lib = "0.7.2"
@@ -84,7 +85,7 @@ compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
-compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-material3 = { module = "androidx.compose.material3:material3", version = "1.5.0-alpha28" }
 compose-material-icons = { module = "androidx.compose.material:material-icons-extended" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
@@ -124,6 +125,8 @@ jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "kuromoji" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 squigglyslider = { module = "me.saket.squigglyslider:squigglyslider", version.ref = "squigglyslider" }
+kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutines-guava" }
+media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
 cloudy = { module = "com.github.skydoves:cloudy", version.ref = "cloudy" }
 markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
 compose-markdown = { module = "com.github.jeziellago:compose-markdown", version.ref = "compose-markdown-lib" }

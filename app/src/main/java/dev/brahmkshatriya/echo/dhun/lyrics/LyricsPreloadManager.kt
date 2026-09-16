@@ -158,7 +158,7 @@ class LyricsPreloadManager @Inject constructor(
      * This is a simplified version that gets lyrics from enabled providers.
      */
     private suspend fun fetchLyricsForSong(song: MediaMetadata): String? {
-        val lyricsHelper = LyricsHelper(context, networkConnectivity, database.dao)
+        val lyricsHelper = LyricsHelper(context, networkConnectivity, database)
         
         return try {
             lyricsHelper.getLyrics(song, preferredProviderOnly = true)

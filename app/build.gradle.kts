@@ -113,6 +113,8 @@ dependencies {
     implementation(libs.compose.markdown)
     implementation(libs.translator)
     implementation(libs.m3color)
+    implementation(libs.kotlinx.coroutines.guava)
+    implementation(libs.media3.datasource.okhttp)
 
     implementation(libs.pikolo)
     implementation(libs.fadingedgelayout)
