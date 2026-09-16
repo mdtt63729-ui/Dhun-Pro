@@ -1,17 +1,14 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.hilt)
     id("org.jetbrains.kotlin.kapt")
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.room.plugin)
 
     alias(libs.plugins.gms) apply false
     alias(libs.plugins.crashlytics) apply false
 }
-
-// Hilt must be applied explicitly so its AGP 9.x bytecode transformation and processor arguments are installed.
-apply(plugin = "com.google.dagger.hilt.android")
 
 val hasGoogleServices = file("google-services.json").exists()
 val gitHash = execute("git", "rev-parse", "HEAD").take(7)
@@ -74,10 +71,6 @@ kotlin {
 
 kapt {
     correctErrorTypes = true
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
 }
 
 dependencies {

@@ -94,51 +94,6 @@ class HomeViewModel @Inject constructor(
 
     val recentActivity = MutableStateFlow<List<YTItem>?>(null)
     val recentPlaylistsDb = MutableStateFlow<List<Playlist>?>(null)
-
-    /** Data-driven local shelves used by the redesigned Dhun home. Empty shelves are hidden by the UI. */
-    val homeSongs = database.allSongs()
-        .map { it.filter { song -> song.song.inLibrary != null || song.song.isLocal } }
-        .map { it.sortedByDescending { song -> song.song.inLibrary ?: song.song.dateDownload } }
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homeFavorites = database.allSongs()
-        .map { it.filter { song -> song.song.liked } }
-        .map { it.sortedByDescending { song -> song.song.likedDate } }
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homeRecentlyAdded = database.allSongs()
-        .map { it.filter { song -> song.song.dateDownload != null } }
-        .map { it.sortedByDescending { song -> song.song.dateDownload } }
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homeMostPlayed = database.allSongs()
-        .map { it.filter { song -> song.song.totalPlayTime > 0 } }
-        .map { it.sortedByDescending { song -> song.song.totalPlayTime } }
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homeAlbums = database.allSongs()
-        .map { songs -> songs.mapNotNull { it.album }.distinctBy { it.id } }
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homeArtists = database.allArtistsByPlayTime()
-        .map { it.filter { artist -> artist.thumbnailUrl != null }.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    val homePlaylists = database.playlists(PlaylistSortType.CREATE_DATE, true)
-        .map { it.take(24) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     /** Home shelves supplied by the installed Saavn extension. */
     val saavnSections = MutableStateFlow<List<DhunSourceSection>>(emptyList())
 

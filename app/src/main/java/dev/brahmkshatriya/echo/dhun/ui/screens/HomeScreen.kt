@@ -89,13 +89,6 @@ fun HomeScreen(
     val homePage by viewModel.homePage.collectAsState()
     val saavnSections by viewModel.saavnSections.collectAsState()
     val allItemsMetadata by viewModel.allItemsMetadata.collectAsState()
-    val homeSongs by viewModel.homeSongs.collectAsState()
-    val homeFavorites by viewModel.homeFavorites.collectAsState()
-    val homeRecentlyAdded by viewModel.homeRecentlyAdded.collectAsState()
-    val homeMostPlayed by viewModel.homeMostPlayed.collectAsState()
-    val homeAlbums by viewModel.homeAlbums.collectAsState()
-    val homeArtists by viewModel.homeArtists.collectAsState()
-    val homePlaylists by viewModel.homePlaylists.collectAsState()
 
     val selectedChip by viewModel.selectedChip.collectAsState()
 
@@ -335,16 +328,16 @@ fun HomeScreen(
                 }
             */
 
-                item { DhunHomeSectionTitle("Quick Picks") }
                 item {
-                    DhunHomeSongSection(
-                        songs = picks,
+                    QuickPicksSection(
+                        quickPicks = picks,
                         mediaMetadata = mediaMetadata,
                         isPlaying = isPlaying,
                         navController = navController,
                         playerConnection = playerConnection,
                         menuState = menuState,
                         haptic = haptic,
+                        metadataMap = allItemsMetadata
                     )
                 }
             }
@@ -411,41 +404,6 @@ fun HomeScreen(
                         metadataMap = allItemsMetadata
                     )
                 }
-            }
-
-            homeFavorites.takeIf { it.isNotEmpty() }?.let { songs ->
-                item { DhunHomeSectionTitle("Your Favorites") }
-                item { DhunHomeSongSection(songs, mediaMetadata, isPlaying, navController, playerConnection, menuState, haptic) }
-            }
-
-            homeRecentlyAdded.takeIf { it.isNotEmpty() }?.let { songs ->
-                item { DhunHomeSectionTitle("Recently Added") }
-                item { DhunHomeSongSection(songs, mediaMetadata, isPlaying, navController, playerConnection, menuState, haptic) }
-            }
-
-            homeMostPlayed.takeIf { it.isNotEmpty() }?.let { songs ->
-                item { DhunHomeSectionTitle("Most Played") }
-                item { DhunHomeSongSection(songs, mediaMetadata, isPlaying, navController, playerConnection, menuState, haptic) }
-            }
-
-            homeAlbums.takeIf { it.isNotEmpty() }?.let { albums ->
-                item { DhunHomeSectionTitle("Albums") }
-                item { DhunHomeAlbumSection(albums, navController) }
-            }
-
-            homeArtists.takeIf { it.isNotEmpty() }?.let { artists ->
-                item { DhunHomeSectionTitle("Artists") }
-                item { DhunHomeArtistSection(artists, navController) }
-            }
-
-            homePlaylists.takeIf { it.isNotEmpty() }?.let { playlists ->
-                item { DhunHomeSectionTitle("Your Playlists") }
-                item { DhunHomePlaylistSection(playlists, navController) }
-            }
-
-            homeSongs.takeIf { it.isNotEmpty() }?.let { songs ->
-                item { DhunHomeSectionTitle("Your Music") }
-                item { DhunHomeSongSection(songs, mediaMetadata, isPlaying, navController, playerConnection, menuState, haptic) }
             }
 
             AccountPlaylistsContainer(

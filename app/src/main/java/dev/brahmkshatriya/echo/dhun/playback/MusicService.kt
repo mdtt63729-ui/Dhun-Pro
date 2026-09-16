@@ -750,11 +750,7 @@ class MusicService :
         }
 
         dataStore.data
-            .map { settings ->
-                val rememberMode = getSharedPreferences("settings", MODE_PRIVATE)
-                    .getBoolean("spatialAudioRememberMode", false)
-                if (rememberMode) settings[SpatialAudioModeKey] ?: 0 else 0
-            }
+            .map { it[SpatialAudioModeKey] ?: 0 }
             .distinctUntilChanged()
             .collectLatest(scope) { mode ->
                 SpatialAudioController.setModeOrdinal(mode)
