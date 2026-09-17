@@ -20,6 +20,20 @@ android {
     namespace = "dev.brahmkshatriya.echo"
     compileSdk = 37
 
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/CONTRIBUTORS.md",
+                "META-INF/CONTRIBUTORS",
+                "META-INF/LICENSE.md",
+                "META-INF/LICENSE",
+                "META-INF/NOTICE.md",
+                "META-INF/NOTICE",
+                "META-INF/DEPENDENCIES",
+            )
+        }
+    }
+
     defaultConfig {
         applicationId = "dev.brahmkshatriya.echo"
         minSdk = 24
