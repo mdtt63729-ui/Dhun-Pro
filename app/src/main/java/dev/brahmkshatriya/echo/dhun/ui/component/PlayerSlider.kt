@@ -19,6 +19,9 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.runtime.remember
 import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
@@ -300,16 +303,21 @@ fun DhunSlider(
                 onValueChangeFinished?.invoke()
             }
         },
-        measurePolicy = { measurables, constraints ->
-            val trackPlaceable = measurables[0].measure(constraints)
-            val thumbPlaceable = measurables[1].measure(
-                constraints.copy(minWidth = 0, minHeight = 0)
-            )
-            val height = maxOf(trackPlaceable.height, thumbPlaceable.height)
-            layout(trackPlaceable.width, height) {
-                trackPlaceable.placeRelative(0, (height - trackPlaceable.height) / 2)
-                val thumbX = ((trackPlaceable.width - thumbPlaceable.width) * fraction).roundToInt()
-                thumbPlaceable.placeRelative(thumbX, (height - thumbPlaceable.height) / 2)
+        measurePolicy = object : MeasurePolicy {
+            override fun MeasureScope.measure(
+                measurables: List<Measurable>,
+                constraints: Constraints
+            ): MeasureResult {
+                val trackPlaceable = measurables[0].measure(constraints)
+                val thumbPlaceable = measurables[1].measure(
+                    constraints.copy(minWidth = 0, minHeight = 0)
+                )
+                val height = maxOf(trackPlaceable.height, thumbPlaceable.height)
+                return layout(trackPlaceable.width, height) {
+                    trackPlaceable.placeRelative(0, (height - trackPlaceable.height) / 2)
+                    val thumbX = ((trackPlaceable.width - thumbPlaceable.width) * fraction).roundToInt()
+                    thumbPlaceable.placeRelative(thumbX, (height - thumbPlaceable.height) / 2)
+                }
             }
         },
     )
