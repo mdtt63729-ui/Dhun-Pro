@@ -19,6 +19,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import dev.brahmkshatriya.echo.dhun.constants.MaxSongCacheSizeKey
+import dev.brahmkshatriya.echo.dhun.db.DatabaseDao
 import dev.brahmkshatriya.echo.dhun.db.InternalDatabase
 import dev.brahmkshatriya.echo.dhun.db.MusicDatabase
 import dev.brahmkshatriya.echo.dhun.utils.dataStore
@@ -117,6 +118,12 @@ object AppModule {
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): MusicDatabase = InternalDatabase.newInstance(context)
+
+    @Singleton
+    @Provides
+    fun provideDatabaseDao(
+        db: MusicDatabase,
+    ): DatabaseDao = db
 
     @Singleton
     @Provides
