@@ -19,8 +19,10 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MultiContentMeasurePolicy
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.runtime.remember
 import kotlin.math.roundToInt
@@ -303,7 +305,7 @@ fun DhunSlider(
                 onValueChangeFinished?.invoke()
             }
         },
-        measurePolicy = object : MeasurePolicy {
+        measurePolicy = object : MultiContentMeasurePolicy {
             override fun MeasureScope.measure(
                 measurables: List<Measurable>,
                 constraints: Constraints
