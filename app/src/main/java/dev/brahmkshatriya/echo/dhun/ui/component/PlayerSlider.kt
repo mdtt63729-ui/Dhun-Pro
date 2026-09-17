@@ -307,11 +307,11 @@ fun DhunSlider(
         },
         measurePolicy = object : MultiContentMeasurePolicy {
             override fun MeasureScope.measure(
-                measurables: List<Measurable>,
+                measurables: List<List<Measurable>>,
                 constraints: Constraints
             ): MeasureResult {
-                val trackPlaceable = measurables[0].measure(constraints)
-                val thumbPlaceable = measurables[1].measure(
+                val trackPlaceable = measurables[0][0].measure(constraints)
+                val thumbPlaceable = measurables[1][0].measure(
                     constraints.copy(minWidth = 0, minHeight = 0)
                 )
                 val height = maxOf(trackPlaceable.height, thumbPlaceable.height)
