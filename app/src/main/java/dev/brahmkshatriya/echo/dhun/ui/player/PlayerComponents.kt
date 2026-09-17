@@ -128,6 +128,7 @@ import dev.brahmkshatriya.echo.dhun.playback.PlayerConnection
 import dev.brahmkshatriya.echo.dhun.ui.component.BottomSheetPageState
 import dev.brahmkshatriya.echo.dhun.ui.component.BottomSheetState
 import dev.brahmkshatriya.echo.dhun.ui.component.MenuState
+import dev.brahmkshatriya.echo.dhun.ui.component.DhunSlider
 import dev.brahmkshatriya.echo.dhun.ui.component.PlayerSliderTrack
 import dev.brahmkshatriya.echo.dhun.ui.component.ResizableIconButton
 import dev.brahmkshatriya.echo.dhun.ui.menu.PlayerMenu
@@ -929,7 +930,7 @@ fun StyledPlaybackSlider(
         }
 
         SliderStyle.Thick -> {
-            Slider(
+            DhunSlider(
                 value = value,
                 valueRange = valueRange,
                 onValueChange = onValueChange,
@@ -963,7 +964,7 @@ fun StyledPlaybackSlider(
         }
 
         SliderStyle.Simple -> {
-            Slider(
+            DhunSlider(
                 value = value,
                 valueRange = valueRange,
                 onValueChange = onValueChange,
@@ -3344,7 +3345,7 @@ fun V8PlayerControlsContent(
 
         val safeDuration = if (duration <= 0L) 0f else duration.toFloat()
         val safeValue = (sliderPosition ?: position).toFloat().coerceIn(0f, maxOf(0f, safeDuration))
-        Slider(
+        DhunSlider(
             value = safeValue,
             valueRange = 0f..maxOf(1f, safeDuration),
             onValueChange = { onSliderValueChange(it.toLong()) },
@@ -3495,7 +3496,7 @@ fun V8VolumeSlider(
             modifier = Modifier.size(16.dp)
         )
 
-        Slider(
+        DhunSlider(
             value = volume,
             valueRange = 0f..1f,
             onValueChange = onVolumeChange,

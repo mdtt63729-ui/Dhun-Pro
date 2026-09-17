@@ -31,7 +31,7 @@ fun BigSeekBar(
     color: Color = MaterialTheme.colorScheme.primary,
     steps: Int = 19,
 ) {
-    Slider(
+    DhunSlider(
         value = progressProvider(),
         onValueChange = onProgressChange,
         valueRange = 0f..1f,

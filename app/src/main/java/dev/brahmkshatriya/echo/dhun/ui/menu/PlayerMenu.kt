@@ -117,6 +117,7 @@ import dev.brahmkshatriya.echo.dhun.playback.EqProfile
 import dev.brahmkshatriya.echo.dhun.playback.EqProfilesPayload
 import dev.brahmkshatriya.echo.dhun.playback.EqualizerJson
 import dev.brahmkshatriya.echo.dhun.playback.ExoDownloadService
+import dev.brahmkshatriya.echo.dhun.ui.component.DhunSlider
 import dev.brahmkshatriya.echo.dhun.ui.component.BottomSheetState
 import dev.brahmkshatriya.echo.dhun.ui.component.ListDialog
 import dev.brahmkshatriya.echo.dhun.ui.component.MenuSurfaceSection
@@ -787,7 +788,7 @@ private fun VolumeSliderL(value: Float, onValueChange: (Float) -> Unit, modifier
 
     LaunchedEffect(safeValue) { if (!isDragging) sliderValue = safeValue }
 
-    Slider(
+    DhunSlider(
         value = sliderValue,
         onValueChange = { updated ->
             isDragging = true

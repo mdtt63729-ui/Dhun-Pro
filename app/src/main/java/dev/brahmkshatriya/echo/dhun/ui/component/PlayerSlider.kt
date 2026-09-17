@@ -14,7 +14,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.SliderState
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.Layout
+import androidx.compose.runtime.remember
+import kotlin.math.roundToInt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import dev.brahmkshatriya.echo.dhun.ui.theme.PlayerSliderColors
 @Composable
 fun PlayerSliderTrack(
-    sliderState: SliderState,
+    sliderState: DhunSliderState,
     modifier: Modifier = Modifier,
     colors: SliderColors,
     trackHeight: Dp = 10.dp
@@ -243,5 +249,85 @@ object PlayerSliderColors {
         
         /** Default inactive color when no theme color is available */
         val DEFAULT_INACTIVE_COLOR = Color.White.copy(alpha = PlayerSliderColors.Config.INACTIVE_TRACK_ALPHA)
+    }
+}
+
+
+/**
+ * Version-independent slider built in-source. material3's Slider overloads changed
+ * across 1.3.x / 1.4.x / 1.5-alphas (value+thumb/track signatures differ), so this
+ * component provides a stable API with custom [thumb] and [track] slots driven by
+ * raw pointer gestures.
+ */
+class DhunSliderState(
+    val valueRange: ClosedFloatingPointRange<Float>,
+    val steps: Int = 0,
+) {
+    var value: Float = valueRange.start
+}
+
+@Composable
+fun DhunSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    steps: Int = 0,
+    onValueChangeFinished: (() -> Unit)? = null,
+    colors: SliderColors,
+    thumb: @Composable () -> Unit,
+    track: @Composable (DhunSliderState) -> Unit = { state ->
+        PlayerSliderTrack(sliderState = state, colors = colors)
+    },
+) {
+    val state = remember(valueRange, steps) { DhunSliderState(valueRange, steps) }
+    state.value = value
+    val clamped = value.coerceIn(valueRange.start, valueRange.endInclusive)
+    val fraction = calcFraction(valueRange.start, valueRange.endInclusive, clamped)
+
+    Layout(
+        contents = listOf({ track(state) }, { thumb() }),
+        modifier = modifier.pointerInput(enabled, valueRange, steps) {
+            if (!enabled) return@pointerInput
+            awaitEachGesture {
+                val down = awaitFirstDown()
+                onValueChange(positionToValue(down.position.x, valueRange, steps, size.width.toFloat()))
+                drag(down.id) { change ->
+                    onValueChange(positionToValue(change.position.x, valueRange, steps, size.width.toFloat()))
+                    change.consume()
+                }
+                onValueChangeFinished?.invoke()
+            }
+        },
+        measurePolicy = { measurables, constraints ->
+            val trackPlaceable = measurables[0].measure(constraints)
+            val thumbPlaceable = measurables[1].measure(
+                constraints.copy(minWidth = 0, minHeight = 0)
+            )
+            val height = maxOf(trackPlaceable.height, thumbPlaceable.height)
+            layout(trackPlaceable.width, height) {
+                trackPlaceable.placeRelative(0, (height - trackPlaceable.height) / 2)
+                val thumbX = ((trackPlaceable.width - thumbPlaceable.width) * fraction).roundToInt()
+                thumbPlaceable.placeRelative(thumbX, (height - thumbPlaceable.height) / 2)
+            }
+        },
+    )
+}
+
+private fun positionToValue(
+    x: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    steps: Int,
+    width: Float,
+): Float {
+    val fraction = if (width <= 0f) 0f else (x / width).coerceIn(0f, 1f)
+    val raw = valueRange.start + (valueRange.endInclusive - valueRange.start) * fraction
+    return if (steps > 0) {
+        val stepSize = (valueRange.endInclusive - valueRange.start) / (steps + 1)
+        (kotlin.math.round((raw - valueRange.start) / stepSize) * stepSize + valueRange.start)
+            .coerceIn(valueRange.start, valueRange.endInclusive)
+    } else {
+        raw
     }
 }

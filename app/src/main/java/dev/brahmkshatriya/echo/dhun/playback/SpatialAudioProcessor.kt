@@ -86,7 +86,7 @@ class SpatialAudioProcessor : AudioProcessor {
                 SpatialAudioController.Mode.SIXTEEN_D -> 0.13
                 else -> 0.0
             }
-            val pan = if (frequency == 0.0) 0.0 else sin(2.0 * PI * frequency * t).toFloat()
+            val pan = if (frequency == 0.0) 0f else sin(2.0 * PI * frequency * t).toFloat()
             val angle = ((pan + 1f) * 0.25f * PI.toFloat()).toFloat()
             val panL = cos(angle) * sqrt(0.5f)
             val panR = sin(angle) * sqrt(0.5f)
