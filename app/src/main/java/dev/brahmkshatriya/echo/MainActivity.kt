@@ -8,8 +8,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
 import com.google.android.material.navigation.NavigationBarView
@@ -28,8 +30,11 @@ import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.PermsUtils.checkAppPermissions
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isNightMode
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.util.concurrent.atomic.AtomicBoolean
 
 open class MainActivity : AppCompatActivity() {
 
@@ -39,7 +44,17 @@ open class MainActivity : AppCompatActivity() {
     private val uiViewModel by viewModel<UiViewModel>()
     private val extensionLoader by inject<ExtensionLoader>()
 
+    private val splashFinished = AtomicBoolean(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Keep the system splash up until its icon animation has actually finished.
+        // Without this the home screen appears mid-animation, because the first frame
+        // is drawn long before the 900ms animation is over.
+        installSplashScreen().setKeepOnScreenCondition { !splashFinished.get() }
+        lifecycleScope.launch {
+            delay(SPLASH_ANIM_DURATION_MS)
+            splashFinished.set(true)
+        }
         super.onCreate(savedInstanceState)
         setTheme(getAppTheme())
         DynamicColors.applyToActivityIfAvailable(
@@ -68,6 +83,9 @@ open class MainActivity : AppCompatActivity() {
     }
 
     companion object {
+        /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
+        const val SPLASH_ANIM_DURATION_MS = 900L
+
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"
         const val BIG_COVER = "big_cover"

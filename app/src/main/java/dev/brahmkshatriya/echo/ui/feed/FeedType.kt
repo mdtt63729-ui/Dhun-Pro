@@ -1,10 +1,14 @@
 package dev.brahmkshatriya.echo.ui.feed
 
+import dev.brahmkshatriya.echo.common.models.Album
+import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Feed
+import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension.Companion.EXTENSION_ID
+import kotlin.random.Random
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -122,6 +126,35 @@ sealed interface FeedType {
     }
 
     companion object {
+        /** How many items the hero carousel holds. */
+        private const val HERO_ITEM_LIMIT = 30
+
+        /** Playlists first, then albums, artists and songs. */
+        private fun EchoMediaItem.heroPriority() = when (this) {
+            is Playlist -> 0
+            is Album -> 1
+            is Artist -> 2
+            is Track -> 3
+            else -> 4
+        }
+
+        /**
+         * The items shown in the home hero carousel: shuffled with a per-load seed so it
+         * is different on every refresh, then stably biased so playlists dominate.
+         */
+        private fun Shelf.Lists<*>.heroItems(seed: Long, limit: Int = HERO_ITEM_LIMIT) =
+            when (this) {
+                is Shelf.Lists.Items -> copy(
+                    list = list
+                        .shuffled(Random(seed))
+                        .sortedBy { it.heroPriority() }
+                        .take(limit)
+                )
+
+                is Shelf.Lists.Tracks -> copy(list = list.shuffled(Random(seed)).take(limit))
+                is Shelf.Lists.Categories -> copy(list = list.shuffled(Random(seed)).take(limit))
+            }
+
         fun List<Shelf>.toFeedType(
             feedId: String,
             extId: String,
@@ -131,6 +164,8 @@ sealed interface FeedType {
             start: Long = 0,
             /** Render the first shelf as a hero carousel (home feed only). */
             heroShelf: Boolean = false,
+            /** Changes on every load, so the hero carousel is different each refresh. */
+            heroSeed: Long = 0L,
         ): List<FeedType> = mapIndexed { index, shelf ->
 
             when (shelf) {
@@ -162,13 +197,16 @@ sealed interface FeedType {
                         shelf.id, shelf.title, shelf.subtitle, shelf.more,
                         if (shelf is Shelf.Lists.Tracks) shelf.list else null
                     )
-                ) + if (shelf.type == Shelf.Lists.Type.Linear) listOf(
-                    HorizontalList(
-                        feedId, extId, context, tabId, shelf,
-                        hero = heroShelf && index == 0
+                ) + if (shelf.type == Shelf.Lists.Type.Linear) {
+                    val isHero = heroShelf && index == 0
+                    listOf(
+                        HorizontalList(
+                            feedId, extId, context, tabId,
+                            if (isHero) shelf.heroItems(heroSeed) else shelf,
+                            hero = isHero
+                        )
                     )
-                )
-                else when (shelf) {
+                } else when (shelf) {
                     is Shelf.Lists.Categories -> shelf.list.map {
                         Category(feedId, extId, context, tabId, it, Enum.CategoryGrid)
                     }

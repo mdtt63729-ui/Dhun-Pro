@@ -6,6 +6,7 @@ import dev.brahmkshatriya.echo.common.helpers.PagedData
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.common.models.Feed
+import dev.brahmkshatriya.echo.common.models.Playlist
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Tab
 import dev.brahmkshatriya.echo.di.App
@@ -19,6 +20,7 @@ import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
 import dev.brahmkshatriya.echo.utils.CacheUtils.saveToCache
 import dev.brahmkshatriya.echo.utils.CoroutineUtils.combineTransformLatest
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadDrawable
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,6 +63,28 @@ data class FeedData(
 
     val layoutManagerStates = hashMapOf<Int, Parcelable?>()
     val visibleScrollableViews = hashMapOf<Int, WeakReference<HorizontalListViewHolder>>()
+
+    /**
+     * Regenerated on every load/refresh. Drives both the hero carousel's contents and the
+     * order of the shelves below it, so the home feed is different each time.
+     */
+    @Volatile
+    private var heroSeed: Long = System.currentTimeMillis()
+
+    /**
+     * Home only: keeps the first shelf on top (it becomes the hero carousel) and shuffles
+     * everything below, biasing playlist shelves towards the top.
+     */
+    private fun List<Shelf>.shuffleBelowFirst(seed: Long): List<Shelf> {
+        if (!heroShelf || size <= 2) return this
+        val rest = drop(1)
+            .shuffled(Random(seed))
+            .sortedBy { if (it.isPlaylistShelf()) 0 else 1 }
+        return listOf(first()) + rest
+    }
+
+    private fun Shelf.isPlaylistShelf() =
+        this is Shelf.Lists.Items && list.any { it is Playlist }
 
     private val refreshFlow = MutableSharedFlow<Unit>(1)
     private val cachedState = MutableStateFlow<Result<State<Feed<Shelf>>?>?>(null)
@@ -213,13 +237,14 @@ data class FeedData(
                     }.map { it.second }
                 }
                 PagedData.Single {
-                    shelves.toFeedType(
+                    shelves.shuffleBelowFirst(heroSeed).toFeedType(
                         feedId,
                         extensionId,
                         state.item,
                         tabId,
                         noVideos,
-                        heroShelf = heroShelf
+                        heroShelf = heroShelf,
+                        heroSeed = heroSeed
                     )
                 }
             }
@@ -229,14 +254,17 @@ data class FeedData(
             val data = state.feed.pagedData
             data.loadPage(null)
             var start = 0L
+            var firstPage = true
             data.map { result ->
                 result.map {
-                    val list = it.toFeedType(
-                        feedId, extId, state.item, tabId, noVideos, start, heroShelf
+                    // Only the very first shelf of the first page is the hero carousel.
+                    val list = it.shuffleBelowFirst(heroSeed).toFeedType(
+                        feedId, extId, state.item, tabId, noVideos, start,
+                        heroShelf && firstPage, heroSeed
                     )
                     start += list.size
                     list
-                }.getOrThrow()
+                }.getOrThrow().also { firstPage = false }
             }
         }
         data
@@ -271,6 +299,7 @@ data class FeedData(
         scope.launch(Dispatchers.IO) {
             listOfNotNull(current, refreshFlow, usersFlow, extraLoadFlow)
                 .merge().debounce(100L).collectLatest {
+                    heroSeed = System.currentTimeMillis()
                     cachedState.value = null
                     loadedState.value = null
                     extensionLoader.current.value ?: return@collectLatest

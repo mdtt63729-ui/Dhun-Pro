@@ -104,6 +104,43 @@ The first CI run failed to compile; these three fixes are applied:
 | `HorizontalListViewHolder.kt` — unresolved `listener` in `bind()` | `listener` is now a `private val` constructor property (a plain constructor parameter is only visible in initializers). |
 | `ImageUtils.kt` — unresolved `allowHardware` | Added the missing `import coil3.request.allowHardware` (`ImageRequest.Builder.allowHardware` is an extension function in Coil 3). |
 
+## 7. Thumbnail quality, round two
+
+The first pass capped covers at 544 px, which is fine for a 128 dp card but visibly soft on the
+full-screen player (a ~350 dp cover is ~1050 px on a 3x screen).
+
+| Change | Detail |
+|---|---|
+| Resolution | `THUMBNAIL_SIZE` 544 → **1000 px** in `ImageUtils.kt` — well above Echo Music's `resize(544, 544)`. Coil still downsamples to whatever the view actually needs. |
+| YouTube stills | URLs with no `=` size token (e.g. `/vi/<id>/mqdefault.jpg`) are upgraded to `hqdefault.jpg`. |
+| Cache | Disk cache key version bumped so the old low-res copies are not reused. |
+
+This applies to every network cover — playlist cards, the songs listed inside a playlist, the
+mini player and the full-screen player — because they all share one request builder.
+
+## 8. Home carousel behaviour
+
+| Change | Where |
+|---|---|
+| The home feed's first shelf is still the hero carousel and always stays on top. | `FeedType.toFeedType()` |
+| Its contents are **shuffled with a per-load seed** and capped at 15 items, so it is different on every refresh. | `FeedType.heroItems()` |
+| Items are stably biased **playlists → albums → artists → songs**, so playlists dominate. | `FeedType.heroPriority()` |
+| The shelves **below** the carousel are shuffled on every load too, with playlist shelves biased towards the top. | `FeedData.shuffleBelowFirst()` |
+| The seed is regenerated on every load/refresh. | `FeedData.heroSeed` |
+| Only the first shelf of the first page becomes the carousel (paged feeds no longer produce several). | `FeedData` `firstPage` guard |
+
+Tuning: `HERO_ITEM_LIMIT` in `FeedType.kt` (15).
+
+## 9. Splash screen
+
+The splash is the Android 12+ system splash (`art_splash_anim`, 900 ms) and nothing held it on
+screen, so the home appeared as soon as the first frame was drawn — cutting the animation off.
+
+| File | Change |
+|---|---|
+| `MainActivity.kt` | `installSplashScreen()` + `setKeepOnScreenCondition { !splashFinished }`, released after `SPLASH_ANIM_DURATION_MS` (900 ms). |
+| `values/themes.xml` | Added the `core-splashscreen` equivalents (`windowSplashScreenBackground`, `windowSplashScreenAnimatedIcon`, `windowSplashScreenAnimationDuration`, `postSplashScreenTheme`) so the splash also renders on API < 31. |
+
 ---
 
 ## Build
