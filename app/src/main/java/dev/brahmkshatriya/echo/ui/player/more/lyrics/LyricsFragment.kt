@@ -15,12 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.paging.LoadState.Error
 import androidx.paging.LoadState.NotLoading
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
@@ -42,7 +36,6 @@ import dev.brahmkshatriya.echo.ui.feed.FeedLoadingAdapter
 import dev.brahmkshatriya.echo.ui.feed.FeedLoadingAdapter.Companion.createListener
 import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.defaultPlayerColors
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
-import dev.brahmkshatriya.echo.ui.player.more.lyrics.applemusic.AppleMusicLyricsView
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadAsCircle
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.setupTransition
@@ -86,7 +79,6 @@ class LyricsFragment : Fragment() {
     }
 
     private var shouldAutoScroll = true
-    private var hasCollapsedAppBar = false
     val layoutManager by lazy {
         binding.lyricsRecyclerView.layoutManager as LinearLayoutManager
     }
@@ -100,12 +92,8 @@ class LyricsFragment : Fragment() {
             }
             lyricAdapter.updateCurrent(currentIndex)
             if (!shouldAutoScroll) return
-            // Only collapse app bar and slide down once — not on every lyrics line change
-            if (!hasCollapsedAppBar) {
-                binding.appBarLayout.setExpanded(false)
-                slideDown()
-                hasCollapsedAppBar = true
-            }
+            binding.appBarLayout.setExpanded(false)
+            slideDown()
             if (currentIndex < 0) return
             val smoothScroller = CenterSmoothScroller(requireContext())
             smoothScroller.targetPosition = currentIndex
@@ -215,7 +203,6 @@ class LyricsFragment : Fragment() {
             binding.lyricsItem.bind(lyricsItem)
             currentLyricsPos = -1
             currentLyrics = lyricsItem?.lyrics
-            hasCollapsedAppBar = false
             val list = when (val lyrics = currentLyrics) {
                 is Lyrics.Simple -> listOf(Lyrics.Item(lyrics.text, 0, 0))
                 is Lyrics.Timed -> lyrics.list
@@ -226,38 +213,6 @@ class LyricsFragment : Fragment() {
         }
 
         observe(playerVM.progress) { updateLyrics(it.first) }
-
-        // ── Apple Music-style Compose lyrics overlay ──
-        // Renders lyrics with blur/alpha focus and spring auto-scroll on top of existing UI
-        val composeView = ComposeView(requireContext()).apply {
-            setViewCompositionStrategy(
-                ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed
-            )
-            setContent {
-                MaterialTheme {
-                    val progress by playerVM.progress.collectAsState()
-                    val playerColors by uiViewModel.playerColors.collectAsState()
-                    val colors = playerColors ?: requireContext().defaultPlayerColors()
-                    val lyricsItem = (viewModel.lyricsState.value as? LyricsViewModel.State.Loaded)
-                        ?.result?.getOrNull()
-
-                    AppleMusicLyricsView(
-                        lyrics = lyricsItem,
-                        currentPosition = progress.first,
-                        onLineClick = { startTime -> playerVM.seekTo(startTime) },
-                        primaryColor = Color(colors.accent),
-                        onBackgroundColor = Color(colors.onBackground),
-                    )
-                }
-            }
-        }
-        (binding.root as? android.view.ViewGroup)?.addView(
-            composeView,
-            android.view.ViewGroup.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        )
     }
 
     fun ItemLyricsItemBinding.bind(lyrics: Lyrics?) = root.run {

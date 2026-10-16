@@ -290,37 +290,6 @@ class PlayerViewModel(
         }
     }
 
-    // ── Lazy-load radio trigger (from SimpMusic queue algorithm) ──
-    // Called when the user scrolls near the bottom of the queue.
-    // Sends a radio command to fetch and append more related tracks.
-    // The PlayerRadio listener in the service handles the actual loading.
-    // This is a no-op if the current track doesn't support radio or if
-    // the radio is already loading.
-    fun loadMoreRadio() = withBrowser { controller ->
-        // Only trigger if there are tracks and we're near the end
-        if (controller.mediaItemCount == 0) return@withBrowser
-        val current = controller.currentMediaItem ?: return@withBrowser
-        // Check if endless queue is enabled
-        if (!settings.getBoolean(
-                dev.brahmkshatriya.echo.playback.listener.PlayerRadio.Companion.ENDLESS_QUEUE, true
-            )) return@withBrowser
-        // The PlayerRadio listener will detect the timeline change and
-        // automatically load more tracks via its threshold-based trigger.
-        // We just need to ensure the timeline is checked by seeking to
-        // the current position (a no-op that triggers onTimelineChanged).
-        // Actually, the PlayerRadio already listens to onMediaItemTransition
-        // and onTimelineChanged, so the threshold check runs automatically.
-        // This function exists for the queue UI's lazy-load scroll trigger.
-        // We send a radio command with the current item to force-load.
-        val track = current.track
-        val extId = current.mediaId.substringBeforeLast(":")
-        controller.sendCustomCommand(radioCommand, Bundle().apply {
-            putString("extId", extId)
-            putSerialized("item", track)
-            putBoolean("loaded", true)
-        })
-    }
-
     val progress = MutableStateFlow(0L to 0L)
     val discontinuity = MutableStateFlow(0L)
     val totalDuration = MutableStateFlow<Long?>(null)

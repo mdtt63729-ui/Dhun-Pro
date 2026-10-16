@@ -55,7 +55,7 @@ object InstallationUtils {
     }
 
     suspend fun FragmentActivity.openFileSelector(
-        fileType: String = "*/*"
+        fileType: String = "application/octet-stream"
     ): File {
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             type = fileType

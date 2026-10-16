@@ -1,6 +1,11 @@
 package dev.brahmkshatriya.echo.ui.settings
 
 import android.graphics.drawable.Animatable
+import android.os.Build.BRAND
+import android.os.Build.DEVICE
+import android.os.Build.VERSION.CODENAME
+import android.os.Build.VERSION.RELEASE
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
@@ -18,16 +23,21 @@ import dev.brahmkshatriya.echo.common.models.ExtensionType
 import dev.brahmkshatriya.echo.databinding.DialogSettingsBinding
 import dev.brahmkshatriya.echo.extensions.db.models.UserEntity.Companion.toEntity
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
+import dev.brahmkshatriya.echo.ui.download.DownloadFragment
 import dev.brahmkshatriya.echo.ui.download.DownloadViewModel
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionInfoFragment
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionInfoFragment.Companion.openLink
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
+import dev.brahmkshatriya.echo.ui.extensions.add.ExtensionsAddBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.list.ExtensionsListBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.login.LoginUserListBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.login.LoginUserListViewModel
 import dev.brahmkshatriya.echo.ui.extensions.manage.ManageExtensionsFragment
 import dev.brahmkshatriya.echo.ui.main.HeaderAdapter.Companion.loadBigIcon
 import dev.brahmkshatriya.echo.ui.main.HeaderAdapter.Companion.setLoopedLongClick
+import dev.brahmkshatriya.echo.utils.ContextUtils.appVersion
+import dev.brahmkshatriya.echo.utils.ContextUtils.copyToClipboard
+import dev.brahmkshatriya.echo.utils.ContextUtils.getArch
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.configureBottomBar
@@ -69,9 +79,9 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
             requireActivity().openFragment<SettingsOtherFragment>()
         }
 
-        binding.lyrics.setOnClickListener {
+        binding.downloads.setOnClickListener {
             dismiss()
-            requireActivity().openFragment<SettingsLyricsFragment>()
+            requireActivity().openFragment<DownloadFragment>()
         }
 
         observe(downloadVM.downloadExtensions) { extensions ->
@@ -89,6 +99,11 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
         binding.manageExtension.setOnClickListener {
             dismiss()
             requireActivity().openFragment<ManageExtensionsFragment>()
+        }
+
+        binding.addExtension.setOnClickListener {
+            dismiss()
+            ExtensionsAddBottomSheet().show(parentFragmentManager, null)
         }
 
         val settings = requireContext().getSettings()
@@ -112,6 +127,62 @@ class SettingsBottomSheet : BottomSheetDialogFragment(R.layout.dialog_settings) 
                     .show()
                 dismiss()
             }
+        }
+
+        binding.wiki.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://wotaku.wiki/guides/music/echo")
+        }
+
+        val repo = getString(R.string.app_github_repo)
+        binding.contributors.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://github.com/$repo/graphs/contributors")
+        }
+
+        binding.donate.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://ko-fi.com/brahmkshatriya")
+        }
+
+        binding.discord.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://discord.gg/J3WvbBUU8Z")
+        }
+
+        binding.github.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://github.com/$repo")
+        }
+
+        binding.telegram.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://t.me/echo_extension")
+        }
+
+        binding.version.run {
+            val version = appVersion()
+            text = version
+            setOnClickListener {
+                val info = buildString {
+                    appendLine("Echo Version: $version")
+                    appendLine("Device: $BRAND $DEVICE")
+                    appendLine("Architecture: ${getArch()}")
+                    appendLine("OS Version: $CODENAME $RELEASE ($SDK_INT)")
+                }
+                context.copyToClipboard(getString(R.string.version), info)
+            }
+            setOnLongClickListener {
+                val viewModel by activityViewModel<ExtensionsViewModel>()
+                viewModel.update(requireActivity(), true)
+                dismiss()
+                true
+            }
+        }
+
+        binding.shivam.setOnClickListener {
+            dismiss()
+            requireActivity().openLink("https://github.com/brahmkshatriya")
         }
 
         configureBottomBar(binding.extensionBar)

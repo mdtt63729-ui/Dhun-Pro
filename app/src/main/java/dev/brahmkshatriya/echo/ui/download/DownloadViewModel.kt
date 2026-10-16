@@ -15,6 +15,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionLoader
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getIf
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.isClient
 import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
+import dev.brahmkshatriya.echo.ui.extensions.add.ExtensionsAddBottomSheet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted.Companion.Eagerly
@@ -53,7 +54,10 @@ class DownloadViewModel(
             val downloadExt = downloadExtensions.first { it != null }?.firstOrNull()
                 ?: return@with messageFlow.emit(
                     Message(
-                        app.getString(R.string.no_download_extension)
+                        app.getString(R.string.no_download_extension),
+                        Message.Action(getString(R.string.add_extension)) {
+                            ExtensionsAddBottomSheet().show(supportFragmentManager, null)
+                        }
                     )
                 )
 

@@ -1,1 +1,0 @@
-Dhun bundled extensions\n\nOnly these music extensions are shipped inside the APK and installed automatically on first launch:\n- Youtube Music (Youtube_music)\n- Saavn (saavn_music)\n\nOther extensions are optional and must be downloaded/installed separately from the extension manager/repository.\n

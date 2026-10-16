@@ -40,16 +40,7 @@ sealed class AppException : Exception() {
             is ClientException.Unauthorized -> Unauthorized(extension, userId)
             is ClientException.LoginRequired -> LoginRequired(extension)
             is ClientException.NotSupported -> NotSupported(this, extension, operation)
-            else -> {
-                // Detect unauthorized errors from error message (e.g. Spotify throwing generic exceptions)
-                val msg = this.message?.lowercase() ?: ""
-                if (msg.contains("unauthorized") || msg.contains("401") ||
-                    msg.contains("not authenticated") || msg.contains("auth required")) {
-                    LoginRequired(extension)
-                } else {
-                    Other(this, extension)
-                }
-            }
+            else -> Other(this, extension)
         }
     }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Echo Music style cover corner: a softer 12dp radius on the square artwork. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="?colorSurfaceContainerHighest" />
+    <corners android:radius="12dp" />
+</shape>

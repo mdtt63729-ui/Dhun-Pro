@@ -79,28 +79,11 @@ class QueueFragment : Fragment() {
         })
     }
 
-    // ── Lazy-load trigger (from SimpMusic queue algorithm) ──
-    // When the user scrolls near the bottom of the queue (within 3 items),
-    // trigger radio loading to append more tracks before the user reaches the end.
-    private val lazyLoadListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            if (dy <= 0) return // Only trigger on scroll down
-            val layoutManager = recyclerView.layoutManager as? LinearLayoutManager ?: return
-            val totalItems = layoutManager.itemCount
-            val lastVisible = layoutManager.findLastVisibleItemPosition()
-            // Trigger when within 3 items of the end
-            if (totalItems - lastVisible <= 3) {
-                viewModel.loadMoreRadio()
-            }
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         setupTransition(view, false, axis = MaterialSharedAxis.Y)
         val recyclerView = binding!!.root
         recyclerView.adapter = queueAdapter
         touchHelper.attachToRecyclerView(recyclerView)
-        recyclerView.addOnScrollListener(lazyLoadListener)
         val manager = recyclerView.layoutManager as LinearLayoutManager
         val screenHeight = view.resources.displayMetrics.heightPixels / 3
 
@@ -122,10 +105,5 @@ class QueueFragment : Fragment() {
 
         val index = viewModel.playerState.current.value?.index ?: return
         manager.scrollToPositionWithOffset(index + 1, screenHeight)
-    }
-
-    override fun onDestroyView() {
-        binding?.root?.removeOnScrollListener(lazyLoadListener)
-        super.onDestroyView()
     }
 }

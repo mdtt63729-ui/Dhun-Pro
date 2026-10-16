@@ -114,25 +114,41 @@
                     app:icon="@drawable/ic_palette" />
 
                 <com.google.android.material.button.MaterialButton
-                    android:id="@+id/lyrics"
-                    style="@style/SideBarButton"
-                    android:text="@string/lyrics_settings"
-                    app:icon="@drawable/ic_article" />
-
-                <com.google.android.material.button.MaterialButton
                     android:id="@+id/other"
                     style="@style/SideBarButton"
                     android:text="@string/other"
                     app:icon="@drawable/ic_more_horiz" />
             </com.google.android.material.button.MaterialButtonGroup>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/downloadSettings"
-                style="@style/SideBarButton"
+            <com.google.android.material.button.MaterialButtonGroup
+                style="@style/Widget.Material3.MaterialButtonGroup.Connected"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/downloads"
-                app:icon="@drawable/ic_download_for_offline" />
+                android:orientation="horizontal"
+                android:spacing="-4dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/downloads"
+                    style="@style/SideBarButton"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/downloads"
+                    app:icon="@drawable/ic_download_for_offline" />
+
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/downloadSettings"
+                    style="@style/IconButtonTonal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:minHeight="64dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="20dp"
+                    app:icon="@drawable/ic_settings_outline"
+                    app:iconSize="24dp" />
+
+            </com.google.android.material.button.MaterialButtonGroup>
 
             <com.google.android.material.button.MaterialButtonGroup
                 style="@style/Widget.Material3.MaterialButtonGroup.Connected"
@@ -158,7 +174,6 @@
                     android:minHeight="64dp"
                     android:paddingStart="16dp"
                     android:paddingEnd="20dp"
-                    android:visibility="gone"
                     app:icon="@drawable/ic_add_circle"
                     app:iconSize="24dp" />
             </com.google.android.material.button.MaterialButtonGroup>
@@ -184,9 +199,80 @@
                     style="@style/SideBarButton"
                     android:text="@string/language_x"
                     app:icon="@drawable/ic_translate" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/wiki"
+                    style="@style/SideBarButton"
+                    android:text="@string/guide"
+                    app:icon="@drawable/ic_info" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/contributors"
+                    style="@style/SideBarButton"
+                    android:text="@string/contributors"
+                    app:icon="@drawable/ic_person" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/donate"
+                    style="@style/SideBarButton"
+                    android:backgroundTint="?colorSecondary"
+                    android:text="@string/donate"
+                    android:textColor="?colorOnSecondary"
+                    app:icon="@drawable/ic_heart_filled_40dp"
+                    app:iconTint="?colorOnSecondary" />
             </com.google.android.material.button.MaterialButtonGroup>
 
 
+            <com.google.android.material.button.MaterialButtonGroup
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:spacing="0dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/discord"
+                    style="@style/IconButtonTonalBig"
+                    android:contentDescription="Discord"
+                    app:icon="@drawable/ic_discord"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/github"
+                    style="@style/IconButtonTonalBig"
+                    android:contentDescription="Github"
+                    app:icon="@drawable/ic_github"
+                    tools:ignore="HardcodedText" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/telegram"
+                    style="@style/IconButtonTonalBig"
+                    android:contentDescription="Telegram"
+                    app:icon="@drawable/ic_telegram"
+                    tools:ignore="HardcodedText" />
+
+            </com.google.android.material.button.MaterialButtonGroup>
+
+            <TextView
+                android:id="@+id/version"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="3"
+                android:paddingVertical="20dp"
+                android:text="@string/version"
+                android:textAlignment="center" />
+
+            <ImageView
+                android:id="@+id/shivam"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:src="@drawable/art_shivam"
+                tools:ignore="ContentDescription" />
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

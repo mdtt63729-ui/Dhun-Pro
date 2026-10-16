@@ -5,7 +5,6 @@ import android.graphics.drawable.Animatable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
@@ -96,7 +95,7 @@ class MediaViewHolder(
                 applyCover(item, cover, listBg1, listBg2, icon)
                 isPlaying.setBackgroundResource(
                     if (item is Artist) R.drawable.rounded_rectangle_cover_profile
-                    else R.drawable.rounded_rectangle_cover
+                    else R.drawable.rounded_rectangle_cover_echo
                 )
             }
             play.isVisible = item !is Track
@@ -134,14 +133,13 @@ class MediaViewHolder(
             icon.setImageResource(item.icon)
             cover.setBackgroundResource(
                 if (item is Artist) R.drawable.rounded_rectangle_cover_profile
-                else R.drawable.rounded_rectangle_cover
+                else R.drawable.rounded_rectangle_cover_echo
             )
-            val bgVisible = item is EchoMediaItem.Lists
-            listBg1.isVisible = bgVisible
-            listBg2.isVisible = bgVisible
-            cover.updateLayoutParams {
-                height = if (item is Artist) width else WRAP_CONTENT
-            }
+            // Echo Music style: one clean SQUARE cover, so the old stacked
+            // "list backdrop" (listBg1 / listBg2) is never shown.
+            listBg1.isVisible = false
+            listBg2.isVisible = false
+            cover.updateLayoutParams { height = width }
             item.cover.loadInto(cover, item.placeHolder)
         }
 

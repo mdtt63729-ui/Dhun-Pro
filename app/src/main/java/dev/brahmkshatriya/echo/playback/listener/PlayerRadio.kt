@@ -42,10 +42,6 @@ class PlayerRadio(
 
     companion object {
         const val AUTO_START_RADIO = "auto_start_radio"
-        const val ENDLESS_QUEUE = "endless_queue"
-        const val RADIO_THRESHOLD = "radio_threshold"
-        // Default: start loading radio when 3 or fewer tracks remain after current
-        const val DEFAULT_THRESHOLD = 3
         suspend fun start(
             throwableFlow: MutableSharedFlow<Throwable>,
             extension: Extension<*>,
@@ -104,53 +100,28 @@ class PlayerRadio(
     }
 
     private var autoStartRadio = app.settings.getBoolean(AUTO_START_RADIO, true)
-    private var endlessQueue = app.settings.getBoolean(ENDLESS_QUEUE, true)
-    private var threshold = app.settings.getInt(RADIO_THRESHOLD, DEFAULT_THRESHOLD)
 
     private val listener = SharedPreferences.OnSharedPreferenceChangeListener { pref, key ->
-        when (key) {
-            AUTO_START_RADIO -> autoStartRadio = pref.getBoolean(AUTO_START_RADIO, true)
-            ENDLESS_QUEUE -> endlessQueue = pref.getBoolean(ENDLESS_QUEUE, true)
-            RADIO_THRESHOLD -> threshold = pref.getInt(RADIO_THRESHOLD, DEFAULT_THRESHOLD)
-        }
+        if (key != AUTO_START_RADIO) return@OnSharedPreferenceChangeListener
+        autoStartRadio = pref.getBoolean(AUTO_START_RADIO, true)
     }
 
     init {
         app.settings.registerOnSharedPreferenceChangeListener(listener)
     }
 
-    // ── Threshold-based radio trigger (from SimpMusic queue algorithm) ──
-    // Instead of only triggering at the last track, check if remaining tracks
-    // after current are <= threshold. This gives time to fetch radio tracks
-    // before the queue runs out, avoiding a "loading gap".
-    private fun tracksRemaining(): Int {
-        val total = player.mediaItemCount
-        val current = player.currentMediaItemIndex
-        return (total - 1) - current
-    }
-
     private suspend fun startRadio() {
-        if (!autoStartRadio || !endlessQueue) return
+        if (!autoStartRadio) return
         val shouldNotStart = withContext(Dispatchers.Main) {
             player.run {
-                currentMediaItem == null || repeatMode != REPEAT_MODE_OFF
+                currentMediaItem == null || repeatMode != REPEAT_MODE_OFF || hasNextMediaItem()
             }
         }
         if (shouldNotStart) return
-
-        // Threshold check: start radio when remaining tracks <= threshold
-        val remaining = withContext(Dispatchers.Main) { tracksRemaining() }
-        if (remaining > threshold) return
-
         when (val state = stateFlow.value) {
             is PlayerState.Radio.Loading -> {}
             is PlayerState.Radio.Empty -> loadPlaylist()
-            is PlayerState.Radio.Loaded -> {
-                // Only play if we still need more tracks
-                if (remaining <= threshold) {
-                    play(player, downloadFlow, app, stateFlow, state)
-                }
-            }
+            is PlayerState.Radio.Loaded -> play(player, downloadFlow, app, stateFlow, state)
         }
     }
 

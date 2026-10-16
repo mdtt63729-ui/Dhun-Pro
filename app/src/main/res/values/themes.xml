@@ -7,7 +7,7 @@
         <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">
             @drawable/art_splash_anim
         </item>
-        <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">2400</item>
+        <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">900</item>
         <item name="android:windowSplashScreenBehavior" tools:targetApi="TIRAMISU">
             icon_preferred
         </item>
@@ -30,7 +30,7 @@
         <item name="echoBackground">?colorSurface</item>
         <item name="navBackground">?colorSurfaceContainer</item>
 
-        <item name="itemCoverSize">96dp</item>
+        <item name="itemCoverSize">128dp</item>
         <item name="itemCorner">8dp</item>
     </style>
 

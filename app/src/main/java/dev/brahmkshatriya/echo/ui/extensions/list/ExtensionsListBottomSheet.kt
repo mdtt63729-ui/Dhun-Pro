@@ -15,6 +15,7 @@ import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionInfoFragment
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionInfoPreference.Companion.getType
 import dev.brahmkshatriya.echo.ui.extensions.ExtensionsViewModel
+import dev.brahmkshatriya.echo.ui.extensions.add.ExtensionsAddBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.manage.ManageExtensionsFragment
 import dev.brahmkshatriya.echo.ui.player.more.lyrics.LyricsViewModel
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
@@ -44,6 +45,11 @@ class ExtensionsListBottomSheet : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.topAppBar.setNavigationOnClickListener { dismiss() }
         binding.topAppBar.title = getString(R.string.x_extensions, getString(getType(type)))
+
+        binding.addExtension.setOnClickListener {
+            dismiss()
+            ExtensionsAddBottomSheet().show(parentFragmentManager, null)
+        }
 
         binding.manageExtension.setOnClickListener {
             dismiss()

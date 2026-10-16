@@ -55,7 +55,6 @@ import dev.brahmkshatriya.echo.playback.ResumptionUtils.recoverShuffle
 import dev.brahmkshatriya.echo.playback.ResumptionUtils.recoverTracks
 import dev.brahmkshatriya.echo.playback.exceptions.PlayerException
 import dev.brahmkshatriya.echo.playback.listener.PlayerRadio
-import dev.brahmkshatriya.echo.playback.listener.PlayerRadio.Companion.ENDLESS_QUEUE
 import dev.brahmkshatriya.echo.utils.CoroutineUtils.future
 import dev.brahmkshatriya.echo.utils.Serializer.getSerialized
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadDrawable
@@ -329,21 +328,9 @@ class PlayerCallback(
                 null
             )
         }
-
-        // ── Smart routing from SimpMusic queue algorithm ──
-        // When endless queue is ON and a single track is being added,
-        // insert it as "Play Next" (right after current) instead of appending.
-        val endlessQueue = app.settings.getBoolean(ENDLESS_QUEUE, true)
-        if (endlessQueue && tracks.size == 1 && player.mediaItemCount > 0) {
-            player.with {
-                addMediaItem(currentMediaItemIndex + 1, mediaItems.first())
-                prepare()
-            }
-        } else {
-            player.with {
-                addMediaItems(mediaItems)
-                prepare()
-            }
+        player.with {
+            addMediaItems(mediaItems)
+            prepare()
         }
         SessionResult(RESULT_SUCCESS)
     }

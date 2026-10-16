@@ -43,10 +43,8 @@ class ShufflePlayer(
     private fun changeQueue(list: List<MediaItem>) {
         log("Change queue")
         if (list.size <= 1) return
-        val activeId = currentMediaItem?.mediaId ?: return
-        val currentMediaItem = list.firstOrNull { it.mediaId == activeId } ?: return
+        val currentMediaItem = list.first { it.mediaId == currentMediaItem?.mediaId }
         val index = list.indexOf(currentMediaItem)
-        if (index < 0) return
         val before = list.take(index) - currentMediaItem
         val after = list.takeLast(list.size - index) - currentMediaItem
         if (currentMediaItemIndex > 0) player.removeMediaItems(0, currentMediaItemIndex)
@@ -89,41 +87,6 @@ class ShufflePlayer(
 
     private fun getItemAt(index: Int) = player.getMediaItemAt(index).let {
         original.first { item -> item.mediaId == it.mediaId }
-    }
-
-    // ── 3-second Previous Rule (from SimpMusic queue algorithm) ──
-    // If currentPosition > 3000ms, restart current track instead of going to previous.
-    override fun seekToPrevious() {
-        if (currentPosition > 3000) {
-            seekTo(0)
-        } else {
-            super.seekToPrevious()
-        }
-    }
-
-    override fun seekToPreviousMediaItem() {
-        if (currentPosition > 3000) {
-            seekTo(0)
-        } else {
-            super.seekToPreviousMediaItem()
-        }
-    }
-
-    // ── Shuffle-safe drag reorder (from SimpMusic queue algorithm) ──
-    // ForwardingPlayer delegates moveMediaItem to ExoPlayer directly, which
-    // doesn't update our `original` list. Override to keep both in sync.
-    override fun moveMediaItem(index: Int, newIndex: Int) {
-        if (index == newIndex) return
-        val clampedNew = newIndex.coerceIn(0, mediaItemCount - 1)
-        if (index == clampedNew) return
-        // Update original list to mirror the player's move
-        val item = getItemAt(index)
-        original = original.toMutableList().apply {
-            remove(item)
-            add(clampedNew, item)
-        }
-        player.moveMediaItem(index, clampedNew)
-        log("Move media item from $index to $clampedNew")
     }
 
     override fun removeMediaItem(index: Int) {

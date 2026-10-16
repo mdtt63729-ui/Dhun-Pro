@@ -146,7 +146,6 @@
                 <data android:pathPattern=".*" />
                 <data android:pathPattern=".*\\.eapk" />
                 <data android:mimeType="application/octet-stream" />
-                <data android:mimeType="application/vnd.android.package-archive" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
@@ -182,7 +181,6 @@
         </receiver>
 
         <activity android:name=".playback.PlayerService$MainActivityOpener" />
-        <activity android:name=".dhun.DebugActivity" android:exported="false" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

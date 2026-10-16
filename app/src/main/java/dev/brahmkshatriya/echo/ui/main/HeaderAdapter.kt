@@ -16,10 +16,8 @@ import dev.brahmkshatriya.echo.common.models.User
 import dev.brahmkshatriya.echo.databinding.ItemMainHeaderBinding
 import dev.brahmkshatriya.echo.extensions.db.models.UserEntity.Companion.toEntity
 import dev.brahmkshatriya.echo.ui.common.GridAdapter
-import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.extensions.list.ExtensionsListBottomSheet
 import dev.brahmkshatriya.echo.ui.extensions.login.LoginUserListViewModel
-import dev.brahmkshatriya.echo.ui.main.DhunFragment
 import dev.brahmkshatriya.echo.ui.settings.SettingsBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadAsCircle
@@ -40,21 +38,12 @@ class HeaderAdapter(
         val binding = holder.binding
         val parentFragmentManager = fragment.parentFragmentManager
         binding.extensionsCont.setOnClickListener {
-            // If Dhun is the current extension, open DhunFragment
-            val current = viewModel.extensionLoader.current.value
-            if (current?.id == "dhun") {
-                fragment.requireActivity().openFragment<DhunFragment>()
-            } else {
-                ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
-                    .show(parentFragmentManager, null)
-            }
+            ExtensionsListBottomSheet.newInstance(ExtensionType.MUSIC)
+                .show(parentFragmentManager, null)
         }
 
         binding.accountsCont.setOnClickListener {
             SettingsBottomSheet().show(parentFragmentManager, null)
-        }
-        binding.downloadsCont.setOnClickListener {
-            fragment.requireActivity().openFragment<dev.brahmkshatriya.echo.ui.download.DownloadFragment>()
         }
         return holder
     }

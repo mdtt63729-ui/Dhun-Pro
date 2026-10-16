@@ -11,9 +11,7 @@ data class MoreButton(
             oldItem.id == newItem.id
 
         override fun areContentsTheSame(oldItem: MoreButton, newItem: MoreButton) =
-            oldItem.id == newItem.id &&
-            oldItem.title == newItem.title &&
-            oldItem.icon == newItem.icon
+            oldItem == newItem
     }
 
     companion object {

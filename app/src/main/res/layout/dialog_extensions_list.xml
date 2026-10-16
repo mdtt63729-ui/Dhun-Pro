@@ -68,7 +68,6 @@
                 android:layout_weight="1"
                 android:minHeight="64dp"
                 android:text="@string/add"
-                android:visibility="gone"
                 app:icon="@drawable/ic_add_circle" />
 
         </com.google.android.material.button.MaterialButtonGroup>

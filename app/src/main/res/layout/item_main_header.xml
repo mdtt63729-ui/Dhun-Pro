@@ -60,21 +60,4 @@
             android:src="@drawable/ic_account_circle_32dp" />
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/downloadsCont"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        app:cardBackgroundColor="?navBackground"
-        app:cardCornerRadius="24dp"
-        app:contentPadding="4dp">
-
-        <ImageView
-            android:id="@+id/downloadsIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:contentDescription="@string/downloads"
-            android:src="@drawable/ic_download_for_offline" />
-    </com.google.android.material.card.MaterialCardView>
-
 </LinearLayout>

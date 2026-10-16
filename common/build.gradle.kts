@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.androidLibrary
+
 plugins {
     alias(libs.plugins.android.kmp.library)
     alias(libs.plugins.kotlin.multiplatform)
@@ -17,7 +19,7 @@ kotlin {
     @Suppress("UnstableApiUsage")
     androidLibrary {
         namespace = "echo.common"
-        compileSdk = 37
+        compileSdk = 36
         minSdk = 24
     }
     jvm()
@@ -27,10 +29,7 @@ kotlin {
             dependencies {
                 api(libs.bundles.kotlinx)
                 api(libs.okhttp)
-                // Do not expose the full protobuf runtime from common. Android/Firebase
-                // dependencies may bring protobuf-javalite transitively; putting both
-                // protobuf-java and protobuf-javalite on the app classpath causes duplicate
-                // com.google.protobuf.* classes during checkReleaseDuplicateClasses.
+                api(libs.protobuf.java)
             }
         }
     }

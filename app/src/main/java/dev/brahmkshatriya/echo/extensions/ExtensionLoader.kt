@@ -28,7 +28,6 @@ import dev.brahmkshatriya.echo.di.App
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.get
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.getOrThrow
 import dev.brahmkshatriya.echo.extensions.ExtensionUtils.inject
-import dev.brahmkshatriya.echo.extensions.builtin.dhun.DhunExtension
 import dev.brahmkshatriya.echo.extensions.builtin.offline.OfflineExtension
 import dev.brahmkshatriya.echo.extensions.builtin.unified.UnifiedExtension
 import dev.brahmkshatriya.echo.extensions.db.ExtensionDatabase
@@ -79,7 +78,9 @@ class ExtensionLoader(
         scope, app.context, fileIgnoreFlow, parser,
         UnifiedExtension.metadata to unified,
         OfflineExtension.metadata to lazy { OfflineExtension(app.context) },
-        DhunExtension.metadata to lazy { DhunExtension() },
+//        TestExtension.metadata to lazy { TestExtension() },
+//        DownloadExtension.metadata to lazy { DownloadExtension(app.context) }
+//        TrackerTestExtension.metadata to Injectable { TrackerTestExtension() },
     )
 
     private val settings = app.settings
@@ -93,9 +94,7 @@ class ExtensionLoader(
     private fun setCurrentExtension() {
         val last = settings.getString(LAST_EXTENSION_KEY, null)
         val list = music.value
-        // Prefer the last-used extension, then Dhun, then first enabled
         val extension = list.find { it.id == last && it.isEnabled }
-            ?: list.find { it.id == "dhun" && it.isEnabled }
             ?: list.firstOrNull { it.isEnabled }
             ?: return
         setupMusicExtension(extension, false)
