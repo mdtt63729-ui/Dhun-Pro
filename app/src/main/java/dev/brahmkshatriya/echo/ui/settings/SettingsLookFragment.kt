@@ -11,6 +11,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
+import androidx.recyclerview.widget.LinearLayoutManager
 import dev.brahmkshatriya.echo.MainActivity
 import dev.brahmkshatriya.echo.MainActivity.Companion.AMOLED_KEY
 import dev.brahmkshatriya.echo.MainActivity.Companion.BACK_ANIM
@@ -232,6 +233,10 @@ class SettingsLookFragment : BaseSettingsFragment() {
         private fun recreateSafely() {
             if (recreatePosted) return
             recreatePosted = true
+            // Remember where the list was, so the rebuild doesn't jump back to the top.
+            pendingScroll =
+                (listView?.layoutManager as? LinearLayoutManager)?.findFirstVisibleItemPosition()
+                    ?: 0
             view?.post {
                 recreatePosted = false
                 val activity = activity ?: return@post
@@ -270,6 +275,12 @@ class SettingsLookFragment : BaseSettingsFragment() {
             super.onResume()
             preferenceManager.sharedPreferences!!
                 .registerOnSharedPreferenceChangeListener(listener)
+            // Put the list back where it was before the recreate, instead of jumping to the top.
+            val scroll = pendingScroll
+            if (scroll > 0) {
+                pendingScroll = 0
+                listView?.post { listView?.scrollToPosition(scroll) }
+            }
         }
 
         override fun onPause() {
@@ -280,6 +291,9 @@ class SettingsLookFragment : BaseSettingsFragment() {
     }
 
     companion object {
+
+        /** Preference-list position to restore after a theme rebuild. */
+        private var pendingScroll = 0
 
         fun Activity.changeEnabledComponent(enabled: String, disabled: String) {
             packageManager.setComponentEnabledSetting(

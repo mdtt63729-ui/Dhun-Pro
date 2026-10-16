@@ -155,7 +155,11 @@ class PlayerTrackAdapter(
                 collapsedTrackArtist.text = item?.track?.artists?.joinToString(", ") { it.name }
             }
             val old = item?.unloadedCover?.getCachedDrawable(binding.root.context)
-            item?.track?.cover.loadWithThumb(binding.playerTrackCover, old) {
+            // A loaded track's artwork is usually a much smaller thumbnail than the one the
+            // feed gave us, which made the cover go soft the moment playback started.
+            // Prefer the feed artwork and only fall back to the track's own cover.
+            val cover = item?.unloadedCover ?: item?.track?.cover
+            cover.loadWithThumb(binding.playerTrackCover, old) {
                 val image = it
                     ?: ResourcesCompat.getDrawable(resources, R.drawable.art_music, context.theme)
                 setImageDrawable(image)

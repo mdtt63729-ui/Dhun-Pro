@@ -84,6 +84,8 @@ class MainFragment : Fragment() {
             recyclerView: RecyclerView,
             outline: View,
             bottom: Int = 0,
+            /** Set false to keep the fast-scroll bar off this list. */
+            scrollBar: Boolean = true,
             block: UiViewModel.(UiViewModel.Insets) -> Unit = {}
         ) {
             recyclerView.run {
@@ -97,7 +99,12 @@ class MainFragment : Fragment() {
                     outline.alpha = max(0f, offset - extra)
                 }
             }
-            val scroller = FastScrollerHelper.applyTo(recyclerView)
+            val scroller =
+                if (scrollBar) FastScrollerHelper.applyTo(recyclerView)
+                else {
+                    recyclerView.isVerticalScrollBarEnabled = false
+                    null
+                }
             applyInsets {
                 recyclerView.applyInsets(it, 20, 20, bottom + 4)
                 outline.updatePadding(top = it.top)

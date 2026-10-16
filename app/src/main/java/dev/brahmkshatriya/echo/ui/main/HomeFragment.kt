@@ -55,7 +55,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val binding = FragmentHomeBinding.bind(view)
         setupTransition(view, false, MaterialSharedAxis.Y)
-        applyInsets(binding.recyclerView, binding.appBarOutline) {
+        // The home feed keeps its own scroll bar off — it sat over the hero carousel.
+        applyInsets(binding.recyclerView, binding.appBarOutline, scrollBar = false) {
             binding.swipeRefresh.configure(it)
         }
         val uiViewModel by activityViewModel<UiViewModel>()

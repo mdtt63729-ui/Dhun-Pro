@@ -27,6 +27,9 @@ import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 /** Height of the home hero carousel, in dp. */
 private const val HERO_CAROUSEL_HEIGHT_DP = 360
 
+/** How often the hero carousel advances on its own. */
+private const val HERO_AUTO_ADVANCE_MS = 5_000L
+
 class HorizontalListViewHolder(
     parent: ViewGroup,
     private val listener: FeedClickListener,
@@ -41,6 +44,43 @@ class HorizontalListViewHolder(
     private val carouselLayoutManager = CarouselLayoutManager(HeroCarouselStrategy())
     private val snapHelper = CarouselSnapHelper()
 
+    private var heroIndex = 0
+    private var heroAutoAdvanceRunning = false
+
+    /** Drives the hero carousel forward on its own, looping forever. */
+    private val heroAutoAdvance = object : Runnable {
+        override fun run() {
+            if (!heroMode) return
+            val count = adapter.itemCount
+            if (count > 1) {
+                heroIndex = (heroIndex + 1) % count
+                binding.root.smoothScrollToPosition(heroIndex)
+            }
+            binding.root.postDelayed(this, HERO_AUTO_ADVANCE_MS)
+        }
+    }
+
+    private fun startHeroAutoAdvance() {
+        if (heroAutoAdvanceRunning) return
+        heroAutoAdvanceRunning = true
+        binding.root.postDelayed(heroAutoAdvance, HERO_AUTO_ADVANCE_MS)
+    }
+
+    private fun stopHeroAutoAdvance() {
+        heroAutoAdvanceRunning = false
+        binding.root.removeCallbacks(heroAutoAdvance)
+    }
+
+    override fun onViewAttachedToWindow() {
+        super.onViewAttachedToWindow()
+        if (heroMode) startHeroAutoAdvance()
+    }
+
+    override fun onViewDetachedFromWindow() {
+        super.onViewDetachedFromWindow()
+        stopHeroAutoAdvance()
+    }
+
     init {
         binding.root.setRecycledViewPool(pool)
         binding.root.layoutManager = layoutManager
@@ -53,12 +93,15 @@ class HorizontalListViewHolder(
             heroMode = hero
             adapter = Adapter(listener, hero)
             if (hero) {
+                heroIndex = 0
                 snapHelper.attachToRecyclerView(binding.root)
                 binding.root.layoutManager = carouselLayoutManager
                 binding.root.updateLayoutParams {
                     height = HERO_CAROUSEL_HEIGHT_DP.dpToPx(binding.root.context)
                 }
+                startHeroAutoAdvance()
             } else {
+                stopHeroAutoAdvance()
                 snapHelper.attachToRecyclerView(null)
                 binding.root.layoutManager = layoutManager
                 binding.root.updateLayoutParams { height = WRAP_CONTENT }
