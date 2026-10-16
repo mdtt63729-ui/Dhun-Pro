@@ -185,6 +185,8 @@
 
     <string name="dynamic_player">Dynamic Player Color</string>
     <string name="dynamic_player_summary">Apply color to the player based on the Track Artwork</string>
+    <string name="dynamic_color">Dynamic Color</string>
+    <string name="dynamic_color_summary">Tint the whole app from the current song's artwork</string>
 
     <string name="show_background">Show Background</string>
     <string name="show_background_summary">Background video or blurred artwork of track in player</string>
