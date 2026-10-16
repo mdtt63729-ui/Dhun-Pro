@@ -29,7 +29,7 @@ private const val HERO_CAROUSEL_HEIGHT_DP = 360
 
 class HorizontalListViewHolder(
     parent: ViewGroup,
-    listener: FeedClickListener,
+    private val listener: FeedClickListener,
     pool: RecyclerView.RecycledViewPool,
     private val binding: ItemShelfListsBinding = ItemShelfListsBinding.inflate(
         LayoutInflater.from(parent.context), parent, false

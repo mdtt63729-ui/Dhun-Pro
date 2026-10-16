@@ -18,8 +18,8 @@ class FeedViewModel(
         id: String,
         buttons: Feed.Buttons = Feed.Buttons(),
         noVideos: Boolean = false,
-        heroShelf: Boolean = false,
         vararg extraLoadFlow: Flow<*>,
+        heroShelf: Boolean = false,
         cached: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>? = { null },
         loader: suspend ExtensionLoader.() -> FeedData.State<Feed<Shelf>>?
     ): FeedData {

@@ -13,6 +13,7 @@ import coil3.load
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import coil3.request.error
 import coil3.request.placeholder
 import coil3.request.target

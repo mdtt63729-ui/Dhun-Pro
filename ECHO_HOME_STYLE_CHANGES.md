@@ -94,6 +94,16 @@ Hardware bitmaps are deliberately **not** enabled for the paths that read pixels
 the blurred/gradient background and the circle/avatar transforms still get software bitmaps,
 otherwise `toBitmap()` would throw.
 
+## 6. Build fixes
+
+The first CI run failed to compile; these three fixes are applied:
+
+| Error | Fix |
+|---|---|
+| `getFeedData(...)` callers passing a `Flow` positionally (`DownloadFragment`, `SearchFragment`, `MediaDetailsFragment`) | Moved the new `heroShelf` parameter **after** the `vararg extraLoadFlow`, so existing positional calls still bind correctly. |
+| `HorizontalListViewHolder.kt` — unresolved `listener` in `bind()` | `listener` is now a `private val` constructor property (a plain constructor parameter is only visible in initializers). |
+| `ImageUtils.kt` — unresolved `allowHardware` | Added the missing `import coil3.request.allowHardware` (`ImageRequest.Builder.allowHardware` is an extension function in Coil 3). |
+
 ---
 
 ## Build
