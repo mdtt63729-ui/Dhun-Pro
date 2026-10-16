@@ -123,20 +123,28 @@ object ImageUtils {
         listOf("googleusercontent.com", "ggpht.com", "ytimg.com")
 
     /** The size token of a Google image URL, e.g. `=w120-h120` or `=s160`. */
-    private val sizeToken = Regex("""(?<==)(?:w(\d+)-h(\d+)|s(\d+)|w(\d+)|h(\d+))""")
+    private val sizeToken = Regex("""(?<==)(?:w(\d+)-h(\d+)|s(\d+)|w(\d+)|h(\d+))(?=[-&]|$)""")
 
-    /** Requested thumbnail resolution — matches Echo Music's `resize(544, 544)`. */
-    private const val THUMBNAIL_SIZE = 544
+    /** Small YouTube stills, upgraded to a bigger one that is always available. */
+    private val smallYouTubeStills =
+        Regex("""/(vi|vi_webp)/([^/]+)/(?:default|mqdefault)\.(?:jpg|webp)""")
 
     /**
-     * Ask Google's image service for a bigger source image, the way Echo Music's
-     * `resize(544, 544)` does. Without this the extension's small thumbnail URL is
-     * what gets decoded and every cover looks soft.
+     * Requested thumbnail resolution. Deliberately well above Echo Music's
+     * `resize(544, 544)` so even the full-screen player cover stays sharp; Coil
+     * still downsamples to whatever the view actually needs.
+     */
+    private const val THUMBNAIL_SIZE = 1000
+
+    /**
+     * Ask the image host for a bigger source image. Without this the extension's small
+     * thumbnail URL is what gets decoded and every cover — including the full-screen
+     * player — looks soft.
      */
     private fun String.upscaleThumbnail(size: Int = THUMBNAIL_SIZE): String {
         if (resizableImageHosts.none { contains(it, ignoreCase = true) }) return this
-        val match = sizeToken.find(this) ?: return this
-        return replaceRange(match.range, "w$size-h$size")
+        sizeToken.find(this)?.let { return replaceRange(it.range, "w$size-h$size") }
+        return replace(smallYouTubeStills, "/\$1/\$2/hqdefault.jpg")
     }
 
     /** Bump to invalidate previously cached (lower resolution) images. */
