@@ -505,14 +505,9 @@ class PlayerFragment : Fragment() {
             binding?.playerView?.findViewById<ProgressBar>(androidx.media3.ui.R.id.exo_buffering)
         observe(uiViewModel.playerColors) {
             val context = requireContext()
-            if (context.isPlayerColor() && context.isDynamic()) {
-                if (uiViewModel.currentAppColor != viewModel.playerState.current.value?.track?.id) {
-                    uiViewModel.currentAppColor =
-                        viewModel.playerState.current.value?.track?.id
-                    requireActivity().recreate()
-                    return@observe
-                }
-            }
+            // The whole-app tint (PLAYER_COLOR) is applied when the activity is created.
+            // Recreating here on every track change rebuilt the theme mid-playback, which
+            // made the UI flash, lag and visibly cycle its accent colour. So don't.
             val colors = it ?: context.defaultPlayerColors()
             val binding = binding!!
             adapter.onColorsUpdated()

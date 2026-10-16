@@ -53,8 +53,14 @@ abstract class BaseSettingsFragment : Fragment() {
             binding.extensionIcon.setImageDrawable(it)
         }
 
-        childFragmentManager.beginTransaction().replace(R.id.genericFragmentContainer, creator())
-            .commit()
+        // Only build the child once. On a recreate the FragmentManager has already restored
+        // it — replacing it again threw away its saved state, which is why toggling a theme
+        // setting made the whole list jump back to the top.
+        if (childFragmentManager.findFragmentById(R.id.genericFragmentContainer) == null) {
+            childFragmentManager.beginTransaction()
+                .replace(R.id.genericFragmentContainer, creator())
+                .commit()
+        }
     }
 
     companion object {

@@ -220,6 +220,34 @@ artwork was crisp until the track loaded and then dropped in quality.
 being shown as the transition thumbnail) and only falls back to `track.cover`. This covers both
 the mini player and the full-screen player, since they share the same view holder.
 
+## 18. Accent colour cycling / flash / lag during playback — fixed
+
+`PlayerFragment.configureColors()` recreated the activity **on every track change** whenever
+`PLAYER_COLOR` was on:
+
+```kotlin
+if (context.isPlayerColor() && context.isDynamic()) {
+    if (uiViewModel.currentAppColor != ...track?.id) {
+        requireActivity().recreate()   // <-- here
+    }
+}
+```
+
+Every recreate rebuilt the theme, so the whole UI's accent colour visibly cycled, flashed and
+stuttered mid-playback. The recreate is gone — the whole-app tint is applied once, when the
+activity is created (`MainActivity.applyUiChanges`), which is also how the Dynamic Color switch
+behaves.
+
+## 19. Settings list jumping to the top — properly fixed
+
+`BaseSettingsFragment.onViewCreated()` called `replace(...)` on the child fragment container
+every single time. On a recreate the FragmentManager has *already* restored that child —
+replacing it again threw its saved state (including the preference list's scroll position)
+away. That is why toggling a theme setting made the list jump to the top, and why the earlier
+`pendingScroll` workaround did not stick.
+
+The child is now only created when it is not already there.
+
 ---
 
 ## Build
