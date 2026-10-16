@@ -400,4 +400,10 @@
         <item name="layout_constraintTop_toTopOf">parent</item>
         <item name="layout_constraintWidth_max">@dimen/max_cover_size</item>
     </style>
+
+    <!-- Rounded corners for the home hero carousel cards. -->
+    <style name="ShapeAppearance.Echo.HeroCover" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
 </resources>

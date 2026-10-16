@@ -66,7 +66,11 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
     }
 
     override fun getPackageName(): String {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) runCatching {
+        // The stack walk below is expensive and only meaningful on the main thread,
+        // so skip it entirely for background callers.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            Looper.myLooper() === Looper.getMainLooper()
+        ) runCatching {
             val stackTrace = Looper.getMainLooper().thread.stackTrace
             val isChromiumCall = stackTrace.any { trace ->
                 trace.className.equals(CLASS_NAME, ignoreCase = true)

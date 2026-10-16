@@ -139,7 +139,10 @@ class MediaViewHolder(
             // "list backdrop" (listBg1 / listBg2) is never shown.
             listBg1.isVisible = false
             listBg2.isVisible = false
-            cover.updateLayoutParams { height = width }
+            cover.updateLayoutParams {
+                val target = width
+                if (height != target) height = target
+            }
             item.cover.loadInto(cover, item.placeHolder)
         }
 

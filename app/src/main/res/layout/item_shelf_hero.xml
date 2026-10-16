@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    One page of the home hero carousel (Material 3 "hero" carousel layout).
+
+    Two rules the CarouselLayoutManager enforces:
+      * the item root MUST be a MaskableFrameLayout;
+      * the item width must be a specific dp value (wrap_content is not allowed) —
+        the manager reads the FIRST item's width and lays every item out from it,
+        then adjusts to fit the container.
+
+    Tune the card by changing the width below and HERO_CAROUSEL_HEIGHT_DP in
+    HorizontalListViewHolder.kt.
+-->
+<com.google.android.material.carousel.MaskableFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/carouselContainer"
+    android:layout_width="300dp"
+    android:layout_height="match_parent"
+    android:layout_marginStart="4dp"
+    android:layout_marginEnd="4dp"
+    android:foreground="?attr/selectableItemBackground"
+    app:shapeAppearance="@style/ShapeAppearance.Echo.HeroCover">
+
+    <ImageView
+        android:id="@+id/cover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        tools:src="@tools:sample/avatars[2]" />
+
+    <View
+        android:id="@+id/scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/hero_scrim"
+        android:importantForAccessibility="no" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:shadowColor="#66000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="@android:color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            tools:ignore="TextSizeCheck"
+            tools:text="@tools:sample/full_names" />
+
+        <TextView
+            android:id="@+id/subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:shadowColor="#66000000"
+            android:shadowDx="0"
+            android:shadowDy="1"
+            android:shadowRadius="6"
+            android:textColor="#E6FFFFFF"
+            android:textSize="14sp"
+            tools:text="@tools:sample/first_names" />
+
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/isPlaying"
+        style="@style/SmallNowPlayingButton" />
+
+</com.google.android.material.carousel.MaskableFrameLayout>

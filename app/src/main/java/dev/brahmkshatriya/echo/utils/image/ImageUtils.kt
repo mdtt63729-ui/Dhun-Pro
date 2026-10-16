@@ -47,7 +47,10 @@ object ImageUtils {
     fun ImageHolder?.loadInto(
         imageView: ImageView, placeholder: Int? = null, errorDrawable: Int? = null
     ) = tryWith {
-        val request = createRequest(imageView.context, placeholder, errorDrawable)
+        // Safe for hardware bitmaps: the result is only ever drawn into the view.
+        val request = createRequest(
+            imageView.context, placeholder, errorDrawable, allowHardware = true
+        )
         request.target(imageView)
         imageView.enqueue(request)
     }
@@ -111,9 +114,38 @@ object ImageUtils {
         }
     }
 
+    /**
+     * Image hosts that accept a `=wN-hN` / `=sN` size parameter on the URL.
+     * Rewriting it is how a bigger source image is requested.
+     */
+    private val resizableImageHosts =
+        listOf("googleusercontent.com", "ggpht.com", "ytimg.com")
+
+    /** The size token of a Google image URL, e.g. `=w120-h120` or `=s160`. */
+    private val sizeToken = Regex("""(?<==)(?:w(\d+)-h(\d+)|s(\d+)|w(\d+)|h(\d+))""")
+
+    /** Requested thumbnail resolution — matches Echo Music's `resize(544, 544)`. */
+    private const val THUMBNAIL_SIZE = 544
+
+    /**
+     * Ask Google's image service for a bigger source image, the way Echo Music's
+     * `resize(544, 544)` does. Without this the extension's small thumbnail URL is
+     * what gets decoded and every cover looks soft.
+     */
+    private fun String.upscaleThumbnail(size: Int = THUMBNAIL_SIZE): String {
+        if (resizableImageHosts.none { contains(it, ignoreCase = true) }) return this
+        val match = sizeToken.find(this) ?: return this
+        return replaceRange(match.range, "w$size-h$size")
+    }
+
+    /** Bump to invalidate previously cached (lower resolution) images. */
+    private const val IMAGE_CACHE_VERSION = 2
+
     private val ImageHolder.diskId
         get() = when (this) {
-            is ImageHolder.NetworkRequestImageHolder -> request.toString().hashCode().toString()
+            is ImageHolder.NetworkRequestImageHolder ->
+                "${request.toString().hashCode()}-v$IMAGE_CACHE_VERSION"
+
             else -> null
         }
 
@@ -130,7 +162,7 @@ object ImageUtils {
                     headerBuilder[key] = value
                 }
                 builder.httpHeaders(headerBuilder.build())
-                builder.data(request.url)
+                builder.data(request.url.upscaleThumbnail())
             }
 
             is ImageHolder.ResourceIdImageHolder -> builder.data(resId)
@@ -142,7 +174,8 @@ object ImageUtils {
         context: Context,
         placeholder: Int?,
         errorDrawable: Int?,
-        vararg transformations: Transformation
+        vararg transformations: Transformation,
+        allowHardware: Boolean = false
     ): ImageRequest.Builder {
         val builder = ImageRequest.Builder(context)
         var error = errorDrawable
@@ -157,6 +190,9 @@ object ImageUtils {
         error?.let { builder.error(it) }
         val list = if (crop) listOf(squareCrop, *transformations) else transformations.toList()
         if (list.isNotEmpty()) builder.transformations(list)
+        // Hardware bitmaps are far cheaper to draw, but they cannot be transformed
+        // or read back (toBitmap()), so only allow them when neither is needed.
+        builder.allowHardware(allowHardware && list.isEmpty())
         return builder
     }
 }

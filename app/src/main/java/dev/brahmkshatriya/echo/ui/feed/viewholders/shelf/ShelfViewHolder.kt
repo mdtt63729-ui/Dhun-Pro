@@ -12,6 +12,7 @@ import dev.brahmkshatriya.echo.common.models.Artist
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Track
 import dev.brahmkshatriya.echo.databinding.ItemShelfCategoryBinding
+import dev.brahmkshatriya.echo.databinding.ItemShelfHeroBinding
 import dev.brahmkshatriya.echo.databinding.ItemShelfListsMediaBinding
 import dev.brahmkshatriya.echo.databinding.ItemShelfListsThreeTracksBinding
 import dev.brahmkshatriya.echo.playback.PlayerState
@@ -20,7 +21,9 @@ import dev.brahmkshatriya.echo.ui.feed.FeedClickListener
 import dev.brahmkshatriya.echo.ui.feed.viewholders.CategoryViewHolder.Companion.bind
 import dev.brahmkshatriya.echo.ui.feed.viewholders.MediaViewHolder.Companion.applyCover
 import dev.brahmkshatriya.echo.ui.feed.viewholders.MediaViewHolder.Companion.bind
+import dev.brahmkshatriya.echo.ui.feed.viewholders.MediaViewHolder.Companion.placeHolder
 import dev.brahmkshatriya.echo.ui.feed.viewholders.MediaViewHolder.Companion.subtitle
+import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
 
 sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(view) {
@@ -169,6 +172,113 @@ sealed class ShelfViewHolder<T : ShelfType>(view: View) : ScrollAnimViewHolder(v
                 binding.coverContainer.isPlaying.isVisible = isPlaying
                 (binding.coverContainer.isPlaying.icon as Animatable).start()
             }
+        }
+    }
+
+    /**
+     * A full-bleed hero card, used by the home feed's Material 3 hero carousel.
+     * Renders whatever the shelf holds — a media item, a category, or the first
+     * track of a track group — as artwork with the title/subtitle overlaid.
+     */
+    class Hero(
+        parent: ViewGroup,
+        listener: FeedClickListener,
+        private val binding: ItemShelfHeroBinding = ItemShelfHeroBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        ),
+    ) : ShelfViewHolder<ShelfType>(binding.root) {
+
+        private var item: ShelfType? = null
+
+        init {
+            binding.root.setOnClickListener {
+                when (val shelf = item) {
+                    is ShelfType.Media -> when (val media = shelf.media) {
+                        is Track -> if (media.isPlayable != Track.Playable.Yes) {
+                            listener.onMediaClicked(it, shelf.extensionId, media, shelf.context)
+                        } else listener.onTracksClicked(
+                            it, shelf.extensionId, shelf.context, listOf(media), 0
+                        )
+
+                        else -> listener.onMediaClicked(
+                            it, shelf.extensionId, media, shelf.context
+                        )
+                    }
+
+                    is ShelfType.Category -> listener.openFeed(
+                        it, shelf.extensionId, shelf.id,
+                        shelf.category.title, shelf.category.subtitle, shelf.category.feed
+                    )
+
+                    is ShelfType.ThreeTracks -> {
+                        val track = shelf.tracks.first
+                        if (track.isPlayable != Track.Playable.Yes) listener.onMediaClicked(
+                            it, shelf.extensionId, track, shelf.context
+                        ) else listener.onTracksClicked(
+                            it, shelf.extensionId, shelf.context,
+                            shelf.tracks.toList().filterNotNull(), 0
+                        )
+                    }
+
+                    else -> Unit
+                }
+            }
+            binding.root.setOnLongClickListener {
+                val shelf = item ?: return@setOnLongClickListener false
+                listener.onMediaLongClicked(
+                    it, shelf.extensionId, shelf.context,
+                    when (shelf) {
+                        is ShelfType.Media -> shelf.media
+                        is ShelfType.ThreeTracks -> shelf.tracks.first
+                        else -> null
+                    },
+                    shelf.tabId, bindingAdapterPosition
+                )
+                true
+            }
+        }
+
+        override fun bind(index: Int, list: List<ShelfType>) {
+            val shelf = list.getOrNull(index) ?: return
+            item = shelf
+            val context = binding.root.context
+            when (shelf) {
+                is ShelfType.Media -> {
+                    val media = shelf.media
+                    binding.title.text = media.title
+                    val sub = media.subtitle(context)
+                    binding.subtitle.text = sub
+                    binding.subtitle.isVisible = !sub.isNullOrBlank()
+                    media.cover.loadInto(binding.cover, media.placeHolder)
+                }
+
+                is ShelfType.Category -> {
+                    val category = shelf.category
+                    binding.title.text = category.title
+                    binding.subtitle.text = category.subtitle
+                    binding.subtitle.isVisible = !category.subtitle.isNullOrBlank()
+                    category.image.loadInto(binding.cover)
+                }
+
+                is ShelfType.ThreeTracks -> {
+                    val track = shelf.tracks.first
+                    binding.title.text = track.title
+                    val sub = track.subtitle(context)
+                    binding.subtitle.text = sub
+                    binding.subtitle.isVisible = !sub.isNullOrBlank()
+                    track.cover.loadInto(binding.cover, track.placeHolder)
+                }
+            }
+        }
+
+        override fun onCurrentChanged(current: PlayerState.Current?) {
+            val id = when (val shelf = item) {
+                is ShelfType.Media -> shelf.media.id
+                is ShelfType.ThreeTracks -> shelf.tracks.first.id
+                else -> null
+            }
+            binding.isPlaying.isVisible = current.isPlaying(id)
+            (binding.isPlaying.icon as? Animatable)?.start()
         }
     }
 

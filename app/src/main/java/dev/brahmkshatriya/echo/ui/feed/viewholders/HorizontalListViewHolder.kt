@@ -2,6 +2,8 @@ package dev.brahmkshatriya.echo.ui.feed.viewholders
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePaddingRelative
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -10,6 +12,9 @@ import androidx.recyclerview.widget.RecyclerView
 import dev.brahmkshatriya.echo.common.models.EchoMediaItem
 import dev.brahmkshatriya.echo.common.models.Shelf
 import dev.brahmkshatriya.echo.common.models.Track
+import com.google.android.material.carousel.CarouselLayoutManager
+import com.google.android.material.carousel.CarouselSnapHelper
+import com.google.android.material.carousel.HeroCarouselStrategy
 import dev.brahmkshatriya.echo.databinding.ItemShelfListsBinding
 import dev.brahmkshatriya.echo.playback.PlayerState
 import dev.brahmkshatriya.echo.ui.feed.FeedClickListener
@@ -19,6 +24,9 @@ import dev.brahmkshatriya.echo.ui.feed.viewholders.shelf.ShelfViewHolder
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.applyTranslationAndScaleAnimation
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 
+/** Height of the home hero carousel, in dp. */
+private const val HERO_CAROUSEL_HEIGHT_DP = 360
+
 class HorizontalListViewHolder(
     parent: ViewGroup,
     listener: FeedClickListener,
@@ -27,8 +35,11 @@ class HorizontalListViewHolder(
         LayoutInflater.from(parent.context), parent, false
     )
 ) : FeedViewHolder<FeedType.HorizontalList>(binding.root) {
-    val adapter = Adapter(listener)
+    private var heroMode = false
+    private var adapter = Adapter(listener)
     val layoutManager = LinearLayoutManager(parent.context, RecyclerView.HORIZONTAL, false)
+    private val carouselLayoutManager = CarouselLayoutManager(HeroCarouselStrategy())
+    private val snapHelper = CarouselSnapHelper()
 
     init {
         binding.root.setRecycledViewPool(pool)
@@ -36,8 +47,27 @@ class HorizontalListViewHolder(
     }
 
     override fun bind(feed: FeedType.HorizontalList) {
-        val endPadding = if (feed.shelf is Shelf.Lists.Tracks) 8 else 20
-        binding.root.updatePaddingRelative(end = endPadding.dpToPx(binding.root.context))
+        // The first shelf of the home feed renders as a Material 3 hero carousel.
+        val hero = feed.hero && feed.shelf.list.size > 1
+        if (hero != heroMode) {
+            heroMode = hero
+            adapter = Adapter(listener, hero)
+            if (hero) {
+                snapHelper.attachToRecyclerView(binding.root)
+                binding.root.layoutManager = carouselLayoutManager
+                binding.root.updateLayoutParams {
+                    height = HERO_CAROUSEL_HEIGHT_DP.dpToPx(binding.root.context)
+                }
+            } else {
+                snapHelper.attachToRecyclerView(null)
+                binding.root.layoutManager = layoutManager
+                binding.root.updateLayoutParams { height = WRAP_CONTENT }
+            }
+        }
+        if (!hero) {
+            val endPadding = if (feed.shelf is Shelf.Lists.Tracks) 8 else 20
+            binding.root.updatePaddingRelative(end = endPadding.dpToPx(binding.root.context))
+        }
         adapter.tracks = feed.shelf.list.filterIsInstance<Track>()
         adapter.submitList(feed.shelf.toShelfType(feed.extensionId, feed.context, feed.tabId)) {
             binding.root.adapter = adapter
@@ -82,13 +112,17 @@ class HorizontalListViewHolder(
     }
 
     class Adapter(
-        private val listener: FeedClickListener
+        private val listener: FeedClickListener,
+        private val hero: Boolean = false,
     ) : ListAdapter<ShelfType, ShelfViewHolder<*>>(DiffCallback) {
         var tracks: List<Track> = emptyList()
-        override fun getItemViewType(position: Int) = currentList[position].type.ordinal
+        override fun getItemViewType(position: Int) =
+            if (hero) HERO_VIEW_TYPE else currentList[position].type.ordinal
+
         override fun onCreateViewHolder(
             parent: ViewGroup, viewType: Int
-        ) = when (ShelfType.Enum.entries[viewType]) {
+        ) = if (viewType == HERO_VIEW_TYPE) ShelfViewHolder.Hero(parent, listener)
+        else when (ShelfType.Enum.entries[viewType]) {
             ShelfType.Enum.Category -> ShelfViewHolder.Category(parent, listener)
             ShelfType.Enum.Media -> ShelfViewHolder.Media(parent, listener)
             ShelfType.Enum.ThreeTracks -> ShelfViewHolder.ThreeTracks(
@@ -99,9 +133,13 @@ class HorizontalListViewHolder(
         override fun onBindViewHolder(
             holder: ShelfViewHolder<*>, position: Int
         ) {
-            holder.itemView.applyTranslationAndScaleAnimation(scrollAmountX)
-            holder.scrollX = scrollAmountX
+            if (!hero) {
+                holder.itemView.applyTranslationAndScaleAnimation(scrollAmountX)
+                holder.scrollX = scrollAmountX
+            }
             when (holder) {
+                is ShelfViewHolder.Hero -> holder.bind(position, currentList)
+
                 is ShelfViewHolder.Category -> holder.bind(
                     position,
                     currentList.map { it as ShelfType.Category })
@@ -157,6 +195,10 @@ class HorizontalListViewHolder(
         fun onCurrentChanged(current: PlayerState.Current?) {
             this.current = current
             onEachViewHolder { onCurrentChanged(current) }
+        }
+
+        companion object {
+            const val HERO_VIEW_TYPE = 100
         }
     }
 }

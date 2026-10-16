@@ -50,6 +50,8 @@ data class FeedData(
     private val load: suspend ExtensionLoader.() -> State<Feed<Shelf>>?,
     private val defaultButtons: Feed.Buttons,
     private val noVideos: Boolean,
+    /** Render the feed's first shelf as a Material 3 hero carousel. */
+    private val heroShelf: Boolean = false,
     private val extraLoadFlow: Flow<*>
 ) {
     val current = extensionLoader.current
@@ -216,7 +218,8 @@ data class FeedData(
                         extensionId,
                         state.item,
                         tabId,
-                        noVideos
+                        noVideos,
+                        heroShelf = heroShelf
                     )
                 }
             }
@@ -228,7 +231,9 @@ data class FeedData(
             var start = 0L
             data.map { result ->
                 result.map {
-                    val list = it.toFeedType(feedId, extId, state.item, tabId, noVideos, start)
+                    val list = it.toFeedType(
+                        feedId, extId, state.item, tabId, noVideos, start, heroShelf
+                    )
                     start += list.size
                     list
                 }.getOrThrow()

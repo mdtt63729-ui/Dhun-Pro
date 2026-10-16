@@ -113,6 +113,8 @@ sealed interface FeedType {
         override val context: EchoMediaItem?,
         override val tabId: String?,
         val shelf: Shelf.Lists<*>,
+        /** When true this shelf is rendered as a Material 3 hero carousel. */
+        val hero: Boolean = false,
     ) : FeedType {
         override val id = shelf.id
         override val type = Enum.HorizontalList
@@ -127,6 +129,8 @@ sealed interface FeedType {
             tabId: String?,
             noVideos: Boolean = false,
             start: Long = 0,
+            /** Render the first shelf as a hero carousel (home feed only). */
+            heroShelf: Boolean = false,
         ): List<FeedType> = mapIndexed { index, shelf ->
 
             when (shelf) {
@@ -159,7 +163,10 @@ sealed interface FeedType {
                         if (shelf is Shelf.Lists.Tracks) shelf.list else null
                     )
                 ) + if (shelf.type == Shelf.Lists.Type.Linear) listOf(
-                    HorizontalList(feedId, extId, context, tabId, shelf)
+                    HorizontalList(
+                        feedId, extId, context, tabId, shelf,
+                        hero = heroShelf && index == 0
+                    )
                 )
                 else when (shelf) {
                     is Shelf.Lists.Categories -> shelf.list.map {
