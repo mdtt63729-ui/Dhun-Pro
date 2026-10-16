@@ -172,6 +172,54 @@ Three separate causes:
 | `requireActivity().recreate()` called **inside** the `OnSharedPreferenceChangeListener`, with no guard — a detached fragment threw, and two quick toggles queued two recreates. | `recreateSafely()`: deferred to `view.post`, one at a time, and skipped if the activity is finishing/destroyed. |
 | The Back-Animations switch changed the **enabled activity component** synchronously from the same callback, which can take the running activity down. | Also deferred via `view.post` with the same guards. |
 
+## 12. Hero carousel is now "live" and uncapped
+
+| Change | Where |
+|---|---|
+| The carousel **advances on its own** every `HERO_AUTO_ADVANCE_MS` (5 s), looping forever. | `HorizontalListViewHolder` — a `Runnable` posted on the RecyclerView; started/stopped on attach/detach and when the hero mode changes. |
+| **No item cap** — every item the extension sent goes into the carousel (`HERO_ITEM_LIMIT` removed). | `FeedType.heroItems()` |
+
+## 13. Home scroll bar removed
+
+The fast-scroll bar sat on top of the hero carousel. `MainFragment.applyInsets()` gained a
+`scrollBar` flag and `HomeFragment` passes `false`, so the home feed has no scroll bar at all
+(the `Scroll Bar` setting still controls it everywhere else).
+
+## 14. Dynamic Color is smooth again
+
+Rebuilding the theme means recreating the activity, which flashed and stuttered on **every**
+track change. The live rebuild is gone: `Dynamic Color` now tints the app from the current
+song's artwork **at activity creation** (i.e. it follows the song from the next app start),
+so nothing flashes or lags while you listen. The `PLAYER_COLOR` wiring in `applyUiChanges`
+is unchanged — only the auto-recreate was removed.
+
+## 15. Settings list no longer jumps to the top
+
+Toggling a theme/colour setting recreates the activity, and the preference list came back at
+the top. `SettingsLookFragment` now records the first visible position before the recreate
+(`pendingScroll`) and restores it in `onResume`.
+
+## 16. Mini player → full player is instant now
+
+`GestureListener.handleGestures()` fired the click from `onSingleTapConfirmed`, which the
+framework only delivers **after the double-tap timeout (~300 ms)**. So every tap on the mini
+player sat idle for 300 ms before the full player started opening.
+
+Now `onSingleTapUp` acts immediately whenever there is no double-tap action to wait for
+(which is the case while collapsed), remembers that it did, and swallows the later
+`onSingleTapConfirmed`. A second tap inside the double-tap window is ignored, so a double tap
+still behaves like it used to. When a double-tap action *is* set, nothing changes.
+
+## 17. Player cover no longer goes soft when playback starts
+
+The player cover was loaded from `item.track.cover` — the **loaded** track's artwork, which the
+extension usually returns as a much smaller thumbnail than the one the feed gave us. So the
+artwork was crisp until the track loaded and then dropped in quality.
+
+`PlayerTrackAdapter` now prefers `item.unloadedCover` (the feed artwork, which was already
+being shown as the transition thumbnail) and only falls back to `track.cover`. This covers both
+the mini player and the full-screen player, since they share the same view holder.
+
 ---
 
 ## Build

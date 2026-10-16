@@ -1,10 +1,8 @@
 package dev.brahmkshatriya.echo
 
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
-import android.os.SystemClock
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
@@ -38,7 +35,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.abs
 
 open class MainActivity : AppCompatActivity() {
 
@@ -89,60 +85,11 @@ open class MainActivity : AppCompatActivity() {
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
-        // Remember which artwork colour the theme was actually built from (may be none).
-        if (getSettings().getBoolean(PLAYER_COLOR, false)) {
-            appliedThemeColor = uiViewModel.playerColors.value?.accent
-        }
-        observeDynamicColor()
-    }
-
-    /**
-     * When "Dynamic Color" is on, the whole UI is tinted from the current song's
-     * artwork. The theme can only be rebuilt by recreating the activity, so this does
-     * that — but only when the artwork colour actually changed enough to notice, at
-     * most once every [THEME_RECREATE_INTERVAL_MS], and only while the UI is resumed.
-     */
-    private fun observeDynamicColor() {
-        if (!getSettings().getBoolean(PLAYER_COLOR, false)) return
-        lifecycleScope.launch {
-            uiViewModel.playerColors.collect { colors ->
-                val accent = colors?.accent ?: return@collect
-                val applied = appliedThemeColor
-                if (applied == accent) return@collect
-                if (applied != null && !isThemeColorDifferent(accent, applied)) return@collect
-                val now = SystemClock.elapsedRealtime()
-                if (now - lastThemeRecreate < THEME_RECREATE_INTERVAL_MS) return@collect
-                if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return@collect
-                appliedThemeColor = accent
-                lastThemeRecreate = now
-                recreate()
-            }
-        }
-    }
-
-    private fun isThemeColorDifferent(a: Int, b: Int): Boolean {
-        val first = FloatArray(3)
-        val second = FloatArray(3)
-        Color.colorToHSV(a, first)
-        Color.colorToHSV(b, second)
-        val hue = abs(first[0] - second[0]).let { if (it > 180f) 360f - it else it }
-        val saturation = abs(first[1] - second[1]) * 100f
-        return hue > THEME_HUE_THRESHOLD || saturation > 25f
     }
 
     companion object {
         /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
         const val SPLASH_ANIM_DURATION_MS = 900L
-
-        /** How different two artwork colours must be before the theme is rebuilt. */
-        private const val THEME_HUE_THRESHOLD = 24f
-
-        /** Never rebuild the theme more often than this. */
-        private const val THEME_RECREATE_INTERVAL_MS = 8_000L
-
-        /** The artwork colour the current theme was built from; survives a recreate. */
-        private var appliedThemeColor: Int? = null
-        private var lastThemeRecreate = 0L
 
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"
@@ -178,6 +125,10 @@ open class MainActivity : AppCompatActivity() {
 
             val custom = settings.getBoolean(CUSTOM_THEME_KEY, true)
             val color = if (custom) settings.getInt(COLOR_KEY, context.defaultColor()) else null
+            // "Dynamic Color": tint the whole app from the current song's artwork.
+            // Applied here, at activity creation, on purpose — re-theming a running
+            // activity means recreating it, which flashed and lagged on every track
+            // change. So the colour follows the song from the next app start instead.
             val playerColor = settings.getBoolean(PLAYER_COLOR, false)
             val customColor = uiViewModel.playerColors.value?.accent?.takeIf { playerColor }
 

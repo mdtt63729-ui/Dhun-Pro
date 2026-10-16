@@ -126,9 +126,6 @@ sealed interface FeedType {
     }
 
     companion object {
-        /** How many items the hero carousel holds. */
-        private const val HERO_ITEM_LIMIT = 30
-
         /** Playlists first, then albums, artists and songs. */
         private fun EchoMediaItem.heroPriority() = when (this) {
             is Playlist -> 0
@@ -140,20 +137,17 @@ sealed interface FeedType {
 
         /**
          * The items shown in the home hero carousel: shuffled with a per-load seed so it
-         * is different on every refresh, then stably biased so playlists dominate.
+         * is different on every refresh, then stably biased so playlists dominate. Every
+         * item the extension sent is kept — nothing is capped.
          */
-        private fun Shelf.Lists<*>.heroItems(seed: Long, limit: Int = HERO_ITEM_LIMIT) =
-            when (this) {
-                is Shelf.Lists.Items -> copy(
-                    list = list
-                        .shuffled(Random(seed))
-                        .sortedBy { it.heroPriority() }
-                        .take(limit)
-                )
+        private fun Shelf.Lists<*>.heroItems(seed: Long) = when (this) {
+            is Shelf.Lists.Items -> copy(
+                list = list.shuffled(Random(seed)).sortedBy { it.heroPriority() }
+            )
 
-                is Shelf.Lists.Tracks -> copy(list = list.shuffled(Random(seed)).take(limit))
-                is Shelf.Lists.Categories -> copy(list = list.shuffled(Random(seed)).take(limit))
-            }
+            is Shelf.Lists.Tracks -> copy(list = list.shuffled(Random(seed)))
+            is Shelf.Lists.Categories -> copy(list = list.shuffled(Random(seed)))
+        }
 
         fun List<Shelf>.toFeedType(
             feedId: String,
