@@ -141,6 +141,37 @@ screen, so the home appeared as soon as the first frame was drawn — cutting th
 | `MainActivity.kt` | `installSplashScreen()` + `setKeepOnScreenCondition { !splashFinished }`, released after `SPLASH_ANIM_DURATION_MS` (900 ms). |
 | `values/themes.xml` | Added the `core-splashscreen` equivalents (`windowSplashScreenBackground`, `windowSplashScreenAnimatedIcon`, `windowSplashScreenAnimationDuration`, `postSplashScreenTheme`) so the splash also renders on API < 31. |
 
+## 10. Dynamic Color (whole-UI tint from the song artwork)
+
+The app already had the mechanism — `player_app_color` (`PLAYER_COLOR`) feeds the current
+track's artwork accent into `DynamicColors.setContentBasedSource` — but there was **no switch
+for it** and it was only applied once, when the activity was created.
+
+| File | Change |
+|---|---|
+| `ui/settings/SettingsLookFragment.kt` | New **Dynamic Color** switch (key `player_app_color`, default off) under *Colours*. |
+| `MainActivity.kt` | `observeDynamicColor()` — rebuilds the theme when the artwork accent changes enough to notice. |
+| `res/values/strings.xml` | `dynamic_color`, `dynamic_color_summary`. |
+
+Guards, so it can't thrash: the theme is rebuilt only when the hue moves more than
+`THEME_HUE_THRESHOLD` (24°) or saturation by 25%, at most once every
+`THEME_RECREATE_INTERVAL_MS` (8 s), and only while the UI is `RESUMED`. The applied colour is
+kept in a static so a recreate can't loop.
+
+*(Echo Music / Muso do this in Compose, where the theme simply recomposes — `Bitmap.extractThemeColor()`
++ `Palette` + `Score`. In this XML app the only way to rebuild the theme is to recreate the
+activity, hence the guards.)*
+
+## 11. Settings toggling crash / lag — fixed
+
+Three separate causes:
+
+| Cause | Fix |
+|---|---|
+| **The splash was held on every recreate.** The 900 ms keep-on-screen condition ran on config changes too, so toggling a theme setting recreated the activity and showed the splash again — looking exactly like the app closing and restarting. | `MainActivity` now holds the splash only on a cold start (`savedInstanceState == null`). |
+| `requireActivity().recreate()` called **inside** the `OnSharedPreferenceChangeListener`, with no guard — a detached fragment threw, and two quick toggles queued two recreates. | `recreateSafely()`: deferred to `view.post`, one at a time, and skipped if the activity is finishing/destroyed. |
+| The Back-Animations switch changed the **enabled activity component** synchronously from the same callback, which can take the running activity down. | Also deferred via `view.post` with the same guards. |
+
 ---
 
 ## Build
