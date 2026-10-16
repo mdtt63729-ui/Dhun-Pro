@@ -248,6 +248,22 @@ away. That is why toggling a theme setting made the list jump to the top, and wh
 
 The child is now only created when it is not already there.
 
+## 20. Loaded-track artwork was still soft — fixed
+
+`upscaleThumbnail()` only rewrote a size token when one was **already present**. The loaded
+track's artwork — the one the player endpoint returns, and the one every "now playing" cover
+in the app uses (mini player, full-screen player, queue, notification) — is usually a plain
+URL with **no token at all**, so it was left untouched and decoded small.
+
+Now, for a resizable host (`googleusercontent.com`, `ggpht.com`, `ytimg.com`):
+
+1. a size token, if present, is rewritten to `w1000-h1000`;
+2. a small YouTube still (`default` / `mqdefault`) is swapped for `sddefault`;
+3. otherwise — when the path is a bare id with no other `=` parameter — `=w1000-h1000-l90-rj`
+   is **appended** (any query string is preserved).
+
+The disk cache key version went to 3 so previously cached small covers are re-fetched.
+
 ---
 
 ## Build

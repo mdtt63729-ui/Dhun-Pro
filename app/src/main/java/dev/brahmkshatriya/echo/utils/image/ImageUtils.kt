@@ -143,12 +143,23 @@ object ImageUtils {
      */
     private fun String.upscaleThumbnail(size: Int = THUMBNAIL_SIZE): String {
         if (resizableImageHosts.none { contains(it, ignoreCase = true) }) return this
+        // A size token is already there — just ask for a bigger one.
         sizeToken.find(this)?.let { return replaceRange(it.range, "w$size-h$size") }
-        return replace(smallYouTubeStills, "/\$1/\$2/hqdefault.jpg")
+        // A small YouTube still — swap in a bigger one of the same family.
+        val still = replace(smallYouTubeStills, "/\$1/\$2/sddefault.jpg")
+        if (still != this) return still
+        // No token at all (this is what the loaded track's artwork usually looks like —
+        // the player endpoint returns a plain, unresized URL). Append one, but only when
+        // the path is a bare id so we never disturb an existing '=' parameter or query.
+        val path = substringBefore('?')
+        if (path.contains('=')) return this
+        val suffix = "=w$size-h$size-l90-rj"
+        val query = indexOf('?')
+        return if (query >= 0) path + suffix + substring(query) else path + suffix
     }
 
     /** Bump to invalidate previously cached (lower resolution) images. */
-    private const val IMAGE_CACHE_VERSION = 2
+    private const val IMAGE_CACHE_VERSION = 3
 
     private val ImageHolder.diskId
         get() = when (this) {
