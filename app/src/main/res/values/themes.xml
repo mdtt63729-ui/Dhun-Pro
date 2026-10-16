@@ -14,6 +14,11 @@
         <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">
             @drawable/art_brand
         </item>
+        <!-- core-splashscreen equivalents, so the splash also renders correctly on API < 31 -->
+        <item name="windowSplashScreenBackground">@color/amoled_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/art_splash_anim</item>
+        <item name="windowSplashScreenAnimationDuration">900</item>
+        <item name="postSplashScreenTheme">@style/Default</item>
         <item name="android:colorBackground">?echoBackground</item>
         <item name="snackbarStyle">@style/EchoSnackBar</item>
         <item name="android:dialogTheme">@style/EchoDialog</item>
