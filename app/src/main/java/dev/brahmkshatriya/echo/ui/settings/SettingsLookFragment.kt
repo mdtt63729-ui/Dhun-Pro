@@ -25,6 +25,7 @@ import dev.brahmkshatriya.echo.playback.MediaItemUtils.SHOW_BACKGROUND
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.BACKGROUND_GRADIENT
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.NAVBAR_GRADIENT
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.DYNAMIC_PLAYER
+import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.ANIMATIONS_KEY
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.SCROLL_ANIMATIONS_KEY
@@ -132,6 +133,16 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     setDefaultValue(true)
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = PLAYER_COLOR
+                    title = getString(R.string.dynamic_color)
+                    summary = getString(R.string.dynamic_color_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
@@ -211,23 +222,46 @@ class SettingsLookFragment : BaseSettingsFragment() {
             }
         }
 
+        private var recreatePosted = false
+
+        /**
+         * Recreating straight out of the preference callback — or twice in a row — is what
+         * made toggling a setting crash and stutter. Defer it to the next frame, and never
+         * schedule more than one at a time.
+         */
+        private fun recreateSafely() {
+            if (recreatePosted) return
+            recreatePosted = true
+            view?.post {
+                recreatePosted = false
+                val activity = activity ?: return@post
+                if (activity.isFinishing || activity.isDestroyed) return@post
+                activity.recreate()
+            }
+        }
+
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             when (key) {
                 THEME_KEY, CUSTOM_THEME_KEY, COLOR_KEY, AMOLED_KEY,
                 BIG_COVER, NAVBAR_GRADIENT, BACKGROUND_GRADIENT,
-                    -> {
-                    requireActivity().recreate()
-                }
+                PLAYER_COLOR,
+                    -> recreateSafely()
 
                 BACK_ANIM -> {
                     val pref = preferenceScreen.findPreference<SwitchPreferenceCompat>(key)
                     val enabled = pref?.isChecked == true
-                    val backActivity = MainActivity.Back::class.java.name
-                    val mainActivity = MainActivity::class.java.name
-                    requireActivity().changeEnabledComponent(
-                        if (enabled) backActivity else mainActivity,
-                        if (enabled) mainActivity else backActivity
-                    )
+                    // Swapping the enabled activity component can take the running one
+                    // down, so do it off the preference callback too.
+                    view?.post {
+                        val activity = activity ?: return@post
+                        if (activity.isFinishing || activity.isDestroyed) return@post
+                        val backActivity = MainActivity.Back::class.java.name
+                        val mainActivity = MainActivity::class.java.name
+                        activity.changeEnabledComponent(
+                            if (enabled) backActivity else mainActivity,
+                            if (enabled) mainActivity else backActivity
+                        )
+                    }
                 }
             }
         }
