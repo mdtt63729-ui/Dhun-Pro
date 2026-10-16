@@ -1,6 +1,7 @@
 package dev.brahmkshatriya.echo.ui.feed.viewholders
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import androidx.core.view.updateLayoutParams
@@ -71,19 +72,18 @@ class HorizontalListViewHolder(
         binding.root.removeCallbacks(heroAutoAdvance)
     }
 
-    override fun onViewAttachedToWindow() {
-        super.onViewAttachedToWindow()
-        if (heroMode) startHeroAutoAdvance()
-    }
-
-    override fun onViewDetachedFromWindow() {
-        super.onViewDetachedFromWindow()
-        stopHeroAutoAdvance()
-    }
-
     init {
         binding.root.setRecycledViewPool(pool)
         binding.root.layoutManager = layoutManager
+        binding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {
+                if (heroMode) startHeroAutoAdvance()
+            }
+
+            override fun onViewDetachedFromWindow(v: View) {
+                stopHeroAutoAdvance()
+            }
+        })
     }
 
     override fun bind(feed: FeedType.HorizontalList) {
