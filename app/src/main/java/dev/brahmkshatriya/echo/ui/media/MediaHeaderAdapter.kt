@@ -244,7 +244,7 @@ class MediaHeaderAdapter(
 
             // Muso-style title block: compact cover on the left, title + a one-line summary
             // of the type/song-count beside it.
-            headerCover.loadInto(state.item.cover, R.drawable.art_music)
+            state.item.cover.loadInto(headerCover, R.drawable.art_music)
             headerTitle.text = state.item.title
             val subtitle = span.toString().lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
             headerSubtitle.text = subtitle
