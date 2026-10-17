@@ -106,18 +106,20 @@ open class MainActivity : AppCompatActivity() {
      */
     private var lastReTheme = 0L
 
-    private val reThemeRunnable = Runnable {
-        if (isChangingConfigurations || isFinishing || isDestroyed) return@Runnable
-        // Never rebuild more often than this, so a burst of colour changes cannot turn into a
-        // recreate loop that leaves the app stuck.
-        val now = SystemClock.elapsedRealtime()
-        val since = now - lastReTheme
-        if (since < RE_THEME_MIN_INTERVAL_MS) {
-            handler.postDelayed(this, RE_THEME_MIN_INTERVAL_MS - since)
-            return@Runnable
+    private val reThemeRunnable = object : Runnable {
+        override fun run() {
+            if (isChangingConfigurations || isFinishing || isDestroyed) return
+            // Never rebuild more often than this, so a burst of colour changes cannot turn
+            // into a recreate loop that leaves the app stuck.
+            val now = SystemClock.elapsedRealtime()
+            val since = now - lastReTheme
+            if (since < RE_THEME_MIN_INTERVAL_MS) {
+                handler.postDelayed(this, RE_THEME_MIN_INTERVAL_MS - since)
+                return
+            }
+            lastReTheme = now
+            recreate()
         }
-        lastReTheme = now
-        recreate()
     }
 
     /**
