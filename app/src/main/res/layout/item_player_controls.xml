@@ -183,13 +183,14 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.progressindicator.CircularProgressIndicator
+            <com.google.android.material.loadingindicator.LoadingIndicator
                 android:id="@+id/playingIndicator"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clickable="false"
                 android:indeterminate="true"
-                app:indicatorSize="64dp" />
+                app:indicatorSize="64dp"
+            app:containerColor="@android:color/transparent" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/trackPlayPause"

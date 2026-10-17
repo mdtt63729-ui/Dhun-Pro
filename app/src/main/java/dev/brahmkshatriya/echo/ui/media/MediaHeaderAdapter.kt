@@ -8,6 +8,7 @@ import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
@@ -40,6 +41,7 @@ import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 import dev.brahmkshatriya.echo.ui.common.GridAdapter
 import dev.brahmkshatriya.echo.ui.media.MediaFragment.Companion.getBundle
 import dev.brahmkshatriya.echo.ui.player.PlayerViewModel
+import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import dev.brahmkshatriya.echo.utils.ui.SimpleItemSpan
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.dpToPx
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.toTimeString
@@ -154,8 +156,15 @@ class MediaHeaderAdapter(
             val visible = buttons.filter { it.isVisible }
             binding.buttonGroup.isVisible = visible.isNotEmpty()
             val isNotOne = visible.size > 1
+            // Muso-style: when there are exactly two actions they sit side by side and share
+            // the full width, instead of being a row of small icon buttons.
+            val isPair = visible.size == 2
             visible.forEachIndexed { index, button ->
                 button.isEnabled = true
+                button.updateLayoutParams<LinearLayout.LayoutParams> {
+                    width = if (isPair) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
+                    weight = if (isPair) 1f else 0f
+                }
                 if (index == 0 && isNotOne) button.run {
                     updatePaddingRelative(
                         start = if (icon != null) 16.dpToPx(context) else 24.dpToPx(context),
@@ -173,6 +182,11 @@ class MediaHeaderAdapter(
                 width = if (isNotOne) ViewGroup.LayoutParams.MATCH_PARENT
                 else ViewGroup.LayoutParams.WRAP_CONTENT
                 bottomMargin = if (isNotOne) 0 else (-56).dpToPx(binding.root.context)
+            }
+            // The inner row has to fill the scroll view for the weights above to matter.
+            (visible.firstOrNull()?.parent as? View)?.updateLayoutParams<ViewGroup.LayoutParams> {
+                width = if (isPair) ViewGroup.LayoutParams.MATCH_PARENT
+                else ViewGroup.LayoutParams.WRAP_CONTENT
             }
             binding.description.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 marginEnd = if (isNotOne) 0 else 48.dpToPx(binding.root.context)
@@ -227,6 +241,14 @@ class MediaHeaderAdapter(
                 }
             description.text = span
             description.isVisible = span.isNotEmpty()
+
+            // Muso-style title block: compact cover on the left, title + a one-line summary
+            // of the type/song-count beside it.
+            headerCover.loadInto(state.item.cover, R.drawable.art_music)
+            headerTitle.text = state.item.title
+            val subtitle = span.toString().lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
+            headerSubtitle.text = subtitle
+            headerSubtitle.isVisible = subtitle.isNotBlank()
         }
 
         init {

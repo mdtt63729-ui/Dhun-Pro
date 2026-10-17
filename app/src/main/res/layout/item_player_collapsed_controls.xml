@@ -20,14 +20,15 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center">
 
-            <com.google.android.material.progressindicator.CircularProgressIndicator
+            <com.google.android.material.loadingindicator.LoadingIndicator
                 android:id="@+id/collapsedPlayingIndicator"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:clickable="false"
                 android:indeterminate="true"
-                app:indicatorSize="36dp" />
+                app:indicatorSize="36dp"
+            app:containerColor="@android:color/transparent" />
 
             <com.google.android.material.checkbox.MaterialCheckBox
                 android:id="@+id/collapsedTrackPlayPause"

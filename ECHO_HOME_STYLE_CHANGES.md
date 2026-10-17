@@ -297,6 +297,33 @@ made it look bad is fixed instead:
 
 So the whole UI now follows the song's wallpaper, live, with no blank frame and no slide-in.
 
+## 23. Loading indicators are now Material 3 everywhere
+
+Every indeterminate spinner now uses Material's expressive
+`com.google.android.material.loadingindicator.LoadingIndicator` (the shape-morphing one), and
+none of them draw the solid container circle — `app:containerColor="@android:color/transparent"`
+— so the white disc in the screenshot is gone:
+
+| Layout | Was | Now |
+|---|---|---|
+| `item_loading.xml` | `LoadingIndicator` with the default container | container transparent |
+| `item_loading_small.xml` | container `?colorPrimaryInverse` | container transparent |
+| `dialog_extensions_list.xml` | `CircularProgressIndicator` | `LoadingIndicator` |
+| `item_player_controls.xml` | `CircularProgressIndicator` | `LoadingIndicator` |
+| `item_player_collapsed_controls.xml` | `CircularProgressIndicator` | `LoadingIndicator` |
+| `item_playlist_track.xml` | `CircularProgressIndicator` | `LoadingIndicator` |
+
+`item_download_task.xml` keeps its `CircularProgressIndicator` on purpose — that one is a
+*determinate* ring showing download progress, which the loading indicator cannot express.
+
+## 24. Playlist / media header restyled after Muso
+
+The header (`item_media_header.xml`) now opens with a compact square cover on the left and the
+title block beside it — bold title plus a one-line type/song-count summary — and, when there
+are exactly two actions, they become full-width side-by-side buttons (filled first, outlined
+second), matching Muso's Shuffle/Radio pair. `MediaHeaderAdapter` binds the cover, title and
+subtitle, and `configureButtons()` gives the pair equal weights.
+
 ---
 
 ## Build
