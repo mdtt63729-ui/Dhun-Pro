@@ -95,8 +95,7 @@
                     android:layout_gravity="center"
                     android:indeterminate="true"
                     android:visibility="gone"
-                    app:indicatorColor="?attr/colorTertiary"
-            app:containerColor="@android:color/transparent" />
+                    app:containerColor="@android:color/transparent" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/playlistItemClose"
