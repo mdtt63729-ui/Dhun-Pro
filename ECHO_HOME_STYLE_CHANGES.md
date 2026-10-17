@@ -373,6 +373,22 @@ Two changes:
 `MainActivity` also got a hard floor between theme rebuilds (`RE_THEME_MIN_INTERVAL_MS`, 5 s), so
 a burst of colour changes can never stack up into a recreate loop.
 
+## 28. Playlist screen rebuilt to match Muso's actual layout
+
+Sections 24-25 were based on Muso's `OnlinePlaylistScreen` source, but the app's real playlist
+screen (per the screenshots) is the hero layout. That is what is implemented now:
+
+- **`fragment_media.xml`** — a large full-width hero artwork (`heroCover`, 420dp, centre-crop)
+  inside the collapsing toolbar, with the title **centred over its lower edge**
+  (`expandedTitleGravity="bottom|center_horizontal"`, `HeadlineMedium`). It collapses into the
+  top app bar as you scroll, and the artwork fades out with the collapse offset.
+- **`item_media_header.xml`** — a centred "Playlist •" line, then a **centred action row**: a
+  wide filled Play pill with circular icon buttons either side (the first visible action is
+  labelled and widened, the rest stay circular), then the description and track count.
+- **`MediaFragment`** binds `heroCover` and sets the title on the collapsing toolbar again;
+  **`MediaHeaderAdapter`** no longer binds a cover/title in the header and `configureButtons()`
+  dropped the equal-weight pair logic in favour of the centred row.
+
 ---
 
 ## Build

@@ -156,15 +156,8 @@ class MediaHeaderAdapter(
             val visible = buttons.filter { it.isVisible }
             binding.buttonGroup.isVisible = visible.isNotEmpty()
             val isNotOne = visible.size > 1
-            // Muso-style: when there are exactly two actions they sit side by side and share
-            // the full width, instead of being a row of small icon buttons.
-            val isPair = visible.size == 2
             visible.forEachIndexed { index, button ->
                 button.isEnabled = true
-                button.updateLayoutParams<LinearLayout.LayoutParams> {
-                    width = if (isPair) 0 else ViewGroup.LayoutParams.WRAP_CONTENT
-                    weight = if (isPair) 1f else 0f
-                }
                 if (index == 0 && isNotOne) button.run {
                     updatePaddingRelative(
                         start = if (icon != null) 16.dpToPx(context) else 24.dpToPx(context),
@@ -178,19 +171,11 @@ class MediaHeaderAdapter(
                     text = null
                 }
             }
+            // Muso-style: one centred row — a wide filled pill for the first action and
+            // circular icon buttons either side of it.
             binding.buttonGroup.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                width = if (isNotOne) ViewGroup.LayoutParams.MATCH_PARENT
-                else ViewGroup.LayoutParams.WRAP_CONTENT
-                // There is no collapsing cover to tuck under any more, so no negative margin.
+                width = ViewGroup.LayoutParams.WRAP_CONTENT
                 bottomMargin = 0
-            }
-            // The inner row has to fill the scroll view for the weights above to matter.
-            (visible.firstOrNull()?.parent as? View)?.updateLayoutParams<ViewGroup.LayoutParams> {
-                width = if (isPair) ViewGroup.LayoutParams.MATCH_PARENT
-                else ViewGroup.LayoutParams.WRAP_CONTENT
-            }
-            binding.description.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                marginEnd = 0
             }
         }
 
@@ -243,10 +228,8 @@ class MediaHeaderAdapter(
             description.text = span
             description.isVisible = span.isNotEmpty()
 
-            // Muso-style title block: compact cover on the left, title + a one-line summary
-            // of the type/song-count beside it.
-            state.item.cover.loadInto(headerCover, R.drawable.art_music)
-            headerTitle.text = state.item.title
+            // Muso-style: the artwork and big title are in the collapsing hero; the header
+            // just carries the centred "Playlist •" line.
             val subtitle = span.toString().lineSequence().firstOrNull { it.isNotBlank() }.orEmpty()
             headerSubtitle.text = subtitle
             headerSubtitle.isVisible = subtitle.isNotBlank()

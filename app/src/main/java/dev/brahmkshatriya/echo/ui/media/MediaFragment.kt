@@ -59,6 +59,7 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
         applyBackPressCallback()
         binding.appBarLayout.configureAppBar { offset ->
             binding.appbarOutline.alpha = offset
+            binding.heroCover.alpha = 1 - offset
         }
         binding.toolBar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
@@ -76,9 +77,9 @@ class MediaFragment : Fragment(R.layout.fragment_media), MediaDetailsFragment.Pa
 
         observe(viewModel.itemResultFlow) { result ->
             val item = result?.getOrNull()?.item ?: item
-            binding.toolBar.title = item.title.trim()
-            // The cover now lives in the scrolling header (MediaHeaderAdapter), not in a
-            // collapsing app bar.
+            // The title is drawn by the collapsing hero, centred over the artwork's lower edge.
+            binding.collapsingToolbar.title = item.title.trim()
+            item.cover.loadInto(binding.heroCover, null, item.placeHolder)
             item.background.loadWithThumb(view) { applyGradient(view, it) }
             val isEditable = (result?.getOrNull()?.item as? Playlist)?.isEditable ?: false
             binding.fabEditPlaylist.isVisible = isEditable

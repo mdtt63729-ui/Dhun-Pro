@@ -8,23 +8,45 @@
     android:fitsSystemWindows="true">
 
     <!--
-        Muso-style: a plain top app bar instead of the big collapsing artwork. The cover,
-        title and summary all live in the scrolling header now (item_media_header.xml), so
-        the screen opens straight onto the content.
+        Muso-style: a large full-width hero artwork with the title centred over its lower
+        edge, collapsing into the top app bar as you scroll.
     -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
+        style="@style/EchoAppBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fitsSystemWindows="true"
-        app:elevation="0dp">
+        android:fitsSystemWindows="true">
 
-        <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/toolBar"
-            style="@style/Toolbar"
-            android:background="@android:color/transparent"
-            app:menu="@menu/more_menu"
-            tools:title="@tools:sample/full_names" />
+        <com.google.android.material.appbar.CollapsingToolbarLayout
+            android:id="@+id/collapsingToolbar"
+            style="@style/EchoCollapsingBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:collapsedTitleGravity="center"
+            app:expandedTitleGravity="bottom|center_horizontal"
+            app:expandedTitleMarginBottom="88dp"
+            app:expandedTitleMarginEnd="20dp"
+            app:expandedTitleMarginStart="20dp"
+            app:maxLines="2"
+            app:titleTextAppearance="@style/TextAppearance.Material3.HeadlineMedium">
+
+            <ImageView
+                android:id="@+id/heroCover"
+                android:layout_width="match_parent"
+                android:layout_height="420dp"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop"
+                tools:ignore="ImageContrastCheck" />
+
+            <com.google.android.material.appbar.MaterialToolbar
+                android:id="@+id/toolBar"
+                style="@style/Toolbar"
+                android:background="@android:color/transparent"
+                app:menu="@menu/more_menu"
+                tools:title="@tools:sample/full_names" />
+
+        </com.google.android.material.appbar.CollapsingToolbarLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 

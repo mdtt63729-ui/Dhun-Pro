@@ -5,132 +5,96 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="8dp">
+    android:paddingTop="4dp">
 
-    <!-- Muso-style header: a compact square cover with the title block beside it. -->
-    <LinearLayout
+    <!--
+        Muso-style header. The artwork and the big title live in the collapsing hero above, so
+        this starts with the centred "Playlist •" line, then a centred action row (a wide filled
+        Play pill with circular icon buttons either side), then the description and track count.
+    -->
+
+    <TextView
+        android:id="@+id/headerSubtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingHorizontal="4dp">
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        android:textColor="?colorOnSurfaceVariant"
+        tools:text="Playlist •" />
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/headerCover"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:importantForAccessibility="no"
-            android:scaleType="centerCrop"
-            app:shapeAppearance="@style/ShapeAppearance.Echo.HeroCover" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/headerTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:textAppearance="@style/TextAppearance.Material3.TitleLarge"
-                android:textStyle="bold"
-                tools:text="Bollywood Romantic Moments" />
-
-            <TextView
-                android:id="@+id/headerSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:ellipsize="end"
-                android:maxLines="2"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
-                android:textColor="?colorOnSurfaceVariant"
-                tools:text="Playlist • 42 songs" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <HorizontalScrollView
+    <LinearLayout
         android:id="@+id/buttonGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
-        android:layout_marginBottom="-56dp"
-        android:scrollbars="none">
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/followButton"
+            style="@style/IconButtonOutlined"
+            android:checkable="true"
+            android:checked="false"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:text="@string/follow"
+            app:icon="@drawable/anim_check_circle"
+            android:visibility="gone"
+            app:iconPadding="8dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/followButton"
-                style="@style/IconButtonOutlined"
-                android:checkable="true"
-                android:checked="false"
-                android:paddingStart="24dp"
-                android:paddingEnd="24dp"
-                android:text="@string/follow"
-                app:icon="@drawable/anim_check_circle"
-                android:visibility="gone"
-                app:iconPadding="8dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/savedButton"
+            style="@style/IconButtonOutlined"
+            android:checkable="true"
+            android:checked="false"
+            android:contentDescription="@string/save"
+            android:visibility="gone"
+            app:icon="@drawable/anim_bookmark" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/savedButton"
-                style="@style/IconButtonOutlined"
-                android:checkable="true"
-                android:checked="false"
-                android:contentDescription="@string/save"
-                android:visibility="gone"
-                app:icon="@drawable/anim_bookmark" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/playButton"
+            style="@style/IconButton"
+            android:contentDescription="@string/play"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium.Emphasized"
+            android:visibility="gone"
+            app:icon="@drawable/ic_play"
+            app:iconSize="24dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/playButton"
-                style="@style/IconButton"
-                android:contentDescription="@string/play"
-                android:textAppearance="@style/TextAppearance.Material3.BodyMedium.Emphasized"
-                android:visibility="gone"
-                app:icon="@drawable/ic_play"
-                app:iconSize="24dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/likeButton"
+            style="@style/IconButtonTertiary"
+            android:checkable="true"
+            android:checked="false"
+            android:contentDescription="@string/like"
+            android:visibility="gone"
+            app:icon="@drawable/anim_heart_40dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/likeButton"
-                style="@style/IconButtonTertiary"
-                android:checkable="true"
-                android:checked="false"
-                android:contentDescription="@string/like"
-                android:visibility="gone"
-                app:icon="@drawable/anim_heart_40dp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/hideButton"
+            style="@style/IconButtonTonal"
+            android:checkable="true"
+            android:checked="false"
+            android:contentDescription="@string/hide"
+            app:icon="@drawable/anim_hide" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/hideButton"
-                style="@style/IconButtonTonal"
-                android:checkable="true"
-                android:checked="false"
-                android:contentDescription="@string/hide"
-                app:icon="@drawable/anim_hide" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/radioButton"
+            android:visibility="gone"
+            style="@style/IconButtonTonal"
+            android:contentDescription="@string/radio"
+            app:icon="@drawable/ic_sensors" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/radioButton"
-                android:visibility="gone"
-                style="@style/IconButtonTonal"
-                android:contentDescription="@string/radio"
-                app:icon="@drawable/ic_sensors" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/shareButton"
+            style="@style/IconButtonOutlined"
+            android:contentDescription="@string/share"
+            android:visibility="gone"
+            app:icon="@drawable/ic_share" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/shareButton"
-                style="@style/IconButtonOutlined"
-                android:contentDescription="@string/share"
-                android:visibility="gone"
-                app:icon="@drawable/ic_share" />
-
-        </LinearLayout>
-    </HorizontalScrollView>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -164,7 +128,7 @@
         android:id="@+id/description"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="48dp"
+        android:layout_marginTop="16dp"
         android:minHeight="48dp"
         android:paddingHorizontal="4dp"
         android:paddingBottom="8dp"
