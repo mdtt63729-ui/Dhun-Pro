@@ -21,7 +21,8 @@
             android:clipToPadding="false"
             android:paddingVertical="72dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            tools:listitem="@layout/item_lyric" />
+            tools:listitem="@layout/item_lyric"
+            android:scrollbars="none" />
 
     </com.bosphere.fadingedgelayout.FadingEdgeLayout>
 
@@ -86,7 +87,8 @@
             android:background="?navBackground"
             android:clipToPadding="false"
             android:padding="4dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            android:scrollbars="none" />
 
     </com.google.android.material.search.SearchView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

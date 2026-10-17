@@ -120,6 +120,15 @@
         <item name="showAnimationBehavior">outward</item>
     </style>
 
+    <!--
+        Material 3 expressive loading indicator, without its solid container disc. The disc is
+        what showed up as the white circle; forcing it transparent here means every
+        LoadingIndicator in the app is just the morphing shape, wherever it is used.
+    -->
+    <style name="EchoLoadingIndicator" parent="Widget.Material3.LoadingIndicator">
+        <item name="containerColor">@android:color/transparent</item>
+    </style>
+
     <style name="TextInput" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>

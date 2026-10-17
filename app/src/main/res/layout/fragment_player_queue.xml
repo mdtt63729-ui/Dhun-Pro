@@ -10,6 +10,7 @@
     android:clipToPadding="false"
     android:paddingVertical="4dp"
     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-    tools:listitem="@layout/item_playlist_track">
+    tools:listitem="@layout/item_playlist_track"
+    android:scrollbars="none">
 
 </androidx.recyclerview.widget.RecyclerView>

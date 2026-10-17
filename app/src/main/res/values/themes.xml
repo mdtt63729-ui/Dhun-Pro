@@ -31,6 +31,7 @@
         <item name="tabStyle">@style/EchoTabLayout</item>
         <item name="circularProgressIndicatorStyle">@style/EchoCircularProgressIndicator</item>
         <item name="linearProgressIndicatorStyle">@style/EchoLinearProgressIndicator</item>
+        <item name="loadingIndicatorStyle">@style/EchoLoadingIndicator</item>
 
         <item name="echoBackground">?colorSurface</item>
         <item name="navBackground">?colorSurfaceContainer</item>

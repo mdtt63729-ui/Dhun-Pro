@@ -339,6 +339,17 @@ artwork in `fragment_media.xml`, so it still looked like before. That is removed
 The screen now opens straight onto the header: compact cover, title, summary, the action row,
 and the track list.
 
+## 26. Loading indicator disc, properly this time — and the player's scroll bar
+
+The white circle was still showing even though each layout set `containerColor` to transparent,
+so it is now forced at the theme level instead — `loadingIndicatorStyle` is overridden with
+`EchoLoadingIndicator` (parent `Widget.Material3.LoadingIndicator`) whose `containerColor` is
+transparent. That covers every `LoadingIndicator` in the app, wherever it is inflated from.
+
+The full-screen player had a scroll bar down its right edge. `fragment_player.xml` (the
+`ViewPager2`), `fragment_player_queue.xml` and both lists in `fragment_player_lyrics.xml` now
+carry `android:scrollbars="none"`.
+
 ---
 
 ## Build
