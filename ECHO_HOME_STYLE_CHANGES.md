@@ -350,6 +350,29 @@ The full-screen player had a scroll bar down its right edge. `fragment_player.xm
 `ViewPager2`), `fragment_player_queue.xml` and both lists in `fragment_player_lyrics.xml` now
 carry `android:scrollbars="none"`.
 
+## 27. The real cause of the theme-change lag: Palette on the main thread
+
+Every time the song changed, `PlayerFragment.configureColors()` ran
+
+```kotlin
+context.getColorsFrom(drawable?.toBitmap())
+```
+
+on the **main thread** — rasterising the cover and then walking *every pixel* of it with
+`Palette.from(...).generate()`. On a full-size cover that is several hundred milliseconds of
+frozen UI, and it ran on every track change *and* on every theme rebuild, which is why the
+colour change lagged and the app seemed to stick.
+
+Two changes:
+
+- `PlayerColors` now runs Palette on a 128px copy (`paletteSample()`), for both
+  `getColorsFrom()` and `getDominantColor()`. Same colours, a fraction of the cost.
+- `PlayerFragment` does the rasterising *and* the extraction inside
+  `withContext(Dispatchers.Default)`, so nothing touches the main thread.
+
+`MainActivity` also got a hard floor between theme rebuilds (`RE_THEME_MIN_INTERVAL_MS`, 5 s), so
+a burst of colour changes can never stack up into a recreate loop.
+
 ---
 
 ## Build

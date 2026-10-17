@@ -16,7 +16,7 @@ data class PlayerColors(
     companion object {
         fun Context.getColorsFrom(bitmap: Bitmap?): PlayerColors? {
             bitmap ?: return null
-            val palette = Palette.from(bitmap).generate()
+            val palette = Palette.from(bitmap.paletteSample()).generate()
             return if (!isAmoled()) {
                 val lightMode = !isNightMode()
                 val lightSwatch = palette.run {
@@ -52,7 +52,19 @@ data class PlayerColors(
         }
 
         fun getDominantColor(bitmap: Bitmap): Int {
-            return Palette.from(bitmap).generate().getDominantColor(0)
+            return Palette.from(bitmap.paletteSample()).generate().getDominantColor(0)
         }
+
+        /**
+         * Palette walks every pixel, so a full-size cover costs hundreds of milliseconds. A
+         * small copy picks the same colours and is an order of magnitude cheaper — this is what
+         * used to stall the app every time the song (and so the theme colour) changed.
+         */
+        private const val PALETTE_SAMPLE_SIZE = 128
+
+        private fun Bitmap.paletteSample(): Bitmap =
+            if (width > PALETTE_SAMPLE_SIZE || height > PALETTE_SAMPLE_SIZE)
+                Bitmap.createScaledBitmap(this, PALETTE_SAMPLE_SIZE, PALETTE_SAMPLE_SIZE, true)
+            else this
     }
 }

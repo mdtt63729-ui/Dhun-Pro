@@ -6,6 +6,7 @@ import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -103,8 +104,19 @@ open class MainActivity : AppCompatActivity() {
      * thrash it, and `setupTransition` skips the fragment animation while
      * `isChangingConfigurations` is set, so the screen does not flash blank or slide in.
      */
+    private var lastReTheme = 0L
+
     private val reThemeRunnable = Runnable {
         if (isChangingConfigurations || isFinishing || isDestroyed) return@Runnable
+        // Never rebuild more often than this, so a burst of colour changes cannot turn into a
+        // recreate loop that leaves the app stuck.
+        val now = SystemClock.elapsedRealtime()
+        val since = now - lastReTheme
+        if (since < RE_THEME_MIN_INTERVAL_MS) {
+            handler.postDelayed(this, RE_THEME_MIN_INTERVAL_MS - since)
+            return@Runnable
+        }
+        lastReTheme = now
         recreate()
     }
 
@@ -146,6 +158,9 @@ open class MainActivity : AppCompatActivity() {
 
         /** Debounce the rebuild so skipping through tracks does not thrash it. */
         private const val RE_THEME_DELAY_MS = 700L
+
+        /** Hard floor between rebuilds, so colour changes can never stack up into a loop. */
+        private const val RE_THEME_MIN_INTERVAL_MS = 5_000L
 
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"

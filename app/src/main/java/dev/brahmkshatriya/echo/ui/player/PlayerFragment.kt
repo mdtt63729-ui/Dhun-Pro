@@ -70,7 +70,11 @@ import dev.brahmkshatriya.echo.ui.player.quality.FormatUtils.getDetails
 import dev.brahmkshatriya.echo.ui.player.quality.QualitySelectionBottomSheet
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import androidx.lifecycle.lifecycleScope
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadBlurred
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animateVisibility
 import dev.brahmkshatriya.echo.utils.ui.AutoClearedValue.Companion.autoClearedNullable
@@ -494,9 +498,17 @@ class PlayerFragment : Fragment() {
                 last = drawable
                 val context = requireContext()
                 uiViewModel.playerDrawable.value = drawable
-                val colors =
-                    if (context.isDynamic()) context.getColorsFrom(drawable?.toBitmap()) else null
-                uiViewModel.playerColors.value = colors
+                // Rasterising the cover and running Palette over it used to happen right here,
+                // on the main thread — that is what made every track change (and every theme
+                // rebuild) stutter or freeze. Both now run on a background dispatcher.
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val colors = if (context.isDynamic()) {
+                        withContext(Dispatchers.Default) {
+                            context.getColorsFrom(drawable?.toBitmap())
+                        }
+                    } else null
+                    uiViewModel.playerColors.value = colors
+                }
                 if (context.showBackground()) binding?.bgImage?.loadBlurred(drawable, 12f)
                 else binding?.bgImage?.setImageDrawable(null)
             }
