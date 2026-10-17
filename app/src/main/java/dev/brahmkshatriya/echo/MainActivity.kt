@@ -1,8 +1,11 @@
 package dev.brahmkshatriya.echo
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Color.TRANSPARENT
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -11,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
@@ -35,6 +39,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.abs
 
 open class MainActivity : AppCompatActivity() {
 
@@ -85,11 +90,77 @@ open class MainActivity : AppCompatActivity() {
             add<PlayerFragment>(R.id.playerFragmentContainer, "player")
         }
         setupIntents(uiViewModel)
+        observeDynamicColor()
+    }
+
+    /** Set when the song's artwork colour changed while we were on screen. */
+    private var themeDirty = false
+
+    /** The artwork colour the theme currently on screen was built from. */
+    private var appliedAccent: Int? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    /**
+     * In this app a theme change means recreating the activity — that is the only way to
+     * re-tint the whole UI. Doing it while the user is looking at the screen is exactly the
+     * flash and stutter we are fixing, so it is deferred until the app is in the background:
+     * the colour still follows the song, but the rebuild itself is never seen.
+     */
+    private val reThemeRunnable = Runnable {
+        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@Runnable
+        if (isChangingConfigurations || isFinishing || isDestroyed) return@Runnable
+        themeDirty = false
+        recreate()
+    }
+
+    /**
+     * When "Dynamic Color" is on, remember each time the song's artwork colour has moved far
+     * enough to be worth a re-tint. The re-tint itself happens off-screen (see above).
+     */
+    private fun observeDynamicColor() {
+        if (!getSettings().getBoolean(PLAYER_COLOR, false)) return
+        appliedAccent = uiViewModel.playerColors.value?.accent
+        lifecycleScope.launch {
+            uiViewModel.playerColors.collect { colors ->
+                val accent = colors?.accent ?: return@collect
+                val applied = appliedAccent
+                if (applied != null && accent == applied) return@collect
+                if (applied != null && !isThemeColorDifferent(accent, applied)) return@collect
+                themeDirty = true
+            }
+        }
+    }
+
+    private fun isThemeColorDifferent(a: Int, b: Int): Boolean {
+        val first = FloatArray(3)
+        val second = FloatArray(3)
+        Color.colorToHSV(a, first)
+        Color.colorToHSV(b, second)
+        val hue = abs(first[0] - second[0]).let { if (it > 180f) 360f - it else it }
+        return hue > THEME_HUE_THRESHOLD || abs(first[1] - second[1]) * 100f > 25f
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Back on screen — cancel any pending rebuild rather than doing it under the user.
+        handler.removeCallbacks(reThemeRunnable)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (themeDirty) handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
     }
 
     companion object {
         /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
         const val SPLASH_ANIM_DURATION_MS = 900L
+
+        /** How different two artwork colours must be before the theme is worth rebuilding. */
+        private const val THEME_HUE_THRESHOLD = 24f
+
+        /** Wait this long off-screen before rebuilding, so a quick app-switch is ignored. */
+        private const val RE_THEME_DELAY_MS = 1_500L
 
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"

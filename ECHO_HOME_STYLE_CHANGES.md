@@ -264,6 +264,24 @@ Now, for a resizable host (`googleusercontent.com`, `ggpht.com`, `ytimg.com`):
 
 The disk cache key version went to 3 so previously cached small covers are re-fetched.
 
+## 21. Theme colour now follows the song — smoothly, with no visible rebuild
+
+In an XML/View app a theme change means **recreating the activity**; there is no re-compose.
+That is the only way to re-tint the whole UI, and doing it while the user is looking at the
+screen is exactly the flash, the stutter and the content reloading (the screen going blank
+for a moment) that the screen recording shows.
+
+The rebuild is therefore deferred until it cannot be seen. `MainActivity` now:
+
+- remembers the artwork colour the on-screen theme was built from (`appliedAccent`);
+- watches the player's colours while the app is visible and, when the song's accent has moved
+  far enough to matter (`THEME_HUE_THRESHOLD`), just sets a flag — it does **not** rebuild;
+- rebuilds only once the app has been off-screen for `RE_THEME_DELAY_MS` (1.5 s), and cancels
+  that if the user comes back first.
+
+So the whole-app colour still follows the song, but the rebuild happens in the background and
+the user never sees it — no lag, no loading, no colour cycling.
+
 ---
 
 ## Build
