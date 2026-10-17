@@ -324,6 +324,21 @@ are exactly two actions, they become full-width side-by-side buttons (filled fir
 second), matching Muso's Shuffle/Radio pair. `MediaHeaderAdapter` binds the cover, title and
 subtitle, and `configureButtons()` gives the pair equal weights.
 
+## 25. The big collapsing cover is gone — the playlist screen really is Muso-shaped now
+
+Section 24 only restyled the header, but the screen was still dominated by the collapsing
+artwork in `fragment_media.xml`, so it still looked like before. That is removed:
+
+- `fragment_media.xml` is now a plain `MaterialToolbar` in an `AppBarLayout` — no
+  `CollapsingToolbarLayout`, no big cover, no `endIcon`.
+- `MediaFragment` no longer touches `coverContainer` / `cover` / `endIcon`; the cover, title
+  and summary come from the scrolling header instead.
+- `MediaHeaderAdapter.configureButtons()` dropped the old `-56dp` negative margin (it existed
+  only to tuck the buttons under the collapsing cover) and the description's trailing margin.
+
+The screen now opens straight onto the header: compact cover, title, summary, the action row,
+and the track list.
+
 ---
 
 ## Build

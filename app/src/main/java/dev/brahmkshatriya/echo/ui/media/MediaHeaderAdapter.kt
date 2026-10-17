@@ -181,7 +181,8 @@ class MediaHeaderAdapter(
             binding.buttonGroup.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 width = if (isNotOne) ViewGroup.LayoutParams.MATCH_PARENT
                 else ViewGroup.LayoutParams.WRAP_CONTENT
-                bottomMargin = if (isNotOne) 0 else (-56).dpToPx(binding.root.context)
+                // There is no collapsing cover to tuck under any more, so no negative margin.
+                bottomMargin = 0
             }
             // The inner row has to fill the scroll view for the weights above to matter.
             (visible.firstOrNull()?.parent as? View)?.updateLayoutParams<ViewGroup.LayoutParams> {
@@ -189,7 +190,7 @@ class MediaHeaderAdapter(
                 else ViewGroup.LayoutParams.WRAP_CONTENT
             }
             binding.description.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                marginEnd = if (isNotOne) 0 else 48.dpToPx(binding.root.context)
+                marginEnd = 0
             }
         }
 
