@@ -282,6 +282,21 @@ The rebuild is therefore deferred until it cannot be seen. `MainActivity` now:
 So the whole-app colour still follows the song, but the rebuild happens in the background and
 the user never sees it — no lag, no loading, no colour cycling.
 
+## 22. Correction: the re-theme is on screen again — but it no longer blanks the screen
+
+Deferring the rebuild to the background (section 21) made the colour stop following the song
+while you were using the app. That was wrong. The rebuild is back on screen, and what actually
+made it look bad is fixed instead:
+
+- `AnimationUtils.setupTransition()` returned early when `activity.isChangingConfigurations`
+  is true — which is exactly the flag `recreate()` sets. The `MaterialSharedAxis` enter
+  transition was what made the content flash blank and slide back in on every colour change.
+  With no transition the new theme is simply there.
+- The rebuild is debounced by `RE_THEME_DELAY_MS` (700 ms) so skipping through tracks does not
+  thrash it, and it is skipped while one is already in flight.
+
+So the whole UI now follows the song's wallpaper, live, with no blank frame and no slide-in.
+
 ---
 
 ## Build

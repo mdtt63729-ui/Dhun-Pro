@@ -14,7 +14,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.color.DynamicColors
 import com.google.android.material.color.DynamicColorsOptions
@@ -93,9 +92,6 @@ open class MainActivity : AppCompatActivity() {
         observeDynamicColor()
     }
 
-    /** Set when the song's artwork colour changed while we were on screen. */
-    private var themeDirty = false
-
     /** The artwork colour the theme currently on screen was built from. */
     private var appliedAccent: Int? = null
 
@@ -103,20 +99,18 @@ open class MainActivity : AppCompatActivity() {
 
     /**
      * In this app a theme change means recreating the activity — that is the only way to
-     * re-tint the whole UI. Doing it while the user is looking at the screen is exactly the
-     * flash and stutter we are fixing, so it is deferred until the app is in the background:
-     * the colour still follows the song, but the rebuild itself is never seen.
+     * re-tint the whole UI. The rebuild is debounced so skipping through tracks does not
+     * thrash it, and `setupTransition` skips the fragment animation while
+     * `isChangingConfigurations` is set, so the screen does not flash blank or slide in.
      */
     private val reThemeRunnable = Runnable {
-        if (lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@Runnable
         if (isChangingConfigurations || isFinishing || isDestroyed) return@Runnable
-        themeDirty = false
         recreate()
     }
 
     /**
-     * When "Dynamic Color" is on, remember each time the song's artwork colour has moved far
-     * enough to be worth a re-tint. The re-tint itself happens off-screen (see above).
+     * When "Dynamic Color" is on, rebuild the theme whenever the song's artwork colour has
+     * moved far enough to be worth it — so the whole UI follows the song's wallpaper.
      */
     private fun observeDynamicColor() {
         if (!getSettings().getBoolean(PLAYER_COLOR, false)) return
@@ -127,7 +121,8 @@ open class MainActivity : AppCompatActivity() {
                 val applied = appliedAccent
                 if (applied != null && accent == applied) return@collect
                 if (applied != null && !isThemeColorDifferent(accent, applied)) return@collect
-                themeDirty = true
+                handler.removeCallbacks(reThemeRunnable)
+                handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
             }
         }
     }
@@ -141,16 +136,6 @@ open class MainActivity : AppCompatActivity() {
         return hue > THEME_HUE_THRESHOLD || abs(first[1] - second[1]) * 100f > 25f
     }
 
-    override fun onStart() {
-        super.onStart()
-        // Back on screen — cancel any pending rebuild rather than doing it under the user.
-        handler.removeCallbacks(reThemeRunnable)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (themeDirty) handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
-    }
 
     companion object {
         /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
@@ -159,8 +144,8 @@ open class MainActivity : AppCompatActivity() {
         /** How different two artwork colours must be before the theme is worth rebuilding. */
         private const val THEME_HUE_THRESHOLD = 24f
 
-        /** Wait this long off-screen before rebuilding, so a quick app-switch is ignored. */
-        private const val RE_THEME_DELAY_MS = 1_500L
+        /** Debounce the rebuild so skipping through tracks does not thrash it. */
+        private const val RE_THEME_DELAY_MS = 700L
 
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"

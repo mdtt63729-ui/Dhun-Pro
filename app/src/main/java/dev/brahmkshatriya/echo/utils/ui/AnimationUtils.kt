@@ -173,6 +173,10 @@ object AnimationUtils {
             view.setBackgroundColor(color)
         }
 
+        // A theme/colour change recreates the activity. The enter transition is what makes
+        // the screen flash blank and slide back in on every colour change, so skip it then.
+        if (activity?.isChangingConfigurations == true) return
+
         if (view.animations) {
 //        val transitionName = arguments?.getString("transitionName")
 //        if (transitionName != null) {
