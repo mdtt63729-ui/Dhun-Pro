@@ -85,6 +85,13 @@ object SettingsKeys {
     const val UPDATE_CHANNEL_STABLE = "stable"
     const val UPDATE_CHANNEL_BETA = "beta"
 
+    /** Extra vertical padding on every lyric line, in dp. */
+    const val LYRICS_LINE_SPACING = "lyrics_line_spacing"
+    const val LYRICS_LINE_SPACING_DEFAULT = 4
+
+    /** Ask image hosts for smaller thumbnails to save data. */
+    const val LOW_DATA_MODE = "low_data_mode"
+
     /** Action: open the About screen. */
     const val ABOUT = "about"
 

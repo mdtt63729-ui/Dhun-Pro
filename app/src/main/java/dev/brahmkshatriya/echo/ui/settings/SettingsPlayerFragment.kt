@@ -98,6 +98,16 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.LOW_DATA_MODE
+                    title = getString(R.string.low_data_mode)
+                    summary = getString(R.string.low_data_mode_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {

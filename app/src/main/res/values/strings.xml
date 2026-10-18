@@ -551,4 +551,12 @@
     <string name="no_changelog">No release notes available</string>
     <string name="retry">Retry</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 6) -->
+    <string name="lyrics_line_spacing">Lyrics Line Spacing</string>
+    <string name="lyrics_line_spacing_summary">Extra space between lyric lines</string>
+    <string name="low_data_mode">Low Data Mode</string>
+    <string name="low_data_mode_summary">Load smaller artwork to save mobile data</string>
+
 </resources>

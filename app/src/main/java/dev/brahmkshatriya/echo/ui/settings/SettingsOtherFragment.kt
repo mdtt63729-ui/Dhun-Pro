@@ -267,6 +267,19 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                         true
                     }
                 }
+
+                TransitionPreference(context).apply {
+                    key = SettingsKeys.CHANGELOG
+                    title = getString(R.string.changelog)
+                    summary = getString(R.string.changelog_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        requireActivity().openFragment<ChangelogFragment>()
+                        true
+                    }
+                }
             }
         }
     }

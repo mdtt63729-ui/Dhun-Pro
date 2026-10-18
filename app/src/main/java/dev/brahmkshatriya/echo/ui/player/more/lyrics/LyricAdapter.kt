@@ -12,6 +12,8 @@ import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.defaultPlayerCol
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.applyTranslationYAnimation
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimListAdapter
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 class LyricAdapter(
     val uiViewModel: UiViewModel, val listener: Listener,
@@ -57,6 +59,18 @@ class LyricAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ItemLyricBinding.inflate(inflater, parent, false)
+        // Added from ArchiveTune: "Lyrics line spacing" widens the gap between lines.
+        val extra = (
+            parent.context.getSettings().getInt(
+                SettingsKeys.LYRICS_LINE_SPACING, SettingsKeys.LYRICS_LINE_SPACING_DEFAULT
+            ) * parent.resources.displayMetrics.density
+            ).toInt()
+        if (extra > 0) binding.root.setPadding(
+            binding.root.paddingLeft,
+            binding.root.paddingTop + extra,
+            binding.root.paddingRight,
+            binding.root.paddingBottom + extra
+        )
         return ViewHolder(binding)
     }
 

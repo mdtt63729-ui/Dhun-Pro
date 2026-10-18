@@ -146,6 +146,14 @@ object ImageUtils {
      */
     private const val THUMBNAIL_SIZE = 1000
 
+    /** What "Low Data Mode" asks for instead. */
+    private const val LOW_DATA_THUMBNAIL_SIZE = 300
+
+    /** Added from ArchiveTune: pick the requested thumbnail size. */
+    private fun sizeFor(context: Context): Int =
+        if (context.getSettings().getBoolean(SettingsKeys.LOW_DATA_MODE, false))
+            LOW_DATA_THUMBNAIL_SIZE else THUMBNAIL_SIZE
+
     /**
      * Ask the image host for a bigger source image. Without this the extension's small
      * thumbnail URL is what gets decoded and every cover — including the full-screen
@@ -182,6 +190,7 @@ object ImageUtils {
     private fun createRequest(
         imageHolder: ImageHolder,
         builder: ImageRequest.Builder,
+        context: Context,
     ) = imageHolder.run {
         builder.diskCacheKey(diskId)
         when (this) {
@@ -192,7 +201,8 @@ object ImageUtils {
                     headerBuilder[key] = value
                 }
                 builder.httpHeaders(headerBuilder.build())
-                builder.data(request.url.upscaleThumbnail())
+                // Added from ArchiveTune: "Low Data Mode" asks the host for smaller artwork.
+                builder.data(request.url.upscaleThumbnail(sizeFor(context)))
             }
 
             is ImageHolder.ResourceIdImageHolder -> builder.data(resId)
@@ -215,7 +225,7 @@ object ImageUtils {
             if (error != null) builder.data(error)
             return builder
         }
-        createRequest(this, builder)
+        createRequest(this, builder, context)
         placeholder?.let { builder.placeholder(it) }
         error?.let { builder.error(it) }
         val list = if (crop) listOf(squareCrop, *transformations) else transformations.toList()

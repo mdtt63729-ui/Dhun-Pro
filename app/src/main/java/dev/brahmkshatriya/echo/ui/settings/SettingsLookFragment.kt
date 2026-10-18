@@ -318,6 +318,15 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     }
                     addPreference(this)
                 }
+
+                MaterialSliderPreference(context, 0, 24, allowOverride = true).apply {
+                    key = SettingsKeys.LYRICS_LINE_SPACING
+                    title = getString(R.string.lyrics_line_spacing)
+                    summary = getString(R.string.lyrics_line_spacing_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(SettingsKeys.LYRICS_LINE_SPACING_DEFAULT)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
