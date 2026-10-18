@@ -93,6 +93,15 @@ object SettingsKeys {
     const val IMAGE_CACHE_SIZE = "image_cache_size"
     const val IMAGE_CACHE_SIZE_DEFAULT = 250
 
+    /** Action: wipe the image disk cache. */
+    const val CLEAR_IMAGE_CACHE = "clear_image_cache"
+
+    /**
+     * Action: wipe the downloaded-song cache. (The *size* of that cache is the app's existing
+     * `cache_size` setting, so there is deliberately no second size setting here.)
+     */
+    const val CLEAR_SONG_CACHE = "clear_song_cache"
+
     // --- Palettes ---------------------------------------------------------------------------
 
     /**

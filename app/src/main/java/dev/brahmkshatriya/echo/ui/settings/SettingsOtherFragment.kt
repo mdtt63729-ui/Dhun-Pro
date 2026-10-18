@@ -21,6 +21,11 @@ import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.utils.net.HttpClient
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialTextInputPreference
+import android.widget.Toast
+import androidx.media3.datasource.cache.SimpleCache
+import coil3.imageLoader
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
+import org.koin.core.context.GlobalContext
 
 class SettingsOtherFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.other_settings)
@@ -159,6 +164,60 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     isIconSpaceReserved = false
                     setDefaultValue("")
                     addPreference(this)
+                }
+            }
+
+            // ---- added from ArchiveTune: Storage ----
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.storage)
+                key = "storage"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialSliderPreference(context, 50, 1000, allowOverride = true).apply {
+                    key = SettingsKeys.IMAGE_CACHE_SIZE
+                    title = getString(R.string.image_cache_size)
+                    summary = getString(R.string.image_cache_size_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(SettingsKeys.IMAGE_CACHE_SIZE_DEFAULT)
+                    addPreference(this)
+                }
+
+                TransitionPreference(context).apply {
+                    key = SettingsKeys.CLEAR_IMAGE_CACHE
+                    title = getString(R.string.clear_image_cache)
+                    summary = getString(R.string.clear_image_cache_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        runCatching { context.imageLoader.diskCache?.clear() }
+                        Toast.makeText(
+                            context, R.string.image_cache_cleared, Toast.LENGTH_SHORT
+                        ).show()
+                        true
+                    }
+                }
+
+                TransitionPreference(context).apply {
+                    key = SettingsKeys.CLEAR_SONG_CACHE
+                    title = getString(R.string.clear_song_cache)
+                    summary = getString(R.string.clear_song_cache_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        runCatching {
+                            val cache = GlobalContext.get().get<SimpleCache>()
+                            cache.keys.forEach { cache.removeResource(it) }
+                        }
+                        Toast.makeText(
+                            context, R.string.song_cache_cleared, Toast.LENGTH_SHORT
+                        ).show()
+                        true
+                    }
                 }
             }
         }

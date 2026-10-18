@@ -29,6 +29,8 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.koinConfiguration
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dev.brahmkshatriya.echo.utils.net.HttpClient
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -66,9 +68,13 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
                     .build()
             }
             .diskCache {
+                // Added from ArchiveTune: "Image Cache Size".
+                val mb = getSettings().getInt(
+                    SettingsKeys.IMAGE_CACHE_SIZE, SettingsKeys.IMAGE_CACHE_SIZE_DEFAULT
+                )
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("image-cache"))
-                    .maxSizeBytes(1024 * 1024 * 100) // 100MB
+                    .maxSizeBytes(mb * 1024L * 1024L)
                     .build()
             }
             .allowHardware(false)

@@ -524,4 +524,12 @@
     <string name="proxy_port">Proxy Port</string>
     <string name="proxy_port_summary">Port of the proxy (1-65535)</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 4: Storage) -->
+    <string name="storage">Storage</string>
+    <string name="clear_song_cache">Clear Song Cache</string>
+    <string name="clear_song_cache_summary">Delete every cached song</string>
+    <string name="song_cache_cleared">Song cache cleared</string>
+
 </resources>
