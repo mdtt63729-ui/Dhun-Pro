@@ -18,6 +18,7 @@ import dev.brahmkshatriya.echo.extensions.ExtensionUtils.copyTo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 @OptIn(UnstableApi::class)
 class EffectsListener(
@@ -68,15 +69,15 @@ class EffectsListener(
     class Effects(sessionId: Int) {
         private val equalizer = runCatching { Equalizer(0, sessionId) }.getOrNull()
         private val gain = runCatching { LoudnessEnhancer(sessionId) }.getOrNull()
-        private fun applyBassBoost(strength: Int) = runCatching {
-            if (strength == 0) {
+        private fun applyBassBoost(strength: Int, normalize: Boolean = false) = runCatching {
+            if (strength == 0 && !normalize) {
                 equalizer?.setEnabled(false)
                 gain?.setEnabled(false)
                 return@runCatching
             }
             gain?.setEnabled(true)
-            equalizer?.setEnabled(true)
-            equalizer?.apply {
+            equalizer?.setEnabled(strength > 0)
+            if (strength > 0) equalizer?.apply {
                 val value =
                     (strength * bandLevelRange.last().toDouble() / 10).roundToInt().toShort()
                 val zero = numberOfBands.toDouble() * 2 / 3
@@ -85,7 +86,8 @@ class EffectsListener(
                     setBandLevel(it.toShort(), v.toShort())
                 }
             }
-            val g = (strength.toDouble().pow(1.toDouble() / 3) * 1600).roundToInt()
+            val g = if (normalize && strength == 0) PlayerService.NORMALIZATION_GAIN
+            else (strength.toDouble().pow(1.toDouble() / 3) * 1600).roundToInt()
             gain?.setTargetGain(g)
         }
 
@@ -97,7 +99,12 @@ class EffectsListener(
         }
 
         fun applySettings(settings: SharedPreferences) {
-            applyBassBoost(settings.getInt(BASS_BOOST, 0))
+            // Added from ArchiveTune: "Audio Normalization" rides the same LoudnessEnhancer as
+            // bass boost, so both are applied together.
+            applyBassBoost(
+                settings.getInt(BASS_BOOST, 0),
+                settings.getBoolean(SettingsKeys.AUDIO_NORMALIZATION, false)
+            )
         }
     }
 

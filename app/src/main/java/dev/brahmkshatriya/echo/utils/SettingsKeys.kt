@@ -56,6 +56,15 @@ object SettingsKeys {
     /** Move on to the next track when the current one fails. */
     const val AUTO_SKIP_ERROR = "auto_skip_error"
 
+    /** Even out loud and quiet tracks with the platform loudness enhancer. */
+    const val AUDIO_NORMALIZATION = "audio_normalization"
+
+    /** Pause when the device volume drops to zero, resume when it comes back. */
+    const val PAUSE_ON_ZERO_VOLUME = "pause_on_zero_volume"
+
+    /** Start playing as soon as a Bluetooth headset connects. */
+    const val AUTO_START_BLUETOOTH = "auto_start_bluetooth"
+
     // --- Updates ----------------------------------------------------------------------------
 
     /** "stable" or "beta". */

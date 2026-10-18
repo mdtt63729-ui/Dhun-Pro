@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 class PlayerEventListener(
     private val context: Context,
@@ -121,6 +123,8 @@ class PlayerEventListener(
 
         if (currentRetries >= maxRetries) return
         if (retries >= maxSingleItemRetries) {
+            // Added from ArchiveTune: "Auto Skip on Error".
+            if (!context.getSettings().getBoolean(SettingsKeys.AUTO_SKIP_ERROR, true)) return
             val hasMore = index < player.mediaItemCount - 1
             if (!hasMore) return
             player.seekToNextMediaItem()

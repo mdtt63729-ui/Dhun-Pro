@@ -496,4 +496,15 @@
     <string name="search_tab">Search</string>
     <string name="library_tab">Library</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 2) -->
+    <string name="audio_normalization">Audio Normalization</string>
+    <string name="audio_normalization_summary">Even out loud and quiet tracks using the platform loudness enhancer</string>
+    <string name="pause_on_zero_volume">Pause at Zero Volume</string>
+    <string name="pause_on_zero_volume_summary">Pause playback when the volume reaches zero and resume when you turn it back up</string>
+    <string name="auto_start_bluetooth">Auto Start on Bluetooth</string>
+    <string name="auto_start_bluetooth_summary">Start playing as soon as a Bluetooth headset connects</string>
+    <string name="playback_behavior">Playback behavior</string>
+
 </resources>

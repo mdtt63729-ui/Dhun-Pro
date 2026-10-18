@@ -25,6 +25,7 @@ import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 class SettingsPlayerFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.player)
@@ -83,6 +84,18 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     setDefaultValue("off")
+                    addPreference(this)
+                }
+
+                // ---- added from ArchiveTune ----
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.AUDIO_NORMALIZATION
+                    title = getString(R.string.audio_normalization)
+                    summary = getString(R.string.audio_normalization_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
                     addPreference(this)
                 }
             }
@@ -150,6 +163,58 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     summary = getString(R.string.cache_size_summary)
                     isIconSpaceReserved = false
                     setDefaultValue(250)
+                    addPreference(this)
+                }
+
+                // ---- added from ArchiveTune ----
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.KEEP_CPU_AWAKE
+                    title = getString(R.string.keep_cpu_awake)
+                    summary = getString(R.string.keep_cpu_awake_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.AUTO_SKIP_ERROR
+                    title = getString(R.string.auto_skip_error)
+                    summary = getString(R.string.auto_skip_error_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.PERMANENT_SHUFFLE
+                    title = getString(R.string.permanent_shuffle)
+                    summary = getString(R.string.permanent_shuffle_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.PAUSE_ON_ZERO_VOLUME
+                    title = getString(R.string.pause_on_zero_volume)
+                    summary = getString(R.string.pause_on_zero_volume_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.AUTO_START_BLUETOOTH
+                    title = getString(R.string.auto_start_bluetooth)
+                    summary = getString(R.string.auto_start_bluetooth_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
                     addPreference(this)
                 }
             }

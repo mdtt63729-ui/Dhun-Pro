@@ -67,6 +67,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 
 @OptIn(UnstableApi::class)
@@ -232,7 +233,9 @@ class PlayerCallback(
         val extId = args.getString("extId") ?: return@future error
         val item = args.getSerialized<EchoMediaItem>("item")?.getOrNull() ?: return@future error
         val loaded = args.getBoolean("loaded", false)
-        val shuffle = args.getBoolean("shuffle", false)
+        // Added from ArchiveTune: "Permanent Shuffle Mode" keeps shuffle on for every queue.
+        val shuffle = args.getBoolean("shuffle", false) ||
+            app.settings.getBoolean(SettingsKeys.PERMANENT_SHUFFLE, false)
         val extension = extensions.music.getExtension(extId) ?: return@future error
         when (item) {
             is Track -> {

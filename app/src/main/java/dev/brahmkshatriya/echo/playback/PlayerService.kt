@@ -51,6 +51,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.koin.android.ext.android.inject
 import java.io.File
+import dev.brahmkshatriya.echo.utils.SettingsKeys
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.database.ContentObserver
+import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
+import android.provider.Settings
+import androidx.core.content.ContextCompat
 
 class PlayerService : MediaLibraryService() {
 
@@ -122,9 +132,72 @@ class PlayerService : MediaLibraryService() {
         setMediaNotificationProvider(notificationProvider)
 
         mediaSession = session
+        registerAddedSettingsListeners()
+    }
+
+    private var volumeObserver: ContentObserver? = null
+    private var bluetoothReceiver: BroadcastReceiver? = null
+
+    /**
+     * Added from ArchiveTune:
+     *  - "Pause at Zero Volume": pause when the output volume hits zero and resume after.
+     *  - "Auto Start on Bluetooth": start playing as soon as a headset connects.
+     */
+    private fun registerAddedSettingsListeners() {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            private var pausedByUs = false
+
+            override fun onChange(selfChange: Boolean) {
+                val player = mediaSession?.player ?: return
+                val audio = getSystemService(AudioManager::class.java) ?: return
+                val volume = audio.getStreamVolume(AudioManager.STREAM_MUSIC)
+                if (!app.settings.getBoolean(SettingsKeys.PAUSE_ON_ZERO_VOLUME, false)) {
+                    if (pausedByUs) {
+                        pausedByUs = false
+                        runCatching { player.play() }
+                    }
+                    return
+                }
+                when {
+                    volume == 0 && player.isPlaying -> {
+                        pausedByUs = true
+                        runCatching { player.pause() }
+                    }
+
+                    volume > 0 && pausedByUs -> {
+                        pausedByUs = false
+                        runCatching { player.play() }
+                    }
+                }
+            }
+        }
+        runCatching {
+            contentResolver.registerContentObserver(Settings.System.CONTENT_URI, true, observer)
+        }
+        volumeObserver = observer
+
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action != BluetoothDevice.ACTION_ACL_CONNECTED) return
+                if (!app.settings.getBoolean(SettingsKeys.AUTO_START_BLUETOOTH, false)) return
+                runCatching { mediaSession?.player?.play() }
+            }
+        }
+        runCatching {
+            ContextCompat.registerReceiver(
+                this, receiver,
+                IntentFilter(BluetoothDevice.ACTION_ACL_CONNECTED),
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        }
+        bluetoothReceiver = receiver
     }
 
     override fun onDestroy() {
+        volumeObserver?.let { runCatching { contentResolver.unregisterContentObserver(it) } }
+        bluetoothReceiver?.let { runCatching { unregisterReceiver(it) } }
+        volumeObserver = null
+        bluetoothReceiver = null
         mediaSession?.run {
             player.release()
             release()
@@ -163,7 +236,12 @@ class PlayerService : MediaLibraryService() {
         ExoPlayer.Builder(this, factory)
             .setRenderersFactory(RenderersFactory(this))
             .setHandleAudioBecomingNoisy(true)
-            .setWakeMode(C.WAKE_MODE_NETWORK)
+            // Added from ArchiveTune: "Keep CPU Awake". When off, let the device sleep.
+            .setWakeMode(
+                if (app.settings.getBoolean(SettingsKeys.KEEP_CPU_AWAKE, true))
+                    C.WAKE_MODE_NETWORK
+                else C.WAKE_MODE_NONE
+            )
             .setAudioAttributes(audioAttributes, true)
             .build()
             .also {
@@ -185,6 +263,9 @@ class PlayerService : MediaLibraryService() {
 
     companion object {
         const val MORE_BRAIN_CAPACITY = "offload"
+
+        /** Target gain (millibels) applied by "Audio Normalization". */
+        const val NORMALIZATION_GAIN = 400
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
 
