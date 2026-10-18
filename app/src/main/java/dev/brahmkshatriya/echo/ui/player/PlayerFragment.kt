@@ -633,7 +633,7 @@ class PlayerFragment : Fragment() {
     /** Added from ArchiveTune: "Show volume bar" — a slider bound to the media stream. */
     private fun setupVolumeBar() {
         val audio = requireContext().getSystemService(AudioManager::class.java) ?: return
-        val bar = binding.playerControls.volumeBar
+        val bar = binding?.playerControls?.volumeBar ?: return
         val maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC).toFloat()
         bar.valueFrom = 0f
         bar.valueTo = maxVolume.coerceAtLeast(1f)
@@ -649,7 +649,7 @@ class PlayerFragment : Fragment() {
 
     /** Added from ArchiveTune: "Nerd stats" — codec / bitrate / sample rate of the track. */
     private fun setupNerdStats() {
-        val player = binding.playerView.player ?: return
+        val player = binding?.playerView?.player ?: return
         val listener = object : Player.Listener {
             override fun onTracksChanged(tracks: Tracks) {
                 binding?.playerControls?.statsText?.text = runCatching {
