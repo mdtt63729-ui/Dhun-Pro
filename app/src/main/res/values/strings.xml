@@ -518,7 +518,7 @@
     <string name="doh_url">Custom DNS URL</string>
     <string name="doh_url_summary">Used when the provider is set to Custom</string>
     <string name="proxy">Enable Proxy</string>
-    <string name="proxy_summary">Route the app's own network requests through an HTTP proxy</string>
+    <string name="proxy_summary">Route the app\'s own network requests through an HTTP proxy</string>
     <string name="proxy_host">Proxy Host</string>
     <string name="proxy_host_summary">Host name or IP of the proxy</string>
     <string name="proxy_port">Proxy Port</string>
