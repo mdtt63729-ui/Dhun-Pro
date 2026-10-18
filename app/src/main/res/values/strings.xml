@@ -532,4 +532,23 @@
     <string name="clear_song_cache_summary">Delete every cached song</string>
     <string name="song_cache_cleared">Song cache cleared</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 5: Updates & Info) -->
+    <string name="updates">Updates</string>
+    <string name="beta_channel">Beta</string>
+    <string name="about_summary">App version, build and links</string>
+    <string name="changelog">Changelog</string>
+    <string name="changelog_summary">What changed in recent releases</string>
+    <string name="app_info">App info</string>
+    <string name="version_label">Version</string>
+    <string name="build_type_label">Build type</string>
+    <string name="package_label">Package</string>
+    <string name="device_label">Device</string>
+    <string name="links">Links</string>
+    <string name="licenses">Open source licenses</string>
+    <string name="licenses_summary">Libraries this app is built on</string>
+    <string name="no_changelog">No release notes available</string>
+    <string name="retry">Retry</string>
+
 </resources>

@@ -26,6 +26,7 @@ import androidx.media3.datasource.cache.SimpleCache
 import coil3.imageLoader
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
 import org.koin.core.context.GlobalContext
+import dev.brahmkshatriya.echo.ui.common.FragmentUtils.openFragment
 
 class SettingsOtherFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.other_settings)
@@ -216,6 +217,53 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                         Toast.makeText(
                             context, R.string.song_cache_cleared, Toast.LENGTH_SHORT
                         ).show()
+                        true
+                    }
+                }
+            }
+
+            // ---- added from ArchiveTune: Updates ----
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.updates)
+                key = "updates"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.UPDATE_CHANNEL
+                    title = getString(R.string.update_channel)
+                    summary = getString(R.string.update_channel_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(getString(R.string.stable), getString(R.string.beta_channel))
+                    entryValues = arrayOf(
+                        SettingsKeys.UPDATE_CHANNEL_STABLE, SettingsKeys.UPDATE_CHANNEL_BETA
+                    )
+                    setDefaultValue(SettingsKeys.UPDATE_CHANNEL_STABLE)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.UPDATE_NOTIFICATIONS
+                    title = getString(R.string.update_notifications)
+                    summary = getString(R.string.update_notifications_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                TransitionPreference(context).apply {
+                    key = SettingsKeys.ABOUT
+                    title = getString(R.string.about)
+                    summary = getString(R.string.about_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    addPreference(this)
+                    setOnPreferenceClickListener {
+                        requireActivity().openFragment<AboutFragment>()
                         true
                     }
                 }

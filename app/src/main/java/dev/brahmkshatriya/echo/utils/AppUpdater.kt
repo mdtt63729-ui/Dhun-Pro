@@ -19,6 +19,7 @@ import okhttp3.Request
 import okio.use
 import java.io.File
 import java.util.zip.ZipFile
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 object AppUpdater {
 
@@ -37,7 +38,11 @@ object AppUpdater {
                 "stable" -> {
                     val currentVersion = version.substringBefore('_')
                     val updateUrl = "https://api.github.com/repos/$githubRepo/releases"
-                    getGithubUpdateUrl(currentVersion, updateUrl, client) ?: return null
+                    // Added from ArchiveTune: "Update Channel" (stable or beta).
+                    val channel = app.settings.getString(
+                        SettingsKeys.UPDATE_CHANNEL, SettingsKeys.UPDATE_CHANNEL_STABLE
+                    )
+                    getGithubUpdateUrl(currentVersion, updateUrl, client, channel) ?: return null
                 }
 
                 "nightly" -> {
@@ -53,13 +58,16 @@ object AppUpdater {
             return null
         }
 
-        messageFlow.emit(
-            Message(
-                app.context.run {
-                    getString(R.string.downloading_update_for_x, getString(R.string.app_name))
-                }
+        // Added from ArchiveTune: "Update Notifications".
+        if (app.settings.getBoolean(SettingsKeys.UPDATE_NOTIFICATIONS, true)) {
+            messageFlow.emit(
+                Message(
+                    app.context.run {
+                        getString(R.string.downloading_update_for_x, getString(R.string.app_name))
+                    }
+                )
             )
-        )
+        }
         return runCatching {
             val download = downloadUpdate(app.context, url, client).getOrThrow()
             if (appType == "stable") download else unzipApk(download)
@@ -73,18 +81,32 @@ object AppUpdater {
     suspend fun getGithubUpdateUrl(
         currentVersion: String,
         updateUrl: String,
-        client: OkHttpClient
+        client: OkHttpClient,
+        channel: String = SettingsKeys.UPDATE_CHANNEL_STABLE,
     ) = run {
         val (user, repo) = githubRegex.find(updateUrl)?.destructured
             ?: throw Exception("Invalid Github URL")
-        val url = "https://api.github.com/repos/$user/$repo/releases/latest"
-        val request = Request.Builder().url(url).build()
-        val res = runCatching {
-            client.newCall(request).await().use {
-                it.body.string().toData<GithubReleaseResponse>()
-            }.getOrThrow()
-        }.getOrElse {
-            throw Exception("Failed to fetch latest release", it)
+        val res = if (channel == SettingsKeys.UPDATE_CHANNEL_BETA) {
+            // Added from ArchiveTune: the beta channel also sees pre-releases.
+            val url = "https://api.github.com/repos/$user/$repo/releases"
+            val request = Request.Builder().url(url).build()
+            runCatching {
+                client.newCall(request).await().use {
+                    it.body.string().toData<List<GithubReleaseResponse>>()
+                }.getOrThrow().firstOrNull()
+            }.getOrElse {
+                throw Exception("Failed to fetch releases", it)
+            } ?: throw Exception("No releases found")
+        } else {
+            val url = "https://api.github.com/repos/$user/$repo/releases/latest"
+            val request = Request.Builder().url(url).build()
+            runCatching {
+                client.newCall(request).await().use {
+                    it.body.string().toData<GithubReleaseResponse>()
+                }.getOrThrow()
+            }.getOrElse {
+                throw Exception("Failed to fetch latest release", it)
+            }
         }
         if (res.tagName != currentVersion) {
             res.assets.sortedByDescending {

@@ -83,6 +83,13 @@ object SettingsKeys {
     /** "stable" or "beta". */
     const val UPDATE_CHANNEL = "update_channel"
     const val UPDATE_CHANNEL_STABLE = "stable"
+    const val UPDATE_CHANNEL_BETA = "beta"
+
+    /** Action: open the About screen. */
+    const val ABOUT = "about"
+
+    /** Action: open the changelog. */
+    const val CHANGELOG = "changelog"
 
     /** Show a notification when a newer release is found. */
     const val UPDATE_NOTIFICATIONS = "update_notifications"
