@@ -53,7 +53,13 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
         return ImageLoader.Builder(context)
             // Added from ArchiveTune: images go through the shared client so the
             // DNS-over-HTTPS and proxy settings apply to them too.
-            .networkFetcherFactory(OkHttpNetworkFetcherFactory { HttpClient.client(this) })
+            .components {
+                add(
+                    OkHttpNetworkFetcherFactory(
+                        callFactory = { HttpClient.client(this@MainApplication) }
+                    )
+                )
+            }
             .memoryCache {
                 MemoryCache.Builder()
                     .maxSizePercent(context, 0.25)
