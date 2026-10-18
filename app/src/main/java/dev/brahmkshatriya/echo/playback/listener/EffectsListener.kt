@@ -86,7 +86,7 @@ class EffectsListener(
                     setBandLevel(it.toShort(), v.toShort())
                 }
             }
-            val g = if (normalize && strength == 0) PlayerService.NORMALIZATION_GAIN
+            val g = if (normalize && strength == 0) NORMALIZATION_GAIN
             else (strength.toDouble().pow(1.toDouble() / 3) * 1600).roundToInt()
             gain?.setTargetGain(g)
         }
@@ -109,6 +109,9 @@ class EffectsListener(
     }
 
     companion object {
+        /** Target gain (millibels) used by "Audio Normalization". */
+        private const val NORMALIZATION_GAIN = 400
+
         const val GLOBAL_FX = "global_fx"
         const val BASS_BOOST = "bass_boost"
         const val PLAYBACK_SPEED = "playback_speed"

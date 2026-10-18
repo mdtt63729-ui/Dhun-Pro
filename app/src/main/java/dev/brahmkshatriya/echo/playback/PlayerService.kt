@@ -263,9 +263,6 @@ class PlayerService : MediaLibraryService() {
 
     companion object {
         const val MORE_BRAIN_CAPACITY = "offload"
-
-        /** Target gain (millibels) applied by "Audio Normalization". */
-        const val NORMALIZATION_GAIN = 400
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
 
