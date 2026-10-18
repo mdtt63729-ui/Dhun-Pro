@@ -507,4 +507,21 @@
     <string name="auto_start_bluetooth_summary">Start playing as soon as a Bluetooth headset connects</string>
     <string name="playback_behavior">Playback behavior</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 3: Internet) -->
+    <string name="internet">Internet</string>
+    <string name="doh">DNS over HTTPS</string>
+    <string name="doh_summary">Resolve hostnames through a DNS-over-HTTPS endpoint</string>
+    <string name="doh_provider">DNS Provider</string>
+    <string name="doh_provider_summary">Which DNS-over-HTTPS endpoint to use</string>
+    <string name="doh_url">Custom DNS URL</string>
+    <string name="doh_url_summary">Used when the provider is set to Custom</string>
+    <string name="proxy">Enable Proxy</string>
+    <string name="proxy_summary">Route the app's own network requests through an HTTP proxy</string>
+    <string name="proxy_host">Proxy Host</string>
+    <string name="proxy_host_summary">Host name or IP of the proxy</string>
+    <string name="proxy_port">Proxy Port</string>
+    <string name="proxy_port_summary">Port of the proxy (1-65535)</string>
+
 </resources>

@@ -65,6 +65,19 @@ object SettingsKeys {
     /** Start playing as soon as a Bluetooth headset connects. */
     const val AUTO_START_BLUETOOTH = "auto_start_bluetooth"
 
+    // --- Internet ---------------------------------------------------------------------------
+
+    /** Resolve hostnames through DNS over HTTPS. */
+    const val DOH_ENABLED = "doh_enabled"
+    const val DOH_PROVIDER = "doh_provider"
+    const val DOH_PROVIDER_CUSTOM = "custom"
+    const val DOH_URL = "doh_url"
+
+    /** Route the app's own HTTP requests through a proxy. */
+    const val PROXY_ENABLED = "proxy_enabled"
+    const val PROXY_HOST = "proxy_host"
+    const val PROXY_PORT = "proxy_port"
+
     // --- Updates ----------------------------------------------------------------------------
 
     /** "stable" or "beta". */

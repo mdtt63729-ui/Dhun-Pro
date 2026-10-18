@@ -15,6 +15,12 @@ import dev.brahmkshatriya.echo.utils.importSettings
 import dev.brahmkshatriya.echo.utils.ui.prefs.SwitchLongClickPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.TransitionPreference
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
+import androidx.preference.PreferenceCategory
+import androidx.preference.SwitchPreferenceCompat
+import dev.brahmkshatriya.echo.utils.SettingsKeys
+import dev.brahmkshatriya.echo.utils.net.HttpClient
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialTextInputPreference
 
 class SettingsOtherFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.other_settings)
@@ -81,6 +87,78 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                         }
                     }.launch(arrayOf("application/json"))
                     true
+                }
+            }
+
+            // ---- added from ArchiveTune: Internet ----
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.internet)
+                key = "internet"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.DOH_ENABLED
+                    title = getString(R.string.doh)
+                    summary = getString(R.string.doh_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.DOH_PROVIDER
+                    title = getString(R.string.doh_provider)
+                    summary = getString(R.string.doh_provider_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = HttpClient.dohProviders
+                    entryValues = HttpClient.dohProviderValues
+                    setDefaultValue(HttpClient.dohProviderValues[0])
+                    addPreference(this)
+                }
+
+                MaterialTextInputPreference(context).apply {
+                    key = SettingsKeys.DOH_URL
+                    title = getString(R.string.doh_url)
+                    summary = getString(R.string.doh_url_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("")
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.PROXY_ENABLED
+                    title = getString(R.string.proxy)
+                    summary = getString(R.string.proxy_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialTextInputPreference(context).apply {
+                    key = SettingsKeys.PROXY_HOST
+                    title = getString(R.string.proxy_host)
+                    summary = getString(R.string.proxy_host_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("")
+                    addPreference(this)
+                }
+
+                MaterialTextInputPreference(context).apply {
+                    key = SettingsKeys.PROXY_PORT
+                    title = getString(R.string.proxy_port)
+                    summary = getString(R.string.proxy_port_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    setDefaultValue("")
+                    addPreference(this)
                 }
             }
         }

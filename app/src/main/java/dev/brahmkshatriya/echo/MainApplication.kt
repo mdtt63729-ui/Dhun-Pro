@@ -27,6 +27,8 @@ import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.androix.startup.KoinStartup
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.dsl.koinConfiguration
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import dev.brahmkshatriya.echo.utils.net.HttpClient
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -49,6 +51,9 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         return ImageLoader.Builder(context)
+            // Added from ArchiveTune: images go through the shared client so the
+            // DNS-over-HTTPS and proxy settings apply to them too.
+            .networkFetcherFactory(OkHttpNetworkFetcherFactory { HttpClient.client(this) })
             .memoryCache {
                 MemoryCache.Builder()
                     .maxSizePercent(context, 0.25)
