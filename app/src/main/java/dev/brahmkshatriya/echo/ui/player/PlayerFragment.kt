@@ -93,6 +93,11 @@ import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import android.media.AudioManager
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.media3.common.Tracks
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
@@ -406,6 +411,15 @@ class PlayerFragment : Fragment() {
             }
         }
 
+        // Added from ArchiveTune: "Show volume bar" and "Nerd stats".
+        val addedSettings = requireContext().getSettings()
+        binding.playerControls.volumeBar.isVisible =
+            addedSettings.getBoolean(SettingsKeys.SHOW_VOLUME_BAR, false)
+        binding.playerControls.statsText.isVisible =
+            addedSettings.getBoolean(SettingsKeys.NERD_STATS, false)
+        if (binding.playerControls.volumeBar.isVisible) setupVolumeBar()
+        if (binding.playerControls.statsText.isVisible) setupNerdStats()
+
 
         val repeatModes = listOf(REPEAT_MODE_OFF, REPEAT_MODE_ALL, REPEAT_MODE_ONE)
         val animatedVectorDrawables = requireContext().run {
@@ -614,6 +628,41 @@ class PlayerFragment : Fragment() {
         MediaMoreBottomSheet.newInstance(
             R.id.navHostFragment, item.extensionId, item.track, item.isLoaded, true
         ).show(requireActivity().supportFragmentManager, null)
+    }
+
+    /** Added from ArchiveTune: "Show volume bar" — a slider bound to the media stream. */
+    private fun setupVolumeBar() {
+        val audio = requireContext().getSystemService(AudioManager::class.java) ?: return
+        val bar = binding.playerControls.volumeBar
+        val maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC).toFloat()
+        bar.valueFrom = 0f
+        bar.valueTo = maxVolume.coerceAtLeast(1f)
+        bar.stepSize = 1f
+        bar.value = audio.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat()
+            .coerceIn(bar.valueFrom, bar.valueTo)
+        bar.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) runCatching {
+                audio.setStreamVolume(AudioManager.STREAM_MUSIC, value.toInt(), 0)
+            }
+        }
+    }
+
+    /** Added from ArchiveTune: "Nerd stats" — codec / bitrate / sample rate of the track. */
+    private fun setupNerdStats() {
+        val player = binding.playerView.player ?: return
+        val listener = object : Player.Listener {
+            override fun onTracksChanged(tracks: Tracks) {
+                binding?.playerControls?.statsText?.text = runCatching {
+                    tracks.getDetails(requireContext(), null, null).joinToString(" · ")
+                }.getOrNull().orEmpty()
+            }
+        }
+        player.addListener(listener)
+        viewLifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) {
+                runCatching { player.removeListener(listener) }
+            }
+        })
     }
 
     private fun Player?.hasVideo() =

@@ -108,6 +108,46 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.PRELOAD_MODE
+                    title = getString(R.string.preload_mode)
+                    summary = getString(R.string.preload_mode_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.preload_off),
+                        getString(R.string.preload_wifi),
+                        getString(R.string.preload_always)
+                    )
+                    entryValues = arrayOf(
+                        SettingsKeys.PRELOAD_OFF,
+                        SettingsKeys.PRELOAD_WIFI,
+                        SettingsKeys.PRELOAD_ALWAYS
+                    )
+                    setDefaultValue(SettingsKeys.PRELOAD_OFF)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.SHOW_VOLUME_BAR
+                    title = getString(R.string.show_volume_bar)
+                    summary = getString(R.string.show_volume_bar_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.NERD_STATS
+                    title = getString(R.string.nerd_stats)
+                    summary = getString(R.string.nerd_stats_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {

@@ -31,6 +31,12 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import dev.brahmkshatriya.echo.utils.net.HttpClient
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.SettingsKeys
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -49,6 +55,35 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
         CoroutineUtils.setDebug()
         applyLocale(settings)
         configureAppShortcuts(extensionLoader)
+        scheduleSettingsBackup()
+    }
+
+    /**
+     * Added from ArchiveTune: "Scheduled Backup". Enqueues (or cancels) the periodic
+     * settings-backup worker to match the current preference.
+     */
+    private fun scheduleSettingsBackup() {
+        val settings = getSettings()
+        val workManager = WorkManager.getInstance(this)
+        if (!settings.getBoolean(SettingsKeys.SCHEDULED_BACKUP, false)) {
+            workManager.cancelUniqueWork(BACKUP_WORK_NAME)
+            return
+        }
+        val days = when (
+            settings.getString(SettingsKeys.BACKUP_SCHEDULE, SettingsKeys.BACKUP_SCHEDULE_DAILY)
+        ) {
+            BACKUP_SCHEDULE_WEEKLY -> 7L
+            BACKUP_SCHEDULE_MONTHLY -> 30L
+            else -> 1L
+        }
+        val request = PeriodicWorkRequestBuilder<SettingsBackupWorker>(days, TimeUnit.DAYS)
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.NOT_REQUIRED).build()
+            )
+            .build()
+        workManager.enqueueUniquePeriodicWork(
+            BACKUP_WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request
+        )
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader {
@@ -108,6 +143,10 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
     }
 
     companion object {
+        private const val BACKUP_WORK_NAME = "echo_settings_backup"
+        private const val BACKUP_SCHEDULE_WEEKLY = "weekly"
+        private const val BACKUP_SCHEDULE_MONTHLY = "monthly"
+
         private const val CHROME_PACKAGE = "com.android.chrome"
         private const val SYSTEM_SETTINGS_PACKAGE = "com.android.settings"
         private const val CLASS_NAME = "org.chromium.base.BuildInfo"

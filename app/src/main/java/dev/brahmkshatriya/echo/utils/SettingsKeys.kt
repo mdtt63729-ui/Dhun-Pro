@@ -92,6 +92,25 @@ object SettingsKeys {
     /** Ask image hosts for smaller thumbnails to save data. */
     const val LOW_DATA_MODE = "low_data_mode"
 
+    /** Show a volume slider on the player. */
+    const val SHOW_VOLUME_BAR = "show_volume_bar"
+
+    /** Show codec/bitrate details under the player controls. */
+    const val NERD_STATS = "nerd_stats"
+
+    /** "off", "wifi" or "always" — how eagerly the next track is preloaded. */
+    const val PRELOAD_MODE = "preload_mode"
+    const val PRELOAD_OFF = "off"
+    const val PRELOAD_WIFI = "wifi"
+    const val PRELOAD_ALWAYS = "always"
+
+    /** Write a settings backup on a schedule. */
+    const val SCHEDULED_BACKUP = "scheduled_backup"
+
+    /** "daily", "weekly" or "monthly". */
+    const val BACKUP_SCHEDULE = "backup_schedule"
+    const val BACKUP_SCHEDULE_DAILY = "daily"
+
     /** Action: open the About screen. */
     const val ABOUT = "about"
 

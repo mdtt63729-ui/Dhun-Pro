@@ -202,6 +202,32 @@ class SettingsOtherFragment : BaseSettingsFragment() {
                     }
                 }
 
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.SCHEDULED_BACKUP
+                    title = getString(R.string.scheduled_backup)
+                    summary = getString(R.string.scheduled_backup_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.BACKUP_SCHEDULE
+                    title = getString(R.string.backup_schedule)
+                    summary = getString(R.string.backup_schedule_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.daily),
+                        getString(R.string.weekly),
+                        getString(R.string.monthly)
+                    )
+                    entryValues = arrayOf("daily", "weekly", "monthly")
+                    setDefaultValue(SettingsKeys.BACKUP_SCHEDULE_DAILY)
+                    addPreference(this)
+                }
+
                 TransitionPreference(context).apply {
                     key = SettingsKeys.CLEAR_SONG_CACHE
                     title = getString(R.string.clear_song_cache)

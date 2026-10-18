@@ -258,4 +258,31 @@
         android:textColor="@color/amoled_fg"
         android:textSize="16sp"
         tools:text="@tools:sample/lorem/random" />
-</LinearLayout>
+        <com.google.android.material.slider.Slider
+            android:id="@+id/volumeBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:contentDescription="@string/volume"
+            android:visibility="gone"
+            app:labelBehavior="gone"
+            app:thumbColor="?attr/colorTertiary"
+            app:trackColorActive="?attr/colorTertiary"
+            app:trackHeight="4dp"
+            app:trackStopIndicatorSize="0dp"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/statsText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:alpha="0.6"
+            android:gravity="center"
+            android:maxLines="2"
+            android:textAppearance="@style/TextAppearance.Material3.LabelSmall"
+            android:visibility="gone"
+            tools:text="mp4a.40.2 · 128 kbps · 44.1 kHz"
+            tools:visibility="visible" />
+
+    </LinearLayout>

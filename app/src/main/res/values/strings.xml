@@ -559,4 +559,26 @@
     <string name="low_data_mode">Low Data Mode</string>
     <string name="low_data_mode_summary">Load smaller artwork to save mobile data</string>
 
+
+
+    <!-- Settings added from ArchiveTune (batch 7) -->
+    <string name="show_volume_bar">Show Volume Bar</string>
+    <string name="show_volume_bar_summary">Show a volume slider on the player</string>
+    <string name="nerd_stats">Nerd Stats</string>
+    <string name="nerd_stats_summary">Show the current codec, bitrate and sample rate on the player</string>
+    <string name="preload_mode">Preload Mode</string>
+    <string name="preload_mode_summary">Load the next track ahead of time so it starts instantly</string>
+    <string name="preload_off">Off</string>
+    <string name="preload_wifi">Wi-Fi only</string>
+    <string name="preload_always">Always</string>
+    <string name="scheduled_backup">Scheduled Backup</string>
+    <string name="scheduled_backup_summary">Write a settings backup automatically</string>
+    <string name="backup_schedule">Backup Schedule</string>
+    <string name="backup_schedule_summary">How often the automatic backup runs</string>
+    <string name="daily">Daily</string>
+    <string name="weekly">Weekly</string>
+    <string name="monthly">Monthly</string>
+    <string name="backup_done">Backup written</string>
+    <string name="volume">Volume</string>
+
 </resources>

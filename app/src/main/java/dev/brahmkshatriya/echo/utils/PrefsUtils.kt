@@ -40,6 +40,16 @@ private fun Map<String, Any?>.toJsonElementMap(): Map<String, JsonElement> {
 
 
 fun Context.exportSettings(uri: Uri) {
+    contentResolver.openOutputStream(uri, "w")?.use { out ->
+        out.write(settingsBackupJson().toByteArray())
+    }
+}
+
+/**
+ * Added from ArchiveTune: the exact payload [exportSettings] writes, as a string, so the
+ * scheduled-backup worker can write it to a file without a document Uri.
+ */
+fun Context.settingsBackupJson(): String {
     val settingsPrefs = getSharedPreferences(SETTINGS_NAME, Context.MODE_PRIVATE)
     val globalFxPrefs = getSharedPreferences(GLOBAL_FX, Context.MODE_PRIVATE)
 
@@ -51,10 +61,7 @@ fun Context.exportSettings(uri: Uri) {
 
     val allPrefsJson = mutableMapOf(SETTINGS_NAME to settingsJson, GLOBAL_FX to globalFxJson)
     customFxJson?.forEach { (name, map) -> allPrefsJson["fx_$name"] = map }
-
-    contentResolver.openOutputStream(uri, "w")?.use { out ->
-        out.write(Json.encodeToString(allPrefsJson).toByteArray())
-    }
+    return Json.encodeToString(allPrefsJson)
 }
 
 

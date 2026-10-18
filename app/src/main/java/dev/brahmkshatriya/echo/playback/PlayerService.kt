@@ -61,6 +61,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import androidx.core.content.ContextCompat
+import android.net.ConnectivityManager
 
 class PlayerService : MediaLibraryService() {
 
@@ -206,6 +207,12 @@ class PlayerService : MediaLibraryService() {
         super.onDestroy()
     }
 
+    /** Added from ArchiveTune: "Preload Mode — Wi-Fi only" needs to know the network. */
+    private fun isUnmetered(): Boolean = runCatching {
+        val cm = getSystemService(ConnectivityManager::class.java) ?: return true
+        !cm.isActiveNetworkMetered
+    }.getOrDefault(true)
+
     private val cache by inject<SimpleCache>()
 
     private val mediaChangeFlow = MutableSharedFlow<Pair<MediaItem, MediaItem>>()
@@ -249,7 +256,19 @@ class PlayerService : MediaLibraryService() {
                     .buildUpon()
                     .setAudioOffloadPreferences(audioOffloadPreferences)
                     .build()
-                it.preloadConfiguration = ExoPlayer.PreloadConfiguration(C.TIME_UNSET)
+                // Added from ArchiveTune: "Preload Mode" decides how eagerly the next
+                // track is read into the cache. Off keeps the app's original behaviour.
+                val preloadMode = app.settings.getString(
+                    SettingsKeys.PRELOAD_MODE, SettingsKeys.PRELOAD_OFF
+                )
+                val preloadMs = when (preloadMode) {
+                    SettingsKeys.PRELOAD_ALWAYS -> PRELOAD_DURATION_MS
+                    SettingsKeys.PRELOAD_WIFI -> if (isUnmetered()) PRELOAD_DURATION_MS
+                    else C.TIME_UNSET
+
+                    else -> C.TIME_UNSET
+                }
+                it.preloadConfiguration = ExoPlayer.PreloadConfiguration(preloadMs)
                 it.skipSilenceEnabled = app.settings.getBoolean(SKIP_SILENCE, true)
             }
     }
@@ -263,6 +282,9 @@ class PlayerService : MediaLibraryService() {
 
     companion object {
         const val MORE_BRAIN_CAPACITY = "offload"
+
+        /** How much of the next track "Preload Mode" reads ahead. */
+        private const val PRELOAD_DURATION_MS = 5_000L
         const val CLOSE_PLAYER = "close_player"
         const val SKIP_SILENCE = "skip_silence"
 
