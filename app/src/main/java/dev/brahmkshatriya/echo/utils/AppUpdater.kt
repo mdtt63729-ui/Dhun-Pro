@@ -41,7 +41,7 @@ object AppUpdater {
                     // Added from ArchiveTune: "Update Channel" (stable or beta).
                     val channel = app.settings.getString(
                         SettingsKeys.UPDATE_CHANNEL, SettingsKeys.UPDATE_CHANNEL_STABLE
-                    )
+                    ) ?: SettingsKeys.UPDATE_CHANNEL_STABLE
                     getGithubUpdateUrl(currentVersion, updateUrl, client, channel) ?: return null
                 }
 
