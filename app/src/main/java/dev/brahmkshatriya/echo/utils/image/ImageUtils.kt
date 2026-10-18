@@ -21,6 +21,8 @@ import coil3.request.transformations
 import coil3.transform.CircleCropTransformation
 import coil3.transform.Transformation
 import dev.brahmkshatriya.echo.common.models.ImageHolder
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 
 object ImageUtils {
 
@@ -109,9 +111,17 @@ object ImageUtils {
     }
 
     fun ImageView.loadBlurred(drawable: Drawable?, radius: Float) = tryWith {
-        if (drawable == null) setImageDrawable(null)
-        load(drawable) {
-            transformations(BlurTransformation(context, radius))
+        // Added from ArchiveTune: "Disable blur" skips the blur entirely and "Backdrop blur
+        // amount" scales the radius (25% is the app's original strength).
+        val settings = context.getSettings()
+        val amount = if (settings.getBoolean(SettingsKeys.DISABLE_BLUR, false)) 0
+        else settings.getInt(SettingsKeys.BLUR_AMOUNT, SettingsKeys.BLUR_AMOUNT_DEFAULT)
+        when {
+            drawable == null -> setImageDrawable(null)
+            amount <= 0 -> setImageDrawable(drawable)
+            else -> load(drawable) {
+                transformations(BlurTransformation(context, radius * amount / 25f))
+            }
         }
     }
 

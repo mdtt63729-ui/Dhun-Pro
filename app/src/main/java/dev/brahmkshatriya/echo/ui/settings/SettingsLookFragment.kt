@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.preference.Preference
@@ -28,11 +29,13 @@ import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.NAVBAR_GRADIENT
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.DYNAMIC_PLAYER
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.utils.ContextUtils.SETTINGS_NAME
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.ANIMATIONS_KEY
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.SCROLL_ANIMATIONS_KEY
 import dev.brahmkshatriya.echo.utils.ui.FastScrollerHelper.SCROLL_BAR
 import dev.brahmkshatriya.echo.utils.ui.prefs.ColorListPreference
 import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialListPreference
+import dev.brahmkshatriya.echo.utils.ui.prefs.MaterialSliderPreference
 
 class SettingsLookFragment : BaseSettingsFragment() {
     override val title get() = getString(R.string.look_and_feel)
@@ -144,6 +147,64 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     setDefaultValue(false)
                     addPreference(this)
                 }
+
+                // ---- added from ArchiveTune ----
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.PALETTE
+                    title = getString(R.string.palette)
+                    summary = getString(R.string.palette_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = SettingsKeys.paletteNames
+                    entryValues = SettingsKeys.paletteValues
+                    setDefaultValue(SettingsKeys.PALETTE_DEFAULT)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, v ->
+                        val value = v as? String ?: return@OnPreferenceChangeListener true
+                        val editor = preferences.edit()
+                        if (value == SettingsKeys.PALETTE_DEFAULT) {
+                            editor.putBoolean(CUSTOM_THEME_KEY, false)
+                        } else {
+                            runCatching { Color.parseColor(value) }.getOrNull()?.let { color ->
+                                editor.putBoolean(CUSTOM_THEME_KEY, true)
+                                editor.putInt(COLOR_KEY, color)
+                            }
+                        }
+                        editor.apply()
+                        recreateSafely()
+                        true
+                    }
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.RANDOM_THEME
+                    title = getString(R.string.random_theme)
+                    summary = getString(R.string.random_theme_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.DISABLE_BLUR
+                    title = getString(R.string.disable_blur)
+                    summary = getString(R.string.disable_blur_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 0, 100, allowOverride = true).apply {
+                    key = SettingsKeys.BLUR_AMOUNT
+                    title = getString(R.string.blur_amount)
+                    summary = getString(R.string.blur_amount_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(SettingsKeys.BLUR_AMOUNT_DEFAULT)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {
@@ -180,6 +241,81 @@ class SettingsLookFragment : BaseSettingsFragment() {
                     layoutResource = R.layout.preference_switch
                     isIconSpaceReserved = false
                     setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                // ---- added from ArchiveTune ----
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.FORCE_REFRESH_RATE
+                    title = getString(R.string.force_refresh_rate)
+                    summary = getString(R.string.force_refresh_rate_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, _ ->
+                        recreateSafely()
+                        true
+                    }
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.HIDE_PLAYER_THUMBNAIL
+                    title = getString(R.string.hide_player_thumbnail)
+                    summary = getString(R.string.hide_player_thumbnail_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    addPreference(this)
+                }
+
+                MaterialSliderPreference(context, 0, 32, allowOverride = true).apply {
+                    key = SettingsKeys.COVER_RADIUS
+                    title = getString(R.string.cover_radius)
+                    summary = getString(R.string.cover_radius_summary)
+                    isIconSpaceReserved = false
+                    setDefaultValue(SettingsKeys.COVER_RADIUS_DEFAULT)
+                    addPreference(this)
+                }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.DEFAULT_TAB
+                    title = getString(R.string.default_tab)
+                    summary = getString(R.string.default_tab_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.home_tab),
+                        getString(R.string.search_tab),
+                        getString(R.string.library_tab)
+                    )
+                    entryValues = arrayOf("0", "1", "2")
+                    setDefaultValue(SettingsKeys.DEFAULT_TAB_HOME)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.HAPTICS
+                    title = getString(R.string.haptics)
+                    summary = getString(R.string.haptics_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(true)
+                    addPreference(this)
+                }
+
+                SwitchPreferenceCompat(context).apply {
+                    key = SettingsKeys.DISABLE_SCREENSHOT
+                    title = getString(R.string.disable_screenshot)
+                    summary = getString(R.string.disable_screenshot_summary)
+                    layoutResource = R.layout.preference_switch
+                    isIconSpaceReserved = false
+                    setDefaultValue(false)
+                    onPreferenceChangeListener = Preference.OnPreferenceChangeListener { _, _ ->
+                        recreateSafely()
+                        true
+                    }
                     addPreference(this)
                 }
             }

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -32,6 +33,7 @@ import dev.brahmkshatriya.echo.ui.main.MainFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment
 import dev.brahmkshatriya.echo.ui.player.PlayerFragment.Companion.PLAYER_COLOR
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.utils.PermsUtils.checkAppPermissions
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.isNightMode
 import kotlinx.coroutines.delay
@@ -66,6 +68,29 @@ open class MainActivity : AppCompatActivity() {
             splashFinished.set(true)
         }
         super.onCreate(savedInstanceState)
+
+        // --- settings added from ArchiveTune; these must run before the theme is built ---
+        val settings = getSettings()
+        if (settings.getBoolean(SettingsKeys.RANDOM_THEME, false)) {
+            SettingsKeys.randomPaletteColor()?.let { color ->
+                settings.edit()
+                    .putBoolean(CUSTOM_THEME_KEY, true)
+                    .putInt(COLOR_KEY, color)
+                    .apply()
+            }
+        }
+        if (settings.getBoolean(SettingsKeys.DISABLE_SCREENSHOT, false)) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE
+            )
+        }
+        if (settings.getBoolean(SettingsKeys.FORCE_REFRESH_RATE, false)) {
+            highestRefreshModeId()?.let { modeId ->
+                window.attributes = window.attributes.apply { preferredDisplayModeId = modeId }
+            }
+        }
+
         setTheme(getAppTheme())
         DynamicColors.applyToActivityIfAvailable(
             this, applyUiChanges(this, uiViewModel)
@@ -104,6 +129,12 @@ open class MainActivity : AppCompatActivity() {
      * thrash it, and `setupTransition` skips the fragment animation while
      * `isChangingConfigurations` is set, so the screen does not flash blank or slide in.
      */
+    /** The display mode with the highest refresh rate the panel supports, if any. */
+    private fun highestRefreshModeId(): Int? {
+        val display = display ?: return null
+        return display.supportedModes.maxByOrNull { it.refreshRate }?.modeId
+    }
+
     private var lastReTheme = 0L
 
     private val reThemeRunnable = object : Runnable {

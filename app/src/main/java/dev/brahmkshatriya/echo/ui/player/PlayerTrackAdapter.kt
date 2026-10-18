@@ -23,7 +23,10 @@ import dev.brahmkshatriya.echo.playback.PlayerState
 import dev.brahmkshatriya.echo.ui.common.UiViewModel
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyHorizontalInsets
 import dev.brahmkshatriya.echo.ui.common.UiViewModel.Companion.applyInsets
+import androidx.core.view.isVisible
 import dev.brahmkshatriya.echo.ui.player.PlayerColors.Companion.defaultPlayerColors
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.getCachedDrawable
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadWithThumb
 import dev.brahmkshatriya.echo.utils.ui.GestureListener
@@ -154,6 +157,9 @@ class PlayerTrackAdapter(
                 collapsedTrackTitle.text = item?.track?.title
                 collapsedTrackArtist.text = item?.track?.artists?.joinToString(", ") { it.name }
             }
+            // Added from ArchiveTune: "Hide player thumbnail".
+            binding.playerTrackCover.isVisible = !binding.root.context.getSettings()
+                .getBoolean(SettingsKeys.HIDE_PLAYER_THUMBNAIL, false)
             val old = item?.unloadedCover?.getCachedDrawable(binding.root.context)
             // A loaded track's artwork is usually a much smaller thumbnail than the one the
             // feed gave us, which made the cover go soft the moment playback started.
@@ -173,9 +179,11 @@ class PlayerTrackAdapter(
         init {
             cover.outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
-                    outline.setRoundRect(
-                        0, 0, currentCoverHeight, currentCoverHeight, currCoverRound
-                    )
+                    // Added from ArchiveTune: "Thumbnail corner radius".
+                    val radius = view.context.getSettings()
+                        .getInt(SettingsKeys.COVER_RADIUS, SettingsKeys.COVER_RADIUS_DEFAULT) *
+                            view.resources.displayMetrics.density
+                    outline.setRoundRect(0, 0, currentCoverHeight, currentCoverHeight, radius)
                 }
             }
             cover.clipToOutline = true

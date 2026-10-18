@@ -451,4 +451,49 @@
     <string name="exported_to">Exported to %1$s</string>
     <string name="import_settings">Import Settings</string>
     <string name="import_settings_summary">Import settings from a file</string>
+
+
+    <!-- Settings added from ArchiveTune -->
+    <string name="palette">Color Palette</string>
+    <string name="palette_summary">Choose the app theme colour from a named palette</string>
+    <string name="random_theme">Random Theme on Startup</string>
+    <string name="random_theme_summary">Pick a random palette colour every time the app starts</string>
+    <string name="disable_blur">Disable Blur Effects</string>
+    <string name="disable_blur_summary">Turn off backdrop blurring throughout the app</string>
+    <string name="blur_amount">Backdrop Blur Amount</string>
+    <string name="blur_amount_summary">How strongly the player backdrop is blurred</string>
+    <string name="force_refresh_rate">Force High Refresh Rate</string>
+    <string name="force_refresh_rate_summary">Ask the display for its highest supported refresh rate</string>
+    <string name="hide_player_thumbnail">Hide Player Thumbnail</string>
+    <string name="hide_player_thumbnail_summary">Hide the artwork on the player and keep only the controls</string>
+    <string name="cover_radius">Thumbnail Corner Radius</string>
+    <string name="cover_radius_summary">How rounded the player artwork is</string>
+    <string name="default_tab">Default Open Tab</string>
+    <string name="default_tab_summary">Which tab the app opens on</string>
+    <string name="haptics">Haptic Feedback</string>
+    <string name="haptics_summary">Vibrate lightly when you touch interactive elements</string>
+    <string name="disable_screenshot">Disable Screenshot</string>
+    <string name="disable_screenshot_summary">Block screenshots and the recents preview</string>
+    <string name="keep_cpu_awake">Keep CPU Awake</string>
+    <string name="keep_cpu_awake_summary">Hold a wake lock while playing so playback is not interrupted</string>
+    <string name="permanent_shuffle">Permanent Shuffle Mode</string>
+    <string name="permanent_shuffle_summary">Keep shuffle enabled when a new track starts</string>
+    <string name="auto_skip_error">Auto Skip on Error</string>
+    <string name="auto_skip_error_summary">Move to the next track automatically if one fails</string>
+    <string name="update_channel">Update Channel</string>
+    <string name="update_channel_summary">Choose between stable and beta releases</string>
+    <string name="update_notifications">Update Notifications</string>
+    <string name="update_notifications_summary">Notify when a newer release is available</string>
+    <string name="image_cache_size">Image Cache Size</string>
+    <string name="image_cache_size_summary">Maximum size of the image cache</string>
+    <string name="clear_image_cache">Clear Image Cache</string>
+    <string name="clear_image_cache_summary">Delete every cached image</string>
+    <string name="image_cache_cleared">Image cache cleared</string>
+    <string name="unlimited">Unlimited</string>
+    <string name="stable">Stable</string>
+    <string name="beta">Beta</string>
+    <string name="home_tab">Home</string>
+    <string name="search_tab">Search</string>
+    <string name="library_tab">Library</string>
+
 </resources>

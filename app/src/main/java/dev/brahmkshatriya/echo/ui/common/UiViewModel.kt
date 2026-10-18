@@ -36,6 +36,7 @@ import dev.brahmkshatriya.echo.utils.CacheUtils.getFromCache
 import dev.brahmkshatriya.echo.utils.CacheUtils.saveToCache
 import dev.brahmkshatriya.echo.utils.ContextUtils.emit
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.utils.ContextUtils.observe
 import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadDrawable
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.animateTranslation
@@ -80,7 +81,12 @@ class UiViewModel(
     }
 
     var currentAppColor: String? = null
-    val navigation = MutableStateFlow(context.getFromCache("main_nav") ?: 0).also { flow ->
+    // Added from ArchiveTune: "Default open tab" decides which tab a fresh launch lands on.
+    val navigation = MutableStateFlow(
+        context.getFromCache("main_nav")
+            ?: context.getSettings().getString(SettingsKeys.DEFAULT_TAB, "0")?.toIntOrNull()
+            ?: 0
+    ).also { flow ->
         viewModelScope.launch { flow.collect { context.saveToCache("main_nav", it) } }
     }
     val selectedSettingsTab = MutableStateFlow(0)

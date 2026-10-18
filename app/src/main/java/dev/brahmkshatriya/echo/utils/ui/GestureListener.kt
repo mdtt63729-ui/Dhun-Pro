@@ -3,9 +3,12 @@ package dev.brahmkshatriya.echo.utils.ui
 import android.graphics.drawable.RippleDrawable
 import android.os.SystemClock
 import android.view.GestureDetector
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
 import java.util.Timer
 import kotlin.concurrent.schedule
 
@@ -16,6 +19,7 @@ interface GestureListener {
 
     companion object {
         fun View.handleGestures(listener: GestureListener) {
+            val hapticView = this
             val gestureListener = object : GestureDetector.SimpleOnGestureListener() {
                 private var timer: Timer? = null
                 private var beingDoubleClicked = false
@@ -40,6 +44,10 @@ interface GestureListener {
                     lastTapUp = now
                     if (isSecondTap) return true
                     handledOnTapUp = true
+                    // Added from ArchiveTune: optional haptic feedback on tap.
+                    if (hapticView.context.getSettings()
+                            .getBoolean(SettingsKeys.HAPTICS, true)
+                    ) hapticView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                     listener.onClick()
                     return true
                 }
@@ -75,7 +83,7 @@ interface GestureListener {
                 }
             }
             val detector = GestureDetector(context, gestureListener)
-            setOnTouchListener { _, event ->
+            setOnTouchListener { v, event ->
                 detector.onTouchEvent(event)
                 performClick()
                 true
