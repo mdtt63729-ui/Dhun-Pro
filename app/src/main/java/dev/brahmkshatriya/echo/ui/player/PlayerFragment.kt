@@ -469,8 +469,8 @@ class PlayerFragment : Fragment() {
         // Added: the pager only binds its pages once it has laid out, so nudge the current page
         // once more shortly after start-up. Without this the collapsed mini player could stay
         // empty after a full close and reopen.
-        view.postDelayed({ runCatching { adapter.onCurrentUpdated() } }, 400L)
-        view.postDelayed({ runCatching { adapter.onCurrentUpdated() } }, 1200L)
+        view?.postDelayed({ runCatching { adapter.onCurrentUpdated() } }, 400L)
+        view?.postDelayed({ runCatching { adapter.onCurrentUpdated() } }, 1200L)
 
 
         val repeatModes = listOf(REPEAT_MODE_OFF, REPEAT_MODE_ALL, REPEAT_MODE_ONE)
