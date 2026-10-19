@@ -206,7 +206,7 @@ open class MainActivity : AppCompatActivity() {
      */
     private fun playSplashAnimation(coldStart: Boolean) {
         val binding = binding ?: return
-        val overlay = binding.splashOverlay
+        val overlay = binding.splashOverlay ?: return
         if (!coldStart) {
             overlay.isVisible = false
             binding.root.alpha = 1f
@@ -215,8 +215,9 @@ open class MainActivity : AppCompatActivity() {
         binding.root.alpha = 0f
         overlay.isVisible = true
         overlay.alpha = 1f
-        binding.splashImage.setImageResource(R.drawable.art_splash_anim)
-        (binding.splashImage.drawable as? Animatable)?.start()
+        val image = binding.splashImage
+        image?.setImageResource(R.drawable.art_splash_anim)
+        (image?.drawable as? Animatable)?.start()
         overlay.postDelayed({
             if (isFinishing || isDestroyed) return@postDelayed
             overlay.animate().alpha(0f).setDuration(FADE_IN_MS).withEndAction {
