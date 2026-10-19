@@ -9,6 +9,8 @@ import androidx.core.view.updateLayoutParams
 import dev.brahmkshatriya.echo.databinding.ItemPlayerControlsBinding
 import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.SettingsKeys
+import dev.brahmkshatriya.echo.databinding.ItemPlayerCollapsedBinding
+import dev.brahmkshatriya.echo.databinding.ItemPlayerCollapsedControlsBinding
 
 /**
  * Applies a now-playing style to the player controls.
@@ -178,6 +180,74 @@ object PlayerStyle {
         if (seek.waveAnimating == playing) return
         seek.waveAnimating = playing
         if (playing) seek.invalidate()
+    }
+
+    /**
+     * Added from Muso: the mini player's progress line follows the slider style too, so the
+     * collapsed bar matches whatever the full player is using.
+     */
+    fun applyCollapsedControls(
+        binding: ItemPlayerCollapsedControlsBinding,
+        sliderStyle: String,
+    ) {
+        val context = binding.root.context
+        val density = context.resources.displayMetrics.density
+        fun dp(value: Float) = (value * density).toInt()
+
+        val seek = binding.collapsedSeekbar
+        val buffer = binding.collapsedBuffer
+
+        when (sliderStyle) {
+            SettingsKeys.SLIDER_STYLE_WAVY, SettingsKeys.SLIDER_STYLE_CIRCULAR -> {
+                seek.waveEnabled = true
+                seek.roundedCaps = sliderStyle == SettingsKeys.SLIDER_STYLE_CIRCULAR
+                seek.waveStrokePx = dp(3f).toFloat()
+                seek.waveAmplitudePx = dp(1f).toFloat()
+                // 1px rather than 0: Material divides by the thickness while drawing.
+                seek.trackThickness = 1
+                buffer.trackThickness = 1
+            }
+
+            SettingsKeys.SLIDER_STYLE_THICK -> {
+                seek.waveEnabled = false
+                seek.trackThickness = dp(6f)
+                buffer.trackThickness = dp(6f)
+            }
+
+            SettingsKeys.SLIDER_STYLE_SIMPLE -> {
+                seek.waveEnabled = false
+                seek.trackThickness = dp(1.5f)
+                buffer.trackThickness = dp(1.5f)
+            }
+
+            else -> {
+                seek.waveEnabled = false
+                seek.trackThickness = dp(2f)
+                buffer.trackThickness = dp(2f)
+            }
+        }
+        seek.requestLayout()
+        seek.invalidate()
+    }
+
+    /** The mini player's wavy line only scrolls while a song is playing. */
+    fun setCollapsedAnimating(binding: ItemPlayerCollapsedControlsBinding, playing: Boolean) {
+        val seek = binding.collapsedSeekbar
+        if (seek.waveAnimating == playing) return
+        seek.waveAnimating = playing
+        if (playing) seek.invalidate()
+    }
+
+    /** Added from Muso: the mini player's title block follows the now-playing style too. */
+    fun applyCollapsedInfo(binding: ItemPlayerCollapsedBinding, style: String) {
+        val (titleSp, artistSp) = when (style) {
+            SettingsKeys.PLAYER_STYLE_SPOTIFY -> 14f to 12f
+            SettingsKeys.PLAYER_STYLE_APPLE -> 17f to 13f
+            SettingsKeys.PLAYER_STYLE_M3E -> 16f to 12f
+            else -> 16f to 14f
+        }
+        binding.collapsedTrackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp)
+        binding.collapsedTrackArtist.setTextSize(TypedValue.COMPLEX_UNIT_SP, artistSp)
     }
 
     /** The slider style currently selected in settings. */

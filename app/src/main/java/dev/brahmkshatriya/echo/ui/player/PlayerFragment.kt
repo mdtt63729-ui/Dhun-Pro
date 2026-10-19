@@ -382,6 +382,7 @@ class PlayerFragment : Fragment() {
             binding.playerControls.playingIndicator.alpha = if (it) 1f else 0f
             // Added from Muso: the wavy seek bar only scrolls while playback is running.
             PlayerStyle.setSliderAnimating(binding.playerControls, it)
+            PlayerStyle.setCollapsedAnimating(binding.playerCollapsedContainer, it)
             binding.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
         }
 
@@ -427,12 +428,20 @@ class PlayerFragment : Fragment() {
         // Added from Muso: the now-playing style can be changed while a song is playing, so
         // re-apply it the moment the preference changes instead of waiting for a rebuild.
         val playerControls = binding.playerControls
+        val collapsedControls = binding.playerCollapsedContainer
         PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
         PlayerStyle.applySlider(playerControls, PlayerStyle.currentSlider(requireContext()))
+        PlayerStyle.applyCollapsedControls(
+            collapsedControls, PlayerStyle.currentSlider(requireContext())
+        )
         val styleListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == SettingsKeys.PLAYER_STYLE || key == SettingsKeys.SLIDER_STYLE) view?.post {
-                PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
-                PlayerStyle.applySlider(playerControls, PlayerStyle.currentSlider(requireContext()))
+                val playerStyle = PlayerStyle.current(requireContext())
+                val sliderStyle = PlayerStyle.currentSlider(requireContext())
+                PlayerStyle.apply(playerControls, playerStyle)
+                PlayerStyle.applySlider(playerControls, sliderStyle)
+                // Added from Muso: the mini player follows both styles too.
+                PlayerStyle.applyCollapsedControls(collapsedControls, sliderStyle)
                 adapter.onStyleUpdated()
             }
         }
