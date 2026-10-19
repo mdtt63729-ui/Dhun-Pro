@@ -101,6 +101,13 @@ open class MainActivity : AppCompatActivity() {
 
         setContentView(binding.root)
 
+        // Added: fade the whole UI in on a cold start instead of letting it pop in behind the
+        // splash. Skipped on a theme rebuild, where the content is already on screen.
+        if (coldStart) {
+            binding.root.alpha = 0f
+            binding.root.animate().alpha(1f).setDuration(FADE_IN_MS).start()
+        }
+
         enableEdgeToEdge(
             SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
             if (isNightMode()) SystemBarStyle.dark(TRANSPARENT)
@@ -223,6 +230,9 @@ open class MainActivity : AppCompatActivity() {
     companion object {
         /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
         const val SPLASH_ANIM_DURATION_MS = 900L
+
+        /** How long the cold-start fade-in of the whole UI takes. */
+        private const val FADE_IN_MS = 260L
 
         /**
          * How different two artwork colours must be before the theme is worth a full rebuild.

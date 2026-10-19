@@ -281,9 +281,18 @@ data class FeedData(
         return list
     }
 
-    val isRefreshingFlow = loadedFeedTypeFlow.map {
-        loadedFeedTypeFlow.value == null
-    }.stateIn(scope, Lazily, true)
+    /**
+     * Whether the pull-to-refresh spinner should be turning.
+     *
+     * This used to be true for the *initial* load as well, which is why a refresh animation
+     * appeared every time the app was opened. Only a real pull-to-refresh raises it now; the
+     * first load is silent and the content simply fades in.
+     */
+    private val userRefreshingFlow = MutableStateFlow(false)
+
+    val isRefreshingFlow = combine(loadedFeedTypeFlow, userRefreshingFlow) { loaded, user ->
+        user && loaded == null
+    }.stateIn(scope, Lazily, false)
 
     fun selectTab(extensionId: String?, pos: Int) {
         val state = stateFlow.value.run { second?.getOrNull() ?: first?.getOrNull() }
@@ -293,7 +302,10 @@ data class FeedData(
         selectedTabFlow.value = tab
     }
 
-    fun refresh() = scope.launch { refreshFlow.emit(Unit) }
+    fun refresh() = scope.launch {
+        userRefreshingFlow.value = true
+        refreshFlow.emit(Unit)
+    }
 
     init {
         scope.launch(Dispatchers.IO) {
