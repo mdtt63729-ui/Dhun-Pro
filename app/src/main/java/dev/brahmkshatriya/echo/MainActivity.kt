@@ -42,6 +42,7 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 
 open class MainActivity : AppCompatActivity() {
 
@@ -118,9 +119,6 @@ open class MainActivity : AppCompatActivity() {
         observeDynamicColor()
     }
 
-    /** The artwork colour the theme currently on screen was built from. */
-    private var appliedAccent: Int? = null
-
     private val handler = Handler(Looper.getMainLooper())
 
     /**
@@ -140,6 +138,16 @@ open class MainActivity : AppCompatActivity() {
     private val reThemeRunnable = object : Runnable {
         override fun run() {
             if (isChangingConfigurations || isFinishing || isDestroyed) return
+            // The full player is where a rebuild hurts most: it re-inflates the player, the
+            // queue and the lyrics while a song is playing, which is the freeze you see. The
+            // artwork already tints the player live, so hold the app-wide rebuild back until
+            // the player is closed and then apply it in one go.
+            if (uiViewModel.playerSheetState.value != BottomSheetBehavior.STATE_HIDDEN &&
+                uiViewModel.playerSheetState.value != BottomSheetBehavior.STATE_COLLAPSED
+            ) {
+                handler.postDelayed(this, RE_THEME_RETRY_MS)
+                return
+            }
             // Never rebuild more often than this, so a burst of colour changes cannot turn
             // into a recreate loop that leaves the app stuck.
             val now = SystemClock.elapsedRealtime()
@@ -149,9 +157,13 @@ open class MainActivity : AppCompatActivity() {
                 return
             }
             lastReTheme = now
+            appliedAccent = pendingAccent ?: appliedAccent
             recreate()
         }
     }
+
+    /** The colour waiting to be applied once a rebuild is allowed to run. */
+    private var pendingAccent: Int? = null
 
     /**
      * When "Dynamic Color" is on, rebuild the theme whenever the song's artwork colour has
@@ -159,13 +171,16 @@ open class MainActivity : AppCompatActivity() {
      */
     private fun observeDynamicColor() {
         if (!getSettings().getBoolean(PLAYER_COLOR, false)) return
-        appliedAccent = uiViewModel.playerColors.value?.accent
+        // Only seed when nothing has been applied yet — the rebuild keeps this value, so
+        // overwriting it here would make the colour that was just applied look new again.
+        if (appliedAccent == null) appliedAccent = uiViewModel.playerColors.value?.accent
         lifecycleScope.launch {
             uiViewModel.playerColors.collect { colors ->
                 val accent = colors?.accent ?: return@collect
                 val applied = appliedAccent
                 if (applied != null && accent == applied) return@collect
                 if (applied != null && !isThemeColorDifferent(accent, applied)) return@collect
+                pendingAccent = accent
                 handler.removeCallbacks(reThemeRunnable)
                 handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
             }
@@ -193,7 +208,19 @@ open class MainActivity : AppCompatActivity() {
         private const val RE_THEME_DELAY_MS = 700L
 
         /** Hard floor between rebuilds, so colour changes can never stack up into a loop. */
-        private const val RE_THEME_MIN_INTERVAL_MS = 5_000L
+        private const val RE_THEME_MIN_INTERVAL_MS = 8_000L
+
+        /** How long to wait before re-checking whether the rebuild can run yet. */
+        private const val RE_THEME_RETRY_MS = 1_500L
+
+        /**
+         * The artwork colour the theme on screen was built from.
+         *
+         * Deliberately in the companion: the rebuild throws the activity away, so a
+         * per-instance field came back null every time and the colour that had just been
+         * applied looked like a brand-new one.
+         */
+        private var appliedAccent: Int? = null
 
         const val THEME_KEY = "theme"
         const val AMOLED_KEY = "amoled"
