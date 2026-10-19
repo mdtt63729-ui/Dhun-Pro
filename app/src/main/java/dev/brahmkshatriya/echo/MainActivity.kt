@@ -205,6 +205,7 @@ open class MainActivity : AppCompatActivity() {
      * shows a still frame for a moment and this plays the whole thing.
      */
     private fun playSplashAnimation(coldStart: Boolean) {
+        val binding = binding ?: return
         val overlay = binding.splashOverlay
         if (!coldStart) {
             overlay.isVisible = false
