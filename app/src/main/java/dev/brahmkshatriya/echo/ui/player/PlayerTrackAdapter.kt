@@ -240,6 +240,15 @@ class PlayerTrackAdapter(
     fun playerControlsHeightUpdated() = onEachViewHolder { updateInsets() }
     fun onColorsUpdated() = onEachViewHolder { updateColors() }
     fun onCurrentUpdated() {
+        // Re-bind the page that has just become current. The title comes straight from the
+        // player state and updates immediately, but the artwork lives in the pager page — and
+        // that page was not always rebound, so it kept showing the previous track's cover.
+        // That is how a song could be playing while a different song's thumbnail was shown.
+        onEachViewHolder {
+            val index = bindingAdapterPosition
+            val item = if (index == RecyclerView.NO_POSITION) null else getItem(index)
+            if (item != null && item == current.value?.mediaItem) bind(item)
+        }
         onEachViewHolder { applyDrawable() }
         if (current.value == null) currentDrawableListener?.invoke(null)
     }
