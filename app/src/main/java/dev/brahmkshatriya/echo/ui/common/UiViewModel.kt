@@ -81,11 +81,18 @@ class UiViewModel(
     }
 
     var currentAppColor: String? = null
-    // Added from ArchiveTune: "Default open tab" decides which tab a fresh launch lands on.
+    // Added from ArchiveTune: "Default Launch Page" decides which tab the app opens on.
+    // Anything other than "last" pins the tab, so the setting actually applies on every launch
+    // instead of only the very first one.
     val navigation = MutableStateFlow(
-        context.getFromCache("main_nav")
-            ?: context.getSettings().getString(SettingsKeys.DEFAULT_TAB, "0")?.toIntOrNull()
-            ?: 0
+        when (context.getSettings()
+            .getString(SettingsKeys.DEFAULT_PAGE, SettingsKeys.DEFAULT_PAGE_LAST)
+        ) {
+            SettingsKeys.DEFAULT_PAGE_HOME -> 0
+            SettingsKeys.DEFAULT_PAGE_SEARCH -> 1
+            SettingsKeys.DEFAULT_PAGE_LIBRARY -> 2
+            else -> context.getFromCache("main_nav") ?: 0
+        }
     ).also { flow ->
         viewModelScope.launch { flow.collect { context.saveToCache("main_nav", it) } }
     }

@@ -43,6 +43,8 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import android.content.res.ColorStateList
+import androidx.core.graphics.ColorUtils
 
 open class MainActivity : AppCompatActivity() {
 
@@ -177,6 +179,10 @@ open class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             uiViewModel.playerColors.collect { colors ->
                 val accent = colors?.accent ?: return@collect
+                // Added for the theme-change lag: tint the navigation bar immediately, without
+                // rebuilding anything. That is what makes the colour change feel instant; the
+                // full rebuild below is the expensive part and is deliberately rare.
+                tintNavBar(accent)
                 val applied = appliedAccent
                 if (applied != null && accent == applied) return@collect
                 if (applied != null && !isThemeColorDifferent(accent, applied)) return@collect
@@ -184,6 +190,23 @@ open class MainActivity : AppCompatActivity() {
                 handler.removeCallbacks(reThemeRunnable)
                 handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
             }
+        }
+    }
+
+    /**
+     * Tints the bottom navigation bar with the artwork colour. No view is recreated, so this is
+     * free compared to the activity rebuild, and it is the surface the user notices most.
+     */
+    private fun tintNavBar(accent: Int) {
+        val nav = (binding.navView as? NavigationBarView) ?: return
+        runCatching {
+            val checked = intArrayOf(android.R.attr.state_checked)
+            val unchecked = intArrayOf()
+            val colors = intArrayOf(accent, ColorUtils.setAlphaComponent(accent, 170))
+            nav.itemIconTintList = ColorStateList(arrayOf(checked, unchecked), colors)
+            nav.itemTextColor = ColorStateList(arrayOf(checked, unchecked), colors)
+            nav.itemActiveIndicatorColor =
+                ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 60))
         }
     }
 
@@ -201,8 +224,12 @@ open class MainActivity : AppCompatActivity() {
         /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
         const val SPLASH_ANIM_DURATION_MS = 900L
 
-        /** How different two artwork colours must be before the theme is worth rebuilding. */
-        private const val THEME_HUE_THRESHOLD = 24f
+        /**
+         * How different two artwork colours must be before the theme is worth a full rebuild.
+         * Raised from 24 to 60: the navigation bar now re-tints live, so the rebuild only has
+         * to catch up when the colour really jumps.
+         */
+        private const val THEME_HUE_THRESHOLD = 60f
 
         /** Debounce the rebuild so skipping through tracks does not thrash it. */
         private const val RE_THEME_DELAY_MS = 700L

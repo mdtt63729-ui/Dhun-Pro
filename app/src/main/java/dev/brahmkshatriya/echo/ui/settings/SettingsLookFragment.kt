@@ -280,18 +280,24 @@ class SettingsLookFragment : BaseSettingsFragment() {
                 }
 
                 MaterialListPreference(context).apply {
-                    key = SettingsKeys.DEFAULT_TAB
-                    title = getString(R.string.default_tab)
-                    summary = getString(R.string.default_tab_summary)
+                    key = SettingsKeys.DEFAULT_PAGE
+                    title = getString(R.string.default_page)
+                    summary = getString(R.string.default_page_summary)
                     layoutResource = R.layout.preference
                     isIconSpaceReserved = false
                     entries = arrayOf(
+                        getString(R.string.page_last),
                         getString(R.string.home_tab),
                         getString(R.string.search_tab),
                         getString(R.string.library_tab)
                     )
-                    entryValues = arrayOf("0", "1", "2")
-                    setDefaultValue(SettingsKeys.DEFAULT_TAB_HOME)
+                    entryValues = arrayOf(
+                        SettingsKeys.DEFAULT_PAGE_LAST,
+                        SettingsKeys.DEFAULT_PAGE_HOME,
+                        SettingsKeys.DEFAULT_PAGE_SEARCH,
+                        SettingsKeys.DEFAULT_PAGE_LIBRARY
+                    )
+                    setDefaultValue(SettingsKeys.DEFAULT_PAGE_LAST)
                     addPreference(this)
                 }
 

@@ -35,9 +35,17 @@ object SettingsKeys {
     const val COVER_RADIUS = "cover_radius"
     const val COVER_RADIUS_DEFAULT = 12
 
-    /** Which bottom-nav tab to open on launch: 0 = Home, 1 = Search, 2 = Library. */
-    const val DEFAULT_TAB = "default_tab"
-    const val DEFAULT_TAB_HOME = "0"
+    /**
+     * Which page the app opens on: "last" restores the tab you were on, anything else pins it.
+     *
+     * The old key only ever applied on a very first launch, because the last-used tab was
+     * restored from the cache and always won.
+     */
+    const val DEFAULT_PAGE = "default_page"
+    const val DEFAULT_PAGE_LAST = "last"
+    const val DEFAULT_PAGE_HOME = "home"
+    const val DEFAULT_PAGE_SEARCH = "search"
+    const val DEFAULT_PAGE_LIBRARY = "library"
 
     /** Haptic feedback on interactive elements. */
     const val HAPTICS = "haptics"

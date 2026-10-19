@@ -612,4 +612,11 @@
     <string name="mini_minify">Minify (compact)</string>
     <string name="mini_classic">Classic (Material 3)</string>
 
+
+
+    <!-- Default launch page -->
+    <string name="default_page">Default Launch Page</string>
+    <string name="default_page_summary">Which page the app opens on</string>
+    <string name="page_last">Last used</string>
+
 </resources>
