@@ -596,7 +596,7 @@
 
     <!-- Player slider styles from the Muso player -->
     <string name="slider_style">Player Slider Style</string>
-    <string name="slider_style_summary">How the player's seek bar is drawn</string>
+    <string name="slider_style_summary">How the player\'s seek bar is drawn</string>
     <string name="slider_standard">Standard</string>
     <string name="slider_wavy">Wavy</string>
     <string name="slider_thick">Thick</string>
