@@ -20,6 +20,8 @@ import dev.brahmkshatriya.echo.utils.image.ImageUtils.loadInto
 import dev.brahmkshatriya.echo.utils.ui.AnimationUtils.applyTranslationYAnimation
 import dev.brahmkshatriya.echo.utils.ui.UiUtils.marquee
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
+import dev.brahmkshatriya.echo.common.models.ImageHolder
+import dev.brahmkshatriya.echo.playback.MediaItemUtils.unloadedCover
 
 class QueueAdapter(
     private val listener: Listener,
@@ -89,7 +91,7 @@ class QueueAdapter(
         val isCurrent = current != null
         val isPlaying = current == true
         val track = item.track
-        binding.bind(track)
+        binding.bind(track, item.unloadedCover)
         binding.isPlaying(isPlaying)
         binding.playlistItemClose.isVisible = !inactive
         binding.playlistItemDrag.isVisible = !inactive
@@ -117,13 +119,18 @@ class QueueAdapter(
     }
 
     companion object {
-        fun ItemPlaylistTrackBinding.bind(track: Track) {
+        fun ItemPlaylistTrackBinding.bind(track: Track, unloadedCover: ImageHolder? = null) {
             playlistItemTitle.run {
                 text = track.title
                 marquee()
             }
 
-            track.cover.loadInto(playlistItemImageView, R.drawable.art_music)
+            // The Up Next rows come from the queue's own MediaItems, and the Track inside an
+            // *unloaded* item often has no artwork at all — which is why every row after the
+            // playing one showed a placeholder. The feed artwork is kept in `unloadedCover`,
+            // so prefer that and only fall back to the track's own cover. Same source the
+            // player cover uses.
+            (unloadedCover ?: track.cover).loadInto(playlistItemImageView, R.drawable.art_music)
             val subtitle = track.subtitle(root.context)
             playlistItemAuthor.run {
                 isVisible = !subtitle.isNullOrEmpty()
