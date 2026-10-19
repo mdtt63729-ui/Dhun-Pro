@@ -45,6 +45,8 @@ import kotlin.math.abs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import android.content.res.ColorStateList
 import androidx.core.graphics.ColorUtils
+import android.graphics.drawable.Animatable
+import androidx.core.view.isVisible
 
 open class MainActivity : AppCompatActivity() {
 
@@ -67,7 +69,7 @@ open class MainActivity : AppCompatActivity() {
         val coldStart = savedInstanceState == null
         installSplashScreen().setKeepOnScreenCondition { coldStart && !splashFinished.get() }
         lifecycleScope.launch {
-            if (coldStart) delay(SPLASH_ANIM_DURATION_MS)
+            if (coldStart) delay(SYSTEM_SPLASH_MS)
             splashFinished.set(true)
         }
         super.onCreate(savedInstanceState)
@@ -101,12 +103,7 @@ open class MainActivity : AppCompatActivity() {
 
         setContentView(binding.root)
 
-        // Added: fade the whole UI in on a cold start instead of letting it pop in behind the
-        // splash. Skipped on a theme rebuild, where the content is already on screen.
-        if (coldStart) {
-            binding.root.alpha = 0f
-            binding.root.animate().alpha(1f).setDuration(FADE_IN_MS).start()
-        }
+        playSplashAnimation(coldStart)
 
         enableEdgeToEdge(
             SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
@@ -201,6 +198,34 @@ open class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Plays the splash animation in the app itself, then fades the UI in behind it.
+     *
+     * The system splash screen only runs one second of an icon animation — the platform caps it
+     * — while this animation is 2.4s, so it was always being cut off. The system splash now
+     * shows a still frame for a moment and this plays the whole thing.
+     */
+    private fun playSplashAnimation(coldStart: Boolean) {
+        val overlay = binding.splashOverlay
+        if (!coldStart) {
+            overlay.isVisible = false
+            binding.root.alpha = 1f
+            return
+        }
+        binding.root.alpha = 0f
+        overlay.isVisible = true
+        overlay.alpha = 1f
+        binding.splashImage.setImageResource(R.drawable.art_splash_anim)
+        (binding.splashImage.drawable as? Animatable)?.start()
+        overlay.postDelayed({
+            if (isFinishing || isDestroyed) return@postDelayed
+            overlay.animate().alpha(0f).setDuration(FADE_IN_MS).withEndAction {
+                overlay.isVisible = false
+                binding.root.animate().alpha(1f).setDuration(FADE_IN_MS).start()
+            }.start()
+        }, SPLASH_ANIM_DURATION_MS)
+    }
+
+    /**
      * Tints the bottom navigation bar with the artwork colour. No view is recreated, so this is
      * free compared to the activity rebuild, and it is the surface the user notices most.
      */
@@ -228,8 +253,11 @@ open class MainActivity : AppCompatActivity() {
 
 
     companion object {
-        /** Matches android:windowSplashScreenAnimationDuration in themes.xml. */
-        const val SPLASH_ANIM_DURATION_MS = 900L
+        /** How long the splash animation actually runs (art_splash_anim's longest animator). */
+        const val SPLASH_ANIM_DURATION_MS = 2400L
+
+        /** How long the system splash is held before the app's own splash overlay takes over. */
+        private const val SYSTEM_SPLASH_MS = 250L
 
         /** How long the cold-start fade-in of the whole UI takes. */
         private const val FADE_IN_MS = 260L

@@ -36,4 +36,27 @@
         android:minHeight="@dimen/nav_height"
         app:menu="@menu/nav_menu" />
 
+    <!--
+        Added: the app plays the real splash animation itself. The platform only ever runs one
+        second of a splash icon animation and this one is 2.4s, which is exactly why the splash
+        always looked cut off.
+    -->
+    <FrameLayout
+        android:id="@+id/splashOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/amoled_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/splashImage"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:layout_gravity="center"
+            android:importantForAccessibility="no" />
+
+    </FrameLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
