@@ -1,0 +1,124 @@
+package dev.brahmkshatriya.echo.utils.ui
+
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
+import dev.brahmkshatriya.echo.databinding.ItemPlayerControlsBinding
+import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
+import dev.brahmkshatriya.echo.utils.SettingsKeys
+
+/**
+ * Applies a now-playing style to the player controls.
+ *
+ * The app's player is one XML layout, so each style is a preset of real, visible differences —
+ * artwork corner radius, how heavy the title/artist block is and how it is aligned, the size of
+ * the like button, the spacing around them and how thick the seek bar is. The three alternates
+ * are modelled on the now-playing styles in the Muso player (Spotify, Apple Music, Material 3
+ * Expressive); [SettingsKeys.PLAYER_STYLE_MATERIAL3] is the app's own look and resets
+ * everything back to the layout's defaults.
+ *
+ * Nothing here recreates a view, so a style can be switched while a song is playing.
+ */
+object PlayerStyle {
+
+    /**
+     * Corner radius of the player artwork, in dp, or -1 to fall back to the user's
+     * "Thumbnail corner radius" setting.
+     */
+    fun coverRadiusDp(style: String): Int = when (style) {
+        SettingsKeys.PLAYER_STYLE_SPOTIFY -> 6
+        SettingsKeys.PLAYER_STYLE_APPLE -> 16
+        SettingsKeys.PLAYER_STYLE_M3E -> 28
+        else -> -1
+    }
+
+    fun apply(binding: ItemPlayerControlsBinding, style: String) {
+        val context = binding.root.context
+        val density = context.resources.displayMetrics.density
+        val scaled = context.resources.displayMetrics.scaledDensity
+
+        fun sp(value: Float) = value * scaled
+        fun dp(value: Float) = value * density
+
+        val title = binding.trackTitle
+        val artist = binding.trackArtist
+        val heart = binding.trackHeart
+        val seek = binding.seekBar
+        val buffer = binding.bufferBar
+
+        // The info row is the controls layout's first child.
+        val row = binding.root.getChildAt(0) as? LinearLayout
+
+        val titleSp: Float
+        val artistSp: Float
+        val titleGravity: Int
+        val heartDp: Float
+        val rowPaddingDp: Float
+        val trackDp: Float
+        val thumbDp: Float
+
+        when (style) {
+            SettingsKeys.PLAYER_STYLE_SPOTIFY -> {
+                // Tight and left-aligned, a hairline seek bar, a smaller like button.
+                titleSp = 17f; artistSp = 13f; titleGravity = Gravity.START
+                heartDp = 56f; rowPaddingDp = 18f; trackDp = 1.5f; thumbDp = 14f
+            }
+
+            SettingsKeys.PLAYER_STYLE_APPLE -> {
+                // Bigger type, centred, generous spacing, a heavier slider.
+                titleSp = 24f; artistSp = 17f; titleGravity = Gravity.CENTER_HORIZONTAL
+                heartDp = 72f; rowPaddingDp = 30f; trackDp = 3f; thumbDp = 22f
+            }
+
+            SettingsKeys.PLAYER_STYLE_M3E -> {
+                // Expressive: a rounded card look, chunky tonal slider, codec capsule below.
+                titleSp = 22f; artistSp = 15f; titleGravity = Gravity.START
+                heartDp = 64f; rowPaddingDp = 24f; trackDp = 5f; thumbDp = 26f
+            }
+
+            else -> {
+                // Material 3 — the layout's own values.
+                titleSp = 20f; artistSp = 16f; titleGravity = Gravity.BOTTOM or Gravity.START
+                heartDp = 64f; rowPaddingDp = 24f; trackDp = 2f; thumbDp = 20f
+            }
+        }
+
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp)
+        title.gravity = titleGravity
+        artist.setTextSize(TypedValue.COMPLEX_UNIT_SP, artistSp)
+        artist.gravity = if (titleGravity == Gravity.CENTER_HORIZONTAL) {
+            Gravity.CENTER_HORIZONTAL
+        } else {
+            Gravity.START
+        }
+
+        heart.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            width = dp(heartDp).toInt()
+            height = dp(heartDp).toInt()
+        }
+        row?.setPaddingRelative(
+            dp(rowPaddingDp).toInt(), row?.paddingTop ?: 0,
+            dp(rowPaddingDp).toInt(), row?.paddingBottom ?: 0
+        )
+
+        runCatching {
+            seek.trackHeight = dp(trackDp).toInt()
+            seek.thumbWidth = dp(thumbDp).toInt()
+            seek.thumbHeight = dp(thumbDp).toInt()
+            buffer.trackThickness = dp(trackDp).toInt()
+        }
+
+        // Material 3 Expressive puts a codec capsule under the seek bar, exactly like Muso's.
+        binding.statsText.isVisible = style == SettingsKeys.PLAYER_STYLE_M3E ||
+            context.getSettings().getBoolean(SettingsKeys.NERD_STATS, false)
+    }
+
+    /** The style currently selected in settings. */
+    fun current(context: android.content.Context): String =
+        context.getSettings().getString(
+            SettingsKeys.PLAYER_STYLE, SettingsKeys.PLAYER_STYLE_MATERIAL3
+        ) ?: SettingsKeys.PLAYER_STYLE_MATERIAL3
+}

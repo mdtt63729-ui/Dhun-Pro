@@ -46,6 +46,38 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
             val screen = preferenceManager.createPreferenceScreen(context)
             preferenceScreen = screen
 
+            // ---- Now Playing styles (from the Muso player) ----
+
+            PreferenceCategory(context).apply {
+                title = getString(R.string.player_section)
+                key = "player"
+                isIconSpaceReserved = false
+                layoutResource = R.layout.preference_category
+                screen.addPreference(this)
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.PLAYER_STYLE
+                    title = getString(R.string.player_style)
+                    summary = getString(R.string.player_style_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.style_material3),
+                        getString(R.string.style_spotify),
+                        getString(R.string.style_apple_music),
+                        getString(R.string.style_m3_expressive)
+                    )
+                    entryValues = arrayOf(
+                        SettingsKeys.PLAYER_STYLE_MATERIAL3,
+                        SettingsKeys.PLAYER_STYLE_SPOTIFY,
+                        SettingsKeys.PLAYER_STYLE_APPLE,
+                        SettingsKeys.PLAYER_STYLE_M3E
+                    )
+                    setDefaultValue(SettingsKeys.PLAYER_STYLE_MATERIAL3)
+                    addPreference(this)
+                }
+            }
+
             PreferenceCategory(context).apply {
                 title = getString(R.string.playback)
                 key = "playback"

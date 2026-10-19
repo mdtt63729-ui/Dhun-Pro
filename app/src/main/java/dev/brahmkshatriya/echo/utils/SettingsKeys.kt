@@ -92,6 +92,16 @@ object SettingsKeys {
     /** Ask image hosts for smaller thumbnails to save data. */
     const val LOW_DATA_MODE = "low_data_mode"
 
+    /**
+     * Which now-playing layout the player uses. "material3" is the app's own look; the other
+     * three are modelled on the now-playing styles in the Muso player.
+     */
+    const val PLAYER_STYLE = "player_style"
+    const val PLAYER_STYLE_MATERIAL3 = "material3"
+    const val PLAYER_STYLE_SPOTIFY = "spotify"
+    const val PLAYER_STYLE_APPLE = "apple"
+    const val PLAYER_STYLE_M3E = "m3expressive"
+
     /** Show a volume slider on the player. */
     const val SHOW_VOLUME_BAR = "show_volume_bar"
 

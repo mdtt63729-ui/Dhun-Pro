@@ -98,6 +98,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.Tracks
 import dev.brahmkshatriya.echo.utils.SettingsKeys
+import android.content.SharedPreferences
 
 class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
@@ -419,6 +420,22 @@ class PlayerFragment : Fragment() {
             addedSettings.getBoolean(SettingsKeys.NERD_STATS, false)
         if (binding.playerControls.volumeBar.isVisible) setupVolumeBar()
         if (binding.playerControls.statsText.isVisible) setupNerdStats()
+
+        // Added from Muso: the now-playing style can be changed while a song is playing, so
+        // re-apply it the moment the preference changes instead of waiting for a rebuild.
+        val styleListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == SettingsKeys.PLAYER_STYLE) view?.post { adapter.onStyleUpdated() }
+        }
+        requireContext().getSettings()
+            .registerOnSharedPreferenceChangeListener(styleListener)
+        viewLifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onDestroy(owner: LifecycleOwner) {
+                runCatching {
+                    requireContext().getSettings()
+                        .unregisterOnSharedPreferenceChangeListener(styleListener)
+                }
+            }
+        })
 
 
         val repeatModes = listOf(REPEAT_MODE_OFF, REPEAT_MODE_ALL, REPEAT_MODE_ONE)

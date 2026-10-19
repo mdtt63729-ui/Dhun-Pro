@@ -581,4 +581,15 @@
     <string name="backup_done">Backup written</string>
     <string name="volume">Volume</string>
 
+
+
+    <!-- Now Playing styles from the Muso player -->
+    <string name="player_style">Now Playing Style</string>
+    <string name="player_style_summary">How the full-screen player is laid out</string>
+    <string name="style_material3">Material 3 (default)</string>
+    <string name="style_spotify">Spotify</string>
+    <string name="style_apple_music">Apple Music</string>
+    <string name="style_m3_expressive">Material 3 Expressive</string>
+    <string name="player_section">Player</string>
+
 </resources>

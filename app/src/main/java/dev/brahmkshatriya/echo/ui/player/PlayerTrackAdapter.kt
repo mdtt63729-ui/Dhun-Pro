@@ -37,6 +37,7 @@ import dev.brahmkshatriya.echo.utils.ui.UiUtils.isRTL
 import dev.brahmkshatriya.echo.utils.ui.scrolling.ScrollAnimViewHolder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.math.max
+import dev.brahmkshatriya.echo.utils.ui.PlayerStyle
 
 class PlayerTrackAdapter(
     private val uiViewModel: UiViewModel,
@@ -160,6 +161,8 @@ class PlayerTrackAdapter(
             // Added from ArchiveTune: "Hide player thumbnail".
             binding.playerTrackCover.isVisible = !binding.root.context.getSettings()
                 .getBoolean(SettingsKeys.HIDE_PLAYER_THUMBNAIL, false)
+            // Added from Muso: the selected now-playing style.
+            PlayerStyle.apply(binding.playerControls, PlayerStyle.current(binding.root.context))
             val old = item?.unloadedCover?.getCachedDrawable(binding.root.context)
             // A loaded track's artwork is usually a much smaller thumbnail than the one the
             // feed gave us, which made the cover go soft the moment playback started.
@@ -179,11 +182,16 @@ class PlayerTrackAdapter(
         init {
             cover.outlineProvider = object : ViewOutlineProvider() {
                 override fun getOutline(view: View, outline: Outline) {
-                    // Added from ArchiveTune: "Thumbnail corner radius".
-                    val radius = view.context.getSettings()
-                        .getInt(SettingsKeys.COVER_RADIUS, SettingsKeys.COVER_RADIUS_DEFAULT) *
-                            view.resources.displayMetrics.density
-                    outline.setRoundRect(0, 0, currentCoverHeight, currentCoverHeight, radius)
+                    // "Thumbnail corner radius", overridden by the now-playing style.
+                    val styleRadius = PlayerStyle.coverRadiusDp(PlayerStyle.current(view.context))
+                    val radius = if (styleRadius >= 0) styleRadius.toFloat()
+                    else view.context.getSettings()
+                        .getInt(SettingsKeys.COVER_RADIUS, SettingsKeys.COVER_RADIUS_DEFAULT)
+                        .toFloat()
+                    outline.setRoundRect(
+                        0, 0, currentCoverHeight, currentCoverHeight,
+                        radius * view.resources.displayMetrics.density
+                    )
                 }
             }
             cover.clipToOutline = true
@@ -239,6 +247,12 @@ class PlayerTrackAdapter(
     fun insetsUpdated() = onEachViewHolder { updateInsets() }
     fun playerControlsHeightUpdated() = onEachViewHolder { updateInsets() }
     fun onColorsUpdated() = onEachViewHolder { updateColors() }
+
+    /** Added from Muso: re-apply the now-playing style without rebuilding anything. */
+    fun onStyleUpdated() = onEachViewHolder {
+        PlayerStyle.apply(binding.playerControls, PlayerStyle.current(binding.root.context))
+        applyDrawable()
+    }
     fun onCurrentUpdated() {
         // Re-bind the page that has just become current. The title comes straight from the
         // player state and updates immediately, but the artwork lives in the pager page — and
