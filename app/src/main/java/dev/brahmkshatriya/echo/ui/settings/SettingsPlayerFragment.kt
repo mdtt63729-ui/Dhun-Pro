@@ -100,6 +100,26 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(SettingsKeys.SLIDER_STYLE_STANDARD)
                     addPreference(this)
                 }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.MINI_PLAYER_STYLE
+                    title = getString(R.string.mini_player_style)
+                    summary = getString(R.string.mini_player_style_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.mini_default),
+                        getString(R.string.mini_minify),
+                        getString(R.string.mini_classic)
+                    )
+                    entryValues = arrayOf(
+                        SettingsKeys.MINI_PLAYER_STYLE_DEFAULT,
+                        SettingsKeys.MINI_PLAYER_STYLE_MINIFY,
+                        SettingsKeys.MINI_PLAYER_STYLE_CLASSIC
+                    )
+                    setDefaultValue(SettingsKeys.MINI_PLAYER_STYLE_DEFAULT)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {

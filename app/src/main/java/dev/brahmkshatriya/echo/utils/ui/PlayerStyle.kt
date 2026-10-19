@@ -11,6 +11,8 @@ import dev.brahmkshatriya.echo.utils.ContextUtils.getSettings
 import dev.brahmkshatriya.echo.utils.SettingsKeys
 import dev.brahmkshatriya.echo.databinding.ItemPlayerCollapsedBinding
 import dev.brahmkshatriya.echo.databinding.ItemPlayerCollapsedControlsBinding
+import android.content.res.ColorStateList
+import androidx.core.graphics.ColorUtils
 
 /**
  * Applies a now-playing style to the player controls.
@@ -238,17 +240,67 @@ object PlayerStyle {
         if (playing) seek.invalidate()
     }
 
-    /** Added from Muso: the mini player's title block follows the now-playing style too. */
-    fun applyCollapsedInfo(binding: ItemPlayerCollapsedBinding, style: String) {
-        val (titleSp, artistSp) = when (style) {
-            SettingsKeys.PLAYER_STYLE_SPOTIFY -> 14f to 12f
-            SettingsKeys.PLAYER_STYLE_APPLE -> 17f to 13f
-            SettingsKeys.PLAYER_STYLE_M3E -> 16f to 12f
-            else -> 16f to 14f
+    /**
+     * Added from Muso: the mini player's own styles (its `MiniPlayerStyle` enum), plus the
+     * app's default. "minify" is the compact bar; "classic" is the taller Material 3 one.
+     *
+     * This is the title block half; [applyMiniPlayerControls] does the bar itself.
+     */
+    fun applyMiniPlayerInfo(binding: ItemPlayerCollapsedBinding, style: String) {
+        val context = binding.root.context
+        val density = context.resources.displayMetrics.density
+        fun dp(value: Float) = (value * density).toInt()
+
+        val titleSp: Float
+        val artistSp: Float
+        val horizontalDp: Float
+
+        when (style) {
+            SettingsKeys.MINI_PLAYER_STYLE_MINIFY -> {
+                titleSp = 14f; artistSp = 11f; horizontalDp = 12f
+            }
+
+            SettingsKeys.MINI_PLAYER_STYLE_CLASSIC -> {
+                titleSp = 17f; artistSp = 13f; horizontalDp = 20f
+            }
+
+            else -> {
+                titleSp = 16f; artistSp = 14f; horizontalDp = 16f
+            }
         }
+
         binding.collapsedTrackTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, titleSp)
         binding.collapsedTrackArtist.setTextSize(TypedValue.COMPLEX_UNIT_SP, artistSp)
+
+        val row = binding.collapsedPlayerInfo
+        row.setPaddingRelative(
+            dp(horizontalDp).toInt(), row.paddingTop,
+            dp(horizontalDp).toInt(), row.paddingBottom
+        )
     }
+
+    /**
+     * The bar half of the mini player style. "Classic" also washes the bar with the artwork
+     * colour, which is what Muso's Classic mini player does.
+     */
+    fun applyMiniPlayerControls(
+        binding: ItemPlayerCollapsedControlsBinding,
+        style: String,
+        accent: Int?,
+    ) {
+        binding.root.backgroundTintList = if (
+            style == SettingsKeys.MINI_PLAYER_STYLE_CLASSIC && accent != null
+        ) {
+            ColorStateList.valueOf(ColorUtils.setAlphaComponent(accent, 64))
+        } else null
+        binding.root.invalidate()
+    }
+
+    /** The mini player style currently selected in settings. */
+    fun currentMini(context: android.content.Context): String =
+        context.getSettings().getString(
+            SettingsKeys.MINI_PLAYER_STYLE, SettingsKeys.MINI_PLAYER_STYLE_DEFAULT
+        ) ?: SettingsKeys.MINI_PLAYER_STYLE_DEFAULT
 
     /** The slider style currently selected in settings. */
     fun currentSlider(context: android.content.Context): String =

@@ -113,6 +113,16 @@ object SettingsKeys {
     const val SLIDER_STYLE_CIRCULAR = "circular"
     const val SLIDER_STYLE_SIMPLE = "simple"
 
+    /**
+     * The mini player layout, from the Muso player's MiniPlayerStyle enum: "default" is the
+     * app's own bar, "minify" is its compact variant and "classic" is the taller Material 3
+     * one with an artwork-tinted background.
+     */
+    const val MINI_PLAYER_STYLE = "mini_player_style"
+    const val MINI_PLAYER_STYLE_DEFAULT = "default"
+    const val MINI_PLAYER_STYLE_MINIFY = "minify"
+    const val MINI_PLAYER_STYLE_CLASSIC = "classic"
+
     /** Show a volume slider on the player. */
     const val SHOW_VOLUME_BAR = "show_volume_bar"
 

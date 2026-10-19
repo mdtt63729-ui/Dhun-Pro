@@ -603,4 +603,13 @@
     <string name="slider_circular">Circular</string>
     <string name="slider_simple">Simple</string>
 
+
+
+    <!-- Mini player styles from the Muso player -->
+    <string name="mini_player_style">Mini Player Style</string>
+    <string name="mini_player_style_summary">How the collapsed mini player looks</string>
+    <string name="mini_default">Default</string>
+    <string name="mini_minify">Minify (compact)</string>
+    <string name="mini_classic">Classic (Material 3)</string>
+
 </resources>

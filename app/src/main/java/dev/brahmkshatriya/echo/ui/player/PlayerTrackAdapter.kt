@@ -157,8 +157,13 @@ class PlayerTrackAdapter(
             binding.playerCollapsed.run {
                 collapsedTrackTitle.text = item?.track?.title
                 collapsedTrackArtist.text = item?.track?.artists?.joinToString(", ") { it.name }
-                // Added from Muso: the mini player's title block follows the now-playing style.
-                PlayerStyle.applyCollapsedInfo(this, PlayerStyle.current(root.context))
+                // Added from Muso: the mini player's own style.
+                PlayerStyle.applyMiniPlayerInfo(
+                    this,
+                    root.context.getSettings().getString(
+                        SettingsKeys.MINI_PLAYER_STYLE, SettingsKeys.MINI_PLAYER_STYLE_DEFAULT
+                    ) ?: SettingsKeys.MINI_PLAYER_STYLE_DEFAULT
+                )
             }
             // Added from ArchiveTune: "Hide player thumbnail".
             binding.playerTrackCover.isVisible = !binding.root.context.getSettings()

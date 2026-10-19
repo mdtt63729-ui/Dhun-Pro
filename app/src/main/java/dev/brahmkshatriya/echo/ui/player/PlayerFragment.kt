@@ -434,14 +434,24 @@ class PlayerFragment : Fragment() {
         PlayerStyle.applyCollapsedControls(
             collapsedControls, PlayerStyle.currentSlider(requireContext())
         )
+        PlayerStyle.applyMiniPlayerControls(
+            collapsedControls, PlayerStyle.currentMini(requireContext()),
+            uiViewModel.playerColors.value?.accent
+        )
         val styleListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == SettingsKeys.PLAYER_STYLE || key == SettingsKeys.SLIDER_STYLE) view?.post {
+            if (key == SettingsKeys.PLAYER_STYLE || key == SettingsKeys.SLIDER_STYLE ||
+                key == SettingsKeys.MINI_PLAYER_STYLE
+            ) view?.post {
                 val playerStyle = PlayerStyle.current(requireContext())
                 val sliderStyle = PlayerStyle.currentSlider(requireContext())
                 PlayerStyle.apply(playerControls, playerStyle)
                 PlayerStyle.applySlider(playerControls, sliderStyle)
-                // Added from Muso: the mini player follows both styles too.
+                // Added from Muso: the mini player follows all three styles.
                 PlayerStyle.applyCollapsedControls(collapsedControls, sliderStyle)
+                PlayerStyle.applyMiniPlayerControls(
+                    collapsedControls, PlayerStyle.currentMini(requireContext()),
+                    uiViewModel.playerColors.value?.accent
+                )
                 adapter.onStyleUpdated()
             }
         }
