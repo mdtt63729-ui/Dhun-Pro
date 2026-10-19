@@ -99,6 +99,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.media3.common.Tracks
 import dev.brahmkshatriya.echo.utils.SettingsKeys
 import android.content.SharedPreferences
+import dev.brahmkshatriya.echo.utils.ui.PlayerStyle
 
 class PlayerFragment : Fragment() {
     private var binding by autoClearedNullable<FragmentPlayerBinding>()
@@ -423,8 +424,13 @@ class PlayerFragment : Fragment() {
 
         // Added from Muso: the now-playing style can be changed while a song is playing, so
         // re-apply it the moment the preference changes instead of waiting for a rebuild.
+        val playerControls = binding.playerControls
+        PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
         val styleListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == SettingsKeys.PLAYER_STYLE) view?.post { adapter.onStyleUpdated() }
+            if (key == SettingsKeys.PLAYER_STYLE) view?.post {
+                PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
+                adapter.onStyleUpdated()
+            }
         }
         requireContext().getSettings()
             .registerOnSharedPreferenceChangeListener(styleListener)

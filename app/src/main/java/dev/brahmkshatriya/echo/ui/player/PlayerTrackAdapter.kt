@@ -62,7 +62,7 @@ class PlayerTrackAdapter(
     }
 
     inner class ViewHolder(
-        private val binding: ItemPlayerTrackBinding
+        val binding: ItemPlayerTrackBinding
     ) : ScrollAnimViewHolder(binding.root) {
 
         private val context = binding.root.context
@@ -161,8 +161,6 @@ class PlayerTrackAdapter(
             // Added from ArchiveTune: "Hide player thumbnail".
             binding.playerTrackCover.isVisible = !binding.root.context.getSettings()
                 .getBoolean(SettingsKeys.HIDE_PLAYER_THUMBNAIL, false)
-            // Added from Muso: the selected now-playing style.
-            PlayerStyle.apply(binding.playerControls, PlayerStyle.current(binding.root.context))
             val old = item?.unloadedCover?.getCachedDrawable(binding.root.context)
             // A loaded track's artwork is usually a much smaller thumbnail than the one the
             // feed gave us, which made the cover go soft the moment playback started.
@@ -248,9 +246,9 @@ class PlayerTrackAdapter(
     fun playerControlsHeightUpdated() = onEachViewHolder { updateInsets() }
     fun onColorsUpdated() = onEachViewHolder { updateColors() }
 
-    /** Added from Muso: re-apply the now-playing style without rebuilding anything. */
+    /** Added from Muso: refresh the artwork outline after a now-playing style change. */
     fun onStyleUpdated() = onEachViewHolder {
-        PlayerStyle.apply(binding.playerControls, PlayerStyle.current(binding.root.context))
+        binding.playerTrackCover.invalidateOutline()
         applyDrawable()
     }
     fun onCurrentUpdated() {
