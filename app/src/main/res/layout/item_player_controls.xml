@@ -90,7 +90,7 @@
                 app:trackColor="?attr/colorOnSurface"
                 app:trackThickness="2dp" />
 
-            <com.google.android.material.slider.Slider
+            <dev.brahmkshatriya.echo.utils.ui.WavySeekBar
                 android:id="@+id/seekBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

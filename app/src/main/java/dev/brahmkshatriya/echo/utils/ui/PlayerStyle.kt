@@ -116,6 +116,76 @@ object PlayerStyle {
             context.getSettings().getBoolean(SettingsKeys.NERD_STATS, false)
     }
 
+    /**
+     * Added from Muso: the seek bar style (its `SliderStyle` enum). Applied after [apply] so it
+     * wins over the now-playing style's own track/thumb sizing.
+     *
+     * Standard is Material's own slider; Thick and Simple are just a fatter/thinner track with
+     * the thumb hidden; Wavy and Circular paint a sine wave instead of a track.
+     */
+    fun applySlider(binding: ItemPlayerControlsBinding, style: String) {
+        val context = binding.root.context
+        val density = context.resources.displayMetrics.density
+        fun dp(value: Float) = (value * density).toInt()
+
+        val seek = binding.seekBar
+        val buffer = binding.bufferBar
+
+        when (style) {
+            SettingsKeys.SLIDER_STYLE_WAVY, SettingsKeys.SLIDER_STYLE_CIRCULAR -> {
+                seek.waveEnabled = true
+                seek.roundedCaps = style == SettingsKeys.SLIDER_STYLE_CIRCULAR
+                seek.waveStrokePx = dp(6f).toFloat()
+                seek.waveAmplitudePx = dp(2f).toFloat()
+                // 1px rather than 0: Material divides by the thumb size while drawing.
+                seek.thumbWidth = 1
+                seek.thumbHeight = 1
+                seek.trackHeight = 1
+                buffer.trackThickness = 1
+            }
+
+            SettingsKeys.SLIDER_STYLE_THICK -> {
+                seek.waveEnabled = false
+                seek.thumbWidth = 1
+                seek.thumbHeight = 1
+                seek.trackHeight = dp(12f)
+                buffer.trackThickness = dp(12f)
+            }
+
+            SettingsKeys.SLIDER_STYLE_SIMPLE -> {
+                seek.waveEnabled = false
+                seek.thumbWidth = 1
+                seek.thumbHeight = 1
+                seek.trackHeight = dp(3f)
+                buffer.trackThickness = dp(3f)
+            }
+
+            else -> {
+                seek.waveEnabled = false
+                seek.thumbWidth = dp(20f)
+                seek.thumbHeight = dp(20f)
+                seek.trackHeight = dp(2f)
+                buffer.trackThickness = dp(2f)
+            }
+        }
+        seek.requestLayout()
+        seek.invalidate()
+    }
+
+    /** The wavy styles only scroll while a song is actually playing, like Muso. */
+    fun setSliderAnimating(binding: ItemPlayerControlsBinding, playing: Boolean) {
+        val seek = binding.seekBar
+        if (seek.waveAnimating == playing) return
+        seek.waveAnimating = playing
+        if (playing) seek.invalidate()
+    }
+
+    /** The slider style currently selected in settings. */
+    fun currentSlider(context: android.content.Context): String =
+        context.getSettings().getString(
+            SettingsKeys.SLIDER_STYLE, SettingsKeys.SLIDER_STYLE_STANDARD
+        ) ?: SettingsKeys.SLIDER_STYLE_STANDARD
+
     /** The style currently selected in settings. */
     fun current(context: android.content.Context): String =
         context.getSettings().getString(

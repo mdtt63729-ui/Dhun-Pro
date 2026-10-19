@@ -380,6 +380,8 @@ class PlayerFragment : Fragment() {
         }
         observe(viewModel.buffering) {
             binding.playerControls.playingIndicator.alpha = if (it) 1f else 0f
+            // Added from Muso: the wavy seek bar only scrolls while playback is running.
+            PlayerStyle.setSliderAnimating(binding.playerControls, it)
             binding.playerCollapsedContainer.collapsedPlayingIndicator.alpha = if (it) 1f else 0f
         }
 
@@ -426,9 +428,11 @@ class PlayerFragment : Fragment() {
         // re-apply it the moment the preference changes instead of waiting for a rebuild.
         val playerControls = binding.playerControls
         PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
+        PlayerStyle.applySlider(playerControls, PlayerStyle.currentSlider(requireContext()))
         val styleListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-            if (key == SettingsKeys.PLAYER_STYLE) view?.post {
+            if (key == SettingsKeys.PLAYER_STYLE || key == SettingsKeys.SLIDER_STYLE) view?.post {
                 PlayerStyle.apply(playerControls, PlayerStyle.current(requireContext()))
+                PlayerStyle.applySlider(playerControls, PlayerStyle.currentSlider(requireContext()))
                 adapter.onStyleUpdated()
             }
         }

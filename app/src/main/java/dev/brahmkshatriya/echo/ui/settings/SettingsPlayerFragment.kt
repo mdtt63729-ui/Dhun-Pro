@@ -76,6 +76,30 @@ class SettingsPlayerFragment : BaseSettingsFragment() {
                     setDefaultValue(SettingsKeys.PLAYER_STYLE_MATERIAL3)
                     addPreference(this)
                 }
+
+                MaterialListPreference(context).apply {
+                    key = SettingsKeys.SLIDER_STYLE
+                    title = getString(R.string.slider_style)
+                    summary = getString(R.string.slider_style_summary)
+                    layoutResource = R.layout.preference
+                    isIconSpaceReserved = false
+                    entries = arrayOf(
+                        getString(R.string.slider_standard),
+                        getString(R.string.slider_wavy),
+                        getString(R.string.slider_thick),
+                        getString(R.string.slider_circular),
+                        getString(R.string.slider_simple)
+                    )
+                    entryValues = arrayOf(
+                        SettingsKeys.SLIDER_STYLE_STANDARD,
+                        SettingsKeys.SLIDER_STYLE_WAVY,
+                        SettingsKeys.SLIDER_STYLE_THICK,
+                        SettingsKeys.SLIDER_STYLE_CIRCULAR,
+                        SettingsKeys.SLIDER_STYLE_SIMPLE
+                    )
+                    setDefaultValue(SettingsKeys.SLIDER_STYLE_STANDARD)
+                    addPreference(this)
+                }
             }
 
             PreferenceCategory(context).apply {

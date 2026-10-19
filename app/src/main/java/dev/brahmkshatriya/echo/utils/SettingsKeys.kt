@@ -102,6 +102,17 @@ object SettingsKeys {
     const val PLAYER_STYLE_APPLE = "apple"
     const val PLAYER_STYLE_M3E = "m3expressive"
 
+    /**
+     * The seek bar style, taken from the Muso player's SliderStyle enum:
+     * "standard", "wavy", "thick", "circular" or "simple".
+     */
+    const val SLIDER_STYLE = "slider_style"
+    const val SLIDER_STYLE_STANDARD = "standard"
+    const val SLIDER_STYLE_WAVY = "wavy"
+    const val SLIDER_STYLE_THICK = "thick"
+    const val SLIDER_STYLE_CIRCULAR = "circular"
+    const val SLIDER_STYLE_SIMPLE = "simple"
+
     /** Show a volume slider on the player. */
     const val SHOW_VOLUME_BAR = "show_volume_bar"
 
