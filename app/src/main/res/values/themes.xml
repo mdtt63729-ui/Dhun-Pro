@@ -4,19 +4,17 @@
         <item name="android:windowSplashScreenBackground" tools:targetApi="s">
             @color/amoled_bg
         </item>
+        <!-- No icon: the animation runs in the app's own splash overlay instead. -->
         <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">
-            @drawable/art_splash
+            @drawable/art_splash_blank
         </item>
         <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">0</item>
         <item name="android:windowSplashScreenBehavior" tools:targetApi="TIRAMISU">
-            icon_preferred
-        </item>
-        <item name="android:windowSplashScreenBrandingImage" tools:targetApi="s">
-            @drawable/art_brand
+            default
         </item>
         <!-- core-splashscreen equivalents, so the splash also renders correctly on API < 31 -->
         <item name="windowSplashScreenBackground">@color/amoled_bg</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/art_splash</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/art_splash_blank</item>
         <item name="windowSplashScreenAnimationDuration">0</item>
         <item name="postSplashScreenTheme">@style/Default</item>
         <item name="android:colorBackground">?echoBackground</item>

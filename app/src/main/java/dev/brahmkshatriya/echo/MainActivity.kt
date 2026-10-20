@@ -257,8 +257,12 @@ open class MainActivity : AppCompatActivity() {
         /** How long the splash animation actually runs (art_splash_anim's longest animator). */
         const val SPLASH_ANIM_DURATION_MS = 2400L
 
-        /** How long the system splash is held before the app's own splash overlay takes over. */
-        private const val SYSTEM_SPLASH_MS = 250L
+        /**
+         * How long the system splash is held before the app's own splash overlay takes over.
+         * Zero: the system splash shows no icon, so there is nothing to hold it for and the
+         * animation should start the moment the app can draw.
+         */
+        private const val SYSTEM_SPLASH_MS = 0L
 
         /** How long the cold-start fade-in of the whole UI takes. */
         private const val FADE_IN_MS = 260L

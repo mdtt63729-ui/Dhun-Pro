@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Blank splash icon.
+    The system splash shows no icon at all, so the first thing you see is the app's own splash
+    overlay playing the real animation — instead of a still frame of it appearing first.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="1dp"
+    android:height="1dp"
+    android:viewportWidth="1"
+    android:viewportHeight="1" />
