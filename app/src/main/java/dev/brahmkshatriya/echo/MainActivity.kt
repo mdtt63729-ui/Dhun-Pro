@@ -209,10 +209,10 @@ open class MainActivity : AppCompatActivity() {
         val overlay = binding.splashOverlay ?: return
         if (!coldStart) {
             overlay.isVisible = false
-            binding.root.alpha = 1f
             return
         }
-        binding.root.alpha = 0f
+        // The overlay is a child of binding.root, so fading the root would fade the splash too.
+        // The content is simply revealed by fading the overlay out at the end.
         overlay.isVisible = true
         overlay.alpha = 1f
         val image = binding.splashImage
@@ -222,7 +222,6 @@ open class MainActivity : AppCompatActivity() {
             if (isFinishing || isDestroyed) return@postDelayed
             overlay.animate().alpha(0f).setDuration(FADE_IN_MS).withEndAction {
                 overlay.isVisible = false
-                binding.root.animate().alpha(1f).setDuration(FADE_IN_MS).start()
             }.start()
         }, SPLASH_ANIM_DURATION_MS)
     }

@@ -52,8 +52,8 @@
 
         <ImageView
             android:id="@+id/splashImage"
-            android:layout_width="160dp"
-            android:layout_height="160dp"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
             android:layout_gravity="center"
             android:importantForAccessibility="no" />
 
