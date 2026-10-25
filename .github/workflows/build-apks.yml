@@ -33,6 +33,15 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # Ships the YouTube Music extension inside the APK, so it is already installed on first
+      # launch instead of having to be added by hand.
+      - name: Bundle the YouTube Music extension
+        run: |
+          mkdir -p app/src/main/assets/extensions
+          curl -sSL --retry 3 -o app/src/main/assets/extensions/yt.apk \
+            https://github.com/brahmkshatriya/echo-youtube-extension-old/releases/download/v3002c5d/yt-3002c5d.eapk
+          ls -la app/src/main/assets/extensions/
+
       - name: Build debug and unsigned release
         run: ./gradlew assembleDebug assembleRelease
 

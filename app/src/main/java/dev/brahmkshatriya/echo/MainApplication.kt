@@ -38,6 +38,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 import dev.brahmkshatriya.echo.utils.SettingsBackupWorker
+import dev.brahmkshatriya.echo.extensions.BundledExtensions
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -57,6 +58,9 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
         applyLocale(settings)
         configureAppShortcuts(extensionLoader)
         scheduleSettingsBackup()
+        // Added: install the extensions that ship inside the app, so YouTube Music is available
+        // without an extra manual install step.
+        Thread { BundledExtensions.install(this) }.start()
     }
 
     /**
