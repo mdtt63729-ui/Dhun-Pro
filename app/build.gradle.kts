@@ -1,3 +1,5 @@
+import java.io.File
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -25,6 +27,22 @@ android {
         versionName = "v${version}_$gitHash($gitCount)"
     }
 
+    // Signed releases. The keystore and its credentials are supplied by the release workflow
+    // from repository secrets, so a normal build (no SIGNING_KEY_STORE_PATH) stays unsigned
+    // exactly as before.
+    val keystoreFile = System.getenv("SIGNING_KEY_STORE_PATH")
+        ?.let { File(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystoreFile != null) {
+            create("release") {
+                storeFile = keystoreFile
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -32,6 +50,7 @@ android {
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
             )
+            signingConfig = signingConfigs.findByName("release")
         }
         create("nightly") {
             initWith(getByName("release"))
