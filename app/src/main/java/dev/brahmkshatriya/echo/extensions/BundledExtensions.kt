@@ -7,13 +7,13 @@ import java.io.File
 /**
  * Extensions that ship inside the app and are installed on first launch.
  *
- * Echo loads file-based extensions from `filesDir/extensions/*.apk`, so dropping the APK into
- * `assets/extensions/` and copying it there once is enough for it to be a normal, really
- * installed extension — no manual "Add extension" step, and it survives app updates because an
- * already-installed copy is never overwritten (so a newer version the user installed wins).
+ * Echo loads file-based extensions from any APK file in its `extensions` folder, so putting
+ * the APK in `assets/extensions` and copying it there once is enough for it to be a normal,
+ * really installed extension — no manual "Add extension" step, and it survives app updates
+ * because an already-installed copy is never overwritten (so a newer install wins).
  *
  * To bundle another extension (for example JioSaavn), just put its APK in
- * `app/src/main/assets/extensions/` and add its file name to [FILES].
+ * `app/src/main/assets/extensions` and add its file name to [FILES].
  */
 object BundledExtensions {
 
