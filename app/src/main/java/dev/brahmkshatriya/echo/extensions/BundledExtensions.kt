@@ -12,19 +12,21 @@ import java.io.File
  * really installed extension — no manual "Add extension" step, and it survives app updates
  * because an already-installed copy is never overwritten (so a newer install wins).
  *
- * To bundle another extension (for example JioSaavn), just put its APK in
- * `app/src/main/assets/extensions` and add its file name to [FILES].
+ * Both bundled extensions are built with minSdk 24, so they work on Android 7.
  */
 object BundledExtensions {
 
     private val FILES = listOf(
-        "yt.apk",
+        "yt.apk",      // YouTube / YouTube Music
+        "saavn.apk",   // JioSaavn
     )
 
-    fun install(context: Context) = runCatching {
+    /** @return true when at least one extension was copied, so the loader can be told to reload. */
+    fun install(context: Context): Boolean = runCatching {
         val dir = context.getExtensionsFileDir()
         // loadAllApks() makes the folder read-only, so open it up before writing.
         dir.setWritable(true)
+        var copied = false
         FILES.forEach { name ->
             val target = File(dir, name)
             if (target.exists()) return@forEach
@@ -32,8 +34,10 @@ object BundledExtensions {
                 context.assets.open("extensions/$name").use { input ->
                     target.outputStream().use { output -> input.copyTo(output) }
                 }
+                copied = true
             }
         }
         dir.setReadOnly()
-    }
+        copied
+    }.getOrDefault(false)
 }

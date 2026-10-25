@@ -39,6 +39,7 @@ import androidx.work.WorkManager
 import java.util.concurrent.TimeUnit
 import dev.brahmkshatriya.echo.utils.SettingsBackupWorker
 import dev.brahmkshatriya.echo.extensions.BundledExtensions
+import kotlinx.coroutines.runBlocking
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -60,7 +61,13 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
         scheduleSettingsBackup()
         // Added: install the extensions that ship inside the app, so YouTube Music is available
         // without an extra manual install step.
-        Thread { BundledExtensions.install(this) }.start()
+        Thread {
+            // Reload the extension list afterwards, otherwise the loader has already cached the
+            // empty folder and the bundled extensions only appear after a restart.
+            if (BundledExtensions.install(this)) {
+                runCatching { runBlocking { extensionLoader.fileIgnoreFlow.emit(null) } }
+            }
+        }.start()
     }
 
     /**

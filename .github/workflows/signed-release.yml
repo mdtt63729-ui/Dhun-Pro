@@ -42,11 +42,15 @@ jobs:
         run: chmod +x ./gradlew
 
       # Ships the YouTube Music extension inside the APK, exactly like the Build APKs workflow.
-      - name: Bundle the YouTube Music extension
+      # Ships the YouTube Music and JioSaavn extensions inside the APK, so both are already
+      # installed on first launch instead of having to be added by hand.
+      - name: Bundle the YouTube Music and JioSaavn extensions
         run: |
           mkdir -p app/src/main/assets/extensions
           curl -sSL --retry 3 -o app/src/main/assets/extensions/yt.apk \
             https://github.com/brahmkshatriya/echo-youtube-extension-old/releases/download/v3002c5d/yt-3002c5d.eapk
+          curl -sSL --retry 3 -o app/src/main/assets/extensions/saavn.apk \
+            https://github.com/mdtt63729-ui/Dhun-Pro/releases/download/latest/saavn.apk
           ls -la app/src/main/assets/extensions/
 
       - name: Decode the signing keystore
