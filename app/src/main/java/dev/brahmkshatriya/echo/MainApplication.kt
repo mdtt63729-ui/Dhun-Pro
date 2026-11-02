@@ -65,10 +65,12 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
         // Added: install the extensions that ship inside the app, so YouTube Music is available
         // without an extra manual install step.
         Thread {
-            // Reload the extension list afterwards, otherwise the loader has already cached the
-            // empty folder and the bundled extensions only appear after a restart.
-            if (BundledExtensions.install(this)) {
-                runCatching { runBlocking { extensionLoader.fileIgnoreFlow.emit(null) } }
+            // Everything is guarded: an uncaught exception on this thread would take the whole
+            // process down, and this runs while the app is starting.
+            runCatching {
+                if (BundledExtensions.install(this)) {
+                    runCatching { runBlocking { extensionLoader.fileIgnoreFlow.emit(null) } }
+                }
             }
         }.start()
     }

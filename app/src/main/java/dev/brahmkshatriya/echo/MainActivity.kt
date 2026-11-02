@@ -51,6 +51,9 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.brahmkshatriya.echo.utils.CrashHandler
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 
 open class MainActivity : AppCompatActivity() {
 
@@ -109,6 +112,7 @@ open class MainActivity : AppCompatActivity() {
 
         playSplashAnimation(coldStart)
         showLastCrashIfAny()
+        requestCrashLogPermission()
 
         enableEdgeToEdge(
             SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
@@ -203,6 +207,22 @@ open class MainActivity : AppCompatActivity() {
     }
 
     /**
+     * Asks for storage access so the crash log can be written to /storage/emulated/0/echo.
+     * Without it the log still lands in Android/data/<package>/files/echo, which needs no
+     * permission at all.
+     */
+    private fun requestCrashLogPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) return
+        val granted = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED
+        if (granted) return
+        runCatching {
+            requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1001)
+        }
+    }
+
+    /**
      * Shows the trace of the previous crash, if there was one.
      *
      * The system "keeps stopping" dialog says nothing useful; this puts the actual exception and
@@ -251,6 +271,10 @@ open class MainActivity : AppCompatActivity() {
                 overlay.isVisible = false
             }.start()
         }, SPLASH_ANIM_DURATION_MS)
+        // Safety net: whatever happens, the splash never stays on screen forever.
+        overlay.postDelayed({
+            if (!isFinishing && !isDestroyed) overlay.isVisible = false
+        }, SPLASH_ANIM_DURATION_MS + SPLASH_SAFETY_MS)
     }
 
     /**
@@ -293,6 +317,9 @@ open class MainActivity : AppCompatActivity() {
 
         /** How long the cold-start fade-in of the whole UI takes. */
         private const val FADE_IN_MS = 260L
+
+        /** Extra time before the splash overlay is force-hidden, whatever else happened. */
+        private const val SPLASH_SAFETY_MS = 4_000L
 
         /**
          * How different two artwork colours must be before the theme is worth a full rebuild.
