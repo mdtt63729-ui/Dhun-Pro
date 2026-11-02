@@ -45,8 +45,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // R8 is off on purpose. The signed release was the first minified build and it
+            // crashed on start on older phones, while every debug build worked; without R8 the
+            // release behaves exactly like the debug build.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
             )

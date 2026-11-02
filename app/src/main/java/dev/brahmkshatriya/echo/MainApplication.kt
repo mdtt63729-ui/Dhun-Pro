@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit
 import dev.brahmkshatriya.echo.utils.SettingsBackupWorker
 import dev.brahmkshatriya.echo.extensions.BundledExtensions
 import kotlinx.coroutines.runBlocking
+import dev.brahmkshatriya.echo.utils.CrashHandler
 
 @OptIn(KoinExperimentalAPI::class)
 class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory {
@@ -55,6 +56,8 @@ class MainApplication : Application(), KoinStartup, SingletonImageLoader.Factory
 
     override fun onCreate() {
         super.onCreate()
+        // Record any crash so it can be read from inside the app on the next launch.
+        CrashHandler.install(this)
         CoroutineUtils.setDebug()
         applyLocale(settings)
         configureAppShortcuts(extensionLoader)

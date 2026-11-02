@@ -47,6 +47,10 @@ import android.content.res.ColorStateList
 import androidx.core.graphics.ColorUtils
 import android.graphics.drawable.Animatable
 import androidx.core.view.isVisible
+import android.content.ClipData
+import android.content.ClipboardManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dev.brahmkshatriya.echo.utils.CrashHandler
 
 open class MainActivity : AppCompatActivity() {
 
@@ -104,6 +108,7 @@ open class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         playSplashAnimation(coldStart)
+        showLastCrashIfAny()
 
         enableEdgeToEdge(
             SystemBarStyle.auto(TRANSPARENT, TRANSPARENT),
@@ -195,6 +200,28 @@ open class MainActivity : AppCompatActivity() {
                 handler.postDelayed(reThemeRunnable, RE_THEME_DELAY_MS)
             }
         }
+    }
+
+    /**
+     * Shows the trace of the previous crash, if there was one.
+     *
+     * The system "keeps stopping" dialog says nothing useful; this puts the actual exception and
+     * the device details on screen so it can be copied and reported.
+     */
+    private fun showLastCrashIfAny() {
+        val text = CrashHandler.last(this) ?: return
+        MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.last_crash)
+            .setMessage(text)
+            .setPositiveButton(R.string.copy) { _, _ ->
+                runCatching {
+                    getSystemService(ClipboardManager::class.java)
+                        ?.setPrimaryClip(ClipData.newPlainText("crash", text))
+                }
+                CrashHandler.clear(this)
+            }
+            .setNegativeButton(R.string.dismiss) { _, _ -> CrashHandler.clear(this) }
+            .show()
     }
 
     /**

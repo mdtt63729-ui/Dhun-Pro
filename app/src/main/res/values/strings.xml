@@ -619,4 +619,11 @@
     <string name="default_page_summary">Which page the app opens on</string>
     <string name="page_last">Last used</string>
 
+
+
+    <!-- Crash reporting -->
+    <string name="last_crash">Last crash</string>
+    <string name="copy">Copy</string>
+    <string name="dismiss">Dismiss</string>
+
 </resources>
