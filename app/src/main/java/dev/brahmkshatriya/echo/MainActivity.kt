@@ -13,7 +13,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.add
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -40,7 +39,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import android.content.res.ColorStateList
@@ -63,22 +61,14 @@ open class MainActivity : AppCompatActivity() {
     private val uiViewModel by viewModel<UiViewModel>()
     private val extensionLoader by inject<ExtensionLoader>()
 
-    private val splashFinished = AtomicBoolean(false)
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Keep the system splash up until its icon animation has actually finished.
-        // Without this the home screen appears mid-animation, because the first frame
-        // is drawn long before the 900ms animation is over.
+        // The compat splash screen is deliberately NOT installed.
         //
-        // Only on a cold start, though: holding the splash through a recreate (which is
-        // what a theme/colour settings toggle does) made every toggle look like the app
-        // was closing and restarting.
+        // It loads the theme's windowSplashScreenAnimatedIcon itself, and on Android 7/8 that
+        // load threw Resources$NotFoundException ("no path defined") and killed the app before
+        // anything could draw. The app plays the splash animation in its own overlay instead,
+        // so nothing here needs the library.
         val coldStart = savedInstanceState == null
-        installSplashScreen().setKeepOnScreenCondition { coldStart && !splashFinished.get() }
-        lifecycleScope.launch {
-            if (coldStart) delay(SYSTEM_SPLASH_MS)
-            splashFinished.set(true)
-        }
         super.onCreate(savedInstanceState)
 
         // --- settings added from ArchiveTune; these must run before the theme is built ---
@@ -307,13 +297,6 @@ open class MainActivity : AppCompatActivity() {
     companion object {
         /** How long the splash animation actually runs (art_splash_anim's longest animator). */
         const val SPLASH_ANIM_DURATION_MS = 2400L
-
-        /**
-         * How long the system splash is held before the app's own splash overlay takes over.
-         * Zero: the system splash shows no icon, so there is nothing to hold it for and the
-         * animation should start the moment the app can draw.
-         */
-        private const val SYSTEM_SPLASH_MS = 0L
 
         /** How long the cold-start fade-in of the whole UI takes. */
         private const val FADE_IN_MS = 260L
